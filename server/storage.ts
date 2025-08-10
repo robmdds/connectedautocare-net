@@ -121,6 +121,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Ensure new users are assigned to default tenant if no tenant specified
+    if (!userData.tenantId) {
+      const defaultTenant = await this.getTenantBySubdomain('default');
+      if (defaultTenant) {
+        userData.tenantId = defaultTenant.id;
+      }
+    }
+
     const [user] = await db
       .insert(users)
       .values(userData)

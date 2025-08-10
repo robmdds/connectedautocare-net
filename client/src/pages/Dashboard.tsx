@@ -1,280 +1,203 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import Layout from "@/components/Layout";
-import MetricsCards from "@/components/MetricsCards";
-import PolicyManagement from "@/components/PolicyManagement";
-import ClaimsManagement from "@/components/ClaimsManagement";
-import PaymentIntegration from "@/components/PaymentIntegration";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, DownloadIcon } from "lucide-react";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { Badge } from "@/components/ui/badge";
+import { Shield, FileText, DollarSign, TrendingUp, Plus, LogOut } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Dashboard() {
-  const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ["/api/analytics/dashboard"],
     retry: false,
   });
 
-  const { data: recentActivity } = useQuery({
+  const { data: recentActivity, isLoading: activityLoading } = useQuery({
     queryKey: ["/api/analytics/recent-activity"],
     retry: false,
   });
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
 
-  if (isLoading) {
+  if (userLoading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      {/* Dashboard Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Welcome back, {user?.firstName || 'User'}. Here's what's happening with your insurance business today.
-              </p>
+            <div className="flex items-center space-x-4">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">TPA Platform</h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" className="inline-flex items-center">
-                <DownloadIcon className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-              <Button className="inline-flex items-center">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                New Policy
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">
+                Welcome, {user?.firstName || user?.email || 'User'}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="p-6 space-y-6">
-        {/* Metrics Cards */}
-        <MetricsCards analytics={analytics} isLoading={analyticsLoading} />
+      {/* Navigation */}
+      <nav className="bg-white border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex space-x-8">
+            <Link href="/" className="py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium">
+              Dashboard
+            </Link>
+            <Link href="/policies" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+              Policies
+            </Link>
+            <Link href="/claims" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+              Claims
+            </Link>
+            <Link href="/analytics" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+              Analytics
+            </Link>
+            <Link href="/admin" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+              Admin
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-            </div>
-            <div className="p-6">
-              {/* Dashboard overview image */}
-              <div className="mb-6">
-                <img 
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=300" 
-                  alt="Insurance dashboard analytics overview" 
-                  className="rounded-lg shadow-sm w-full h-48 object-cover" 
-                />
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Policies</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analyticsLoading ? "..." : analytics?.totalPolicies || 0}
               </div>
-              
-              <div className="space-y-4">
-                {analytics?.recentActivity?.length > 0 ? (
-                  analytics.recentActivity.map((activity: any, index: number) => (
-                    <div key={index} className="flex items-start space-x-3">
+              <p className="text-xs text-muted-foreground">Active insurance policies</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Claims</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analyticsLoading ? "..." : analytics?.activeClaims || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Claims in progress</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Premium</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${analyticsLoading ? "..." : analytics?.monthlyPremium?.toLocaleString() || "0"}
+              </div>
+              <p className="text-xs text-muted-foreground">This month's revenue</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analyticsLoading ? "..." : analytics?.conversionRate || 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">Quote to policy</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common tasks and operations</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Link href="/policies?action=create">
+                <Button className="w-full justify-start">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Quote
+                </Button>
+              </Link>
+              <Link href="/claims?action=create">
+                <Button variant="outline" className="w-full justify-start">
+                  <FileText className="h-4 w-4 mr-2" />
+                  File New Claim
+                </Button>
+              </Link>
+              <Link href="/admin">
+                <Button variant="outline" className="w-full justify-start">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin Panel
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Latest platform activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activityLoading ? (
+                <p className="text-sm text-gray-500">Loading activity...</p>
+              ) : recentActivity && recentActivity.length > 0 ? (
+                <div className="space-y-4">
+                  {recentActivity.slice(0, 5).map((activity: any) => (
+                    <div key={activity.id} className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
-                        <div className={`w-8 h-8 ${activity.color === 'green' ? 'bg-green-100' : activity.color === 'blue' ? 'bg-blue-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
-                          <i className={`fas fa-${activity.icon} ${activity.color === 'green' ? 'text-green-600' : activity.color === 'blue' ? 'text-blue-600' : 'text-gray-600'} text-sm`}></i>
-                        </div>
+                        <Badge variant={activity.type === 'claim_submitted' ? 'destructive' : 'default'}>
+                          {activity.type.replace('_', ' ')}
+                        </Badge>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-900">{activity.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900 truncate">{activity.message}</p>
                         <p className="text-xs text-gray-500">
-                          {new Date(activity.timestamp).toLocaleTimeString()} ago
+                          {new Date(activity.timestamp).toLocaleString()}
                         </p>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    No recent activity to display
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-            </div>
-            <div className="p-6 space-y-4">
-              <Button className="w-full flex items-center justify-center">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                Create New Policy
-              </Button>
-              
-              <Button variant="outline" className="w-full flex items-center justify-center">
-                <i className="fas fa-calculator mr-2"></i>
-                Generate Quote
-              </Button>
-
-              <Button variant="outline" className="w-full flex items-center justify-center">
-                <i className="fas fa-file-upload mr-2"></i>
-                Upload Rate Table
-              </Button>
-
-              <Button variant="outline" className="w-full flex items-center justify-center">
-                <i className="fas fa-exclamation-triangle mr-2"></i>
-                File New Claim
-              </Button>
-
-              <hr className="my-4" />
-
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">AI Assistant</h3>
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <i className="fas fa-robot text-primary mt-1"></i>
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        "How can I help you with policy comparisons or claim guidance today?"
-                      </p>
-                      <button className="text-xs text-primary hover:text-blue-700 mt-2">Ask a question →</button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Policy Management */}
-        <PolicyManagement />
-
-        {/* Claims Management */}
-        <ClaimsManagement />
-
-        {/* Payment Integration */}
-        <PaymentIntegration />
-
-        {/* Resellers and Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Resellers */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Resellers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=200" 
-                  alt="Business analytics dashboard with performance metrics" 
-                  className="rounded-lg shadow-sm w-full h-32 object-cover" 
-                />
-              </div>
-              
-              <div className="space-y-4">
-                {analytics?.topResellers?.length > 0 ? (
-                  analytics.topResellers.map((reseller: any) => (
-                    <div key={reseller.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">{reseller.initials}</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{reseller.name}</p>
-                          <p className="text-xs text-gray-500">{reseller.policiesThisMonth} policies this month</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">${reseller.revenue?.toLocaleString()}</p>
-                        <p className="text-xs text-green-600">+{reseller.growth}%</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    No reseller data available
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Analytics Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=200" 
-                  alt="Financial analytics and business performance charts" 
-                  className="rounded-lg shadow-sm w-full h-32 object-cover" 
-                />
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Conversion Rate</span>
-                  <span className="text-sm font-medium text-gray-900">{analytics?.conversionRate || 0}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full" 
-                    style={{ width: `${analytics?.conversionRate || 0}%` }}
-                  ></div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Customer Acquisition Cost</span>
-                  <span className="text-sm font-medium text-gray-900">${analytics?.analyticsOverview?.cac || 0}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '73%' }}></div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Lifetime Value</span>
-                  <span className="text-sm font-medium text-gray-900">${analytics?.analyticsOverview?.ltv || 0}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-600 h-2 rounded-full" style={{ width: '89%' }}></div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Claims Ratio</span>
-                  <span className="text-sm font-medium text-gray-900">{analytics?.analyticsOverview?.claimsRatio || 0}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: '12%' }}></div>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-gray-500">No recent activity</p>
+              )}
             </CardContent>
           </Card>
         </div>
-      </div>
-    </Layout>
+      </main>
+    </div>
   );
 }

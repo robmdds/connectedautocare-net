@@ -1,269 +1,176 @@
 import OpenAI from "openai";
 
-interface AIResponse {
-  message: string;
-  suggestions?: string[];
-  actions?: Array<{
-    type: string;
-    label: string;
-    data?: any;
-  }>;
-  confidence: number;
-}
-
 export class AIAssistantService {
   private openai: OpenAI;
-  private knowledgeBase: Map<string, string>;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || '',
-    });
-    
-    this.knowledgeBase = new Map();
-    this.initializeKnowledgeBase();
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not found");
+    }
+    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
 
-  private initializeKnowledgeBase() {
-    // Insurance knowledge base entries
-    this.knowledgeBase.set('comprehensive_coverage', 
-      'Comprehensive coverage protects against damage from events other than collisions, such as theft, vandalism, fire, and weather damage.');
-    
-    this.knowledgeBase.set('collision_coverage',
-      'Collision coverage pays for damage to your vehicle from crashes with other vehicles or objects.');
-    
-    this.knowledgeBase.set('liability_coverage',
-      'Liability coverage protects you financially if you cause an accident that injures others or damages their property.');
-    
-    this.knowledgeBase.set('deductible',
-      'A deductible is the amount you pay out of pocket before your insurance coverage kicks in.');
-    
-    this.knowledgeBase.set('claim_process',
-      'To file a claim: 1) Report the incident immediately, 2) Document everything with photos, 3) Provide all required information, 4) Work with your adjuster, 5) Review settlement offer.');
-    
-    this.knowledgeBase.set('premium_factors',
-      'Insurance premiums are affected by vehicle age, mileage, driver history, location, coverage levels, and deductible amounts.');
-  }
-
-  async processMessage(message: string, context?: any): Promise<AIResponse> {
+  async analyzeClaimData(claimData: any): Promise<any> {
     try {
-      // Check for specific knowledge base queries first
-      const knowledgeResponse = this.searchKnowledgeBase(message);
-      if (knowledgeResponse) {
-        return {
-          message: knowledgeResponse,
-          confidence: 0.9,
-          suggestions: this.getRelatedSuggestions(message),
-        };
-      }
-
-      // Use OpenAI for complex queries
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are an insurance assistant for a TPA platform. You help users with:
-            - Policy information and comparisons
-            - Claims guidance and process
-            - Coverage explanations
-            - Premium calculations
-            - Regulatory compliance questions
-            
-            Always provide accurate, helpful information while adhering to insurance regulations.
-            If asked about specific policy details, remind users to check their actual policy documents.
-            Keep responses concise and actionable.`
-          },
-          {
-            role: "user",
-            content: `${message}\n\nContext: ${JSON.stringify(context || {})}`
-          }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 500,
-      });
-
-      const aiResult = JSON.parse(response.choices[0].message.content || '{}');
+      const prompt = `Analyze this insurance claim data and provide insights:
       
-      return {
-        message: aiResult.message || "I'm here to help with your insurance questions. Can you please be more specific?",
-        suggestions: aiResult.suggestions || this.getRelatedSuggestions(message),
-        actions: this.generateActions(message, context),
-        confidence: aiResult.confidence || 0.8,
-      };
-
-    } catch (error) {
-      console.error('AI assistant error:', error);
+      Claim Details:
+      - Description: ${claimData.description}
+      - Incident Date: ${claimData.incidentDate}
+      - Estimated Amount: ${claimData.estimatedAmount || 'Not specified'}
+      - Location: ${claimData.incidentLocation || 'Not specified'}
       
-      // Fallback response
-      return {
-        message: "I'm having trouble processing your request right now. Please try rephrasing your question or contact support for assistance.",
-        confidence: 0.1,
-        suggestions: [
-          "How do I file a claim?",
-          "What does comprehensive coverage include?",
-          "How are premiums calculated?",
-        ],
-      };
-    }
-  }
-
-  private searchKnowledgeBase(message: string): string | null {
-    const lowerMessage = message.toLowerCase();
-    
-    // Search for relevant knowledge base entries
-    for (const [key, value] of this.knowledgeBase) {
-      if (lowerMessage.includes(key.replace('_', ' ')) || 
-          lowerMessage.includes(key)) {
-        return value;
-      }
-    }
-
-    // Check for common question patterns
-    if (lowerMessage.includes('how to file') && lowerMessage.includes('claim')) {
-      return this.knowledgeBase.get('claim_process') || null;
-    }
-    
-    if (lowerMessage.includes('premium') && (lowerMessage.includes('why') || lowerMessage.includes('how'))) {
-      return this.knowledgeBase.get('premium_factors') || null;
-    }
-
-    return null;
-  }
-
-  private getRelatedSuggestions(message: string): string[] {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('claim')) {
-      return [
-        "How long does claim processing take?",
-        "What documents do I need for a claim?",
-        "How do I track my claim status?",
-      ];
-    }
-    
-    if (lowerMessage.includes('coverage') || lowerMessage.includes('policy')) {
-      return [
-        "Compare different coverage options",
-        "What's the difference between comprehensive and collision?",
-        "How do deductibles work?",
-      ];
-    }
-    
-    if (lowerMessage.includes('premium') || lowerMessage.includes('cost')) {
-      return [
-        "How can I lower my premium?",
-        "What factors affect my rate?",
-        "Are there available discounts?",
-      ];
-    }
-    
-    return [
-      "How do I file a claim?",
-      "What coverage do I need?",
-      "How are premiums calculated?",
-      "What documents do I need?",
-    ];
-  }
-
-  private generateActions(message: string, context?: any): Array<{ type: string; label: string; data?: any }> {
-    const actions = [];
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('claim') && lowerMessage.includes('file')) {
-      actions.push({
-        type: 'navigate',
-        label: 'File New Claim',
-        data: { route: '/claims/new' },
-      });
-    }
-    
-    if (lowerMessage.includes('policy') && context?.policyId) {
-      actions.push({
-        type: 'navigate',
-        label: 'View Policy Details',
-        data: { route: `/policies/${context.policyId}` },
-      });
-    }
-    
-    if (lowerMessage.includes('quote')) {
-      actions.push({
-        type: 'navigate',
-        label: 'Get New Quote',
-        data: { route: '/quotes/new' },
-      });
-    }
-    
-    if (lowerMessage.includes('document') || lowerMessage.includes('download')) {
-      actions.push({
-        type: 'navigate',
-        label: 'View Documents',
-        data: { route: '/documents' },
-      });
-    }
-    
-    return actions;
-  }
-
-  async analyzeClaim(claimData: any): Promise<string> {
-    try {
-      const prompt = `Analyze this insurance claim and provide recommendations:
-      
-      Claim Type: ${claimData.type}
-      Description: ${claimData.description}
-      Estimated Amount: $${claimData.estimatedAmount}
-      Date of Loss: ${claimData.dateOfLoss}
-      
-      Provide analysis on:
-      1. Claim validity indicators
-      2. Potential red flags
+      Please provide:
+      1. Risk assessment (low/medium/high)
+      2. Potential fraud indicators
       3. Recommended next steps
-      4. Documentation needed
+      4. Similar claim patterns to watch for
       
-      Respond in JSON format with sections for each analysis point.`;
+      Respond in JSON format with these fields: riskLevel, fraudIndicators, recommendations, similarPatterns`;
 
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are an expert insurance claim analyst. Provide detailed, professional analysis in JSON format." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" }
       });
 
-      const analysis = JSON.parse(response.choices[0].message.content || '{}');
-      return analysis.summary || "Claim analysis completed. Please review with adjuster.";
+      return JSON.parse(response.choices[0].message.content || '{}');
     } catch (error) {
-      console.error('Claim analysis error:', error);
-      return "Unable to analyze claim automatically. Please assign to adjuster for manual review.";
+      console.error('AI claim analysis error:', error);
+      throw new Error('Failed to analyze claim data');
     }
   }
 
-  async comparePolicies(policies: any[]): Promise<string> {
+  async answerCustomerQuestion(question: string, context?: any): Promise<string> {
     try {
-      const prompt = `Compare these insurance policies and highlight key differences:
+      const contextInfo = context ? `
       
-      ${policies.map((p, i) => `
-      Policy ${i + 1}:
-      - Premium: $${p.premium}
-      - Deductible: $${p.deductible}
-      - Coverage: ${JSON.stringify(p.coverageDetails)}
-      `).join('\n')}
-      
-      Provide a clear comparison focusing on value, coverage gaps, and recommendations.
-      Respond in JSON format with comparison points and recommendation.`;
+      Customer Context:
+      - Policy Number: ${context.policyNumber || 'N/A'}
+      - Coverage Type: ${context.coverageType || 'N/A'}
+      - Policy Status: ${context.policyStatus || 'N/A'}
+      ` : '';
 
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const prompt = `You are a helpful insurance customer service assistant. Answer this customer question professionally and accurately:
+      
+      Question: ${question}${contextInfo}
+      
+      Provide a clear, helpful response that addresses their concern. If you need additional information to provide a complete answer, ask for it politely.`;
+
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are a knowledgeable and helpful insurance customer service representative." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 500
       });
 
-      const comparison = JSON.parse(response.choices[0].message.content || '{}');
-      return comparison.summary || "Policy comparison completed.";
+      return response.choices[0].message.content || 'I apologize, but I was unable to generate a response. Please try again or contact support.';
     } catch (error) {
-      console.error('Policy comparison error:', error);
-      return "Unable to compare policies automatically. Please review manually.";
+      console.error('AI customer service error:', error);
+      throw new Error('Failed to process customer question');
+    }
+  }
+
+  async generatePolicyRecommendations(customerProfile: any): Promise<any> {
+    try {
+      const prompt = `Based on this customer profile, recommend appropriate insurance products and coverage levels:
+      
+      Customer Profile:
+      - Age: ${customerProfile.age || 'Not specified'}
+      - Location: ${customerProfile.location || 'Not specified'}
+      - Vehicle Type: ${customerProfile.vehicleType || 'Not specified'}
+      - Driving History: ${customerProfile.drivingHistory || 'Not specified'}
+      - Current Coverage: ${customerProfile.currentCoverage || 'None'}
+      
+      Provide recommendations in JSON format with:
+      1. recommendedProducts: array of product recommendations
+      2. coverageLevels: suggested coverage amounts
+      3. discounts: applicable discounts
+      4. explanation: reasoning for recommendations`;
+
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are an expert insurance advisor. Provide personalized product recommendations in JSON format." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      return JSON.parse(response.choices[0].message.content || '{}');
+    } catch (error) {
+      console.error('AI recommendation error:', error);
+      throw new Error('Failed to generate policy recommendations');
+    }
+  }
+
+  async summarizeClaimHistory(claims: any[]): Promise<string> {
+    try {
+      const claimsData = claims.map(claim => ({
+        date: claim.incidentDate,
+        type: claim.type,
+        amount: claim.estimatedAmount,
+        status: claim.status
+      }));
+
+      const prompt = `Summarize this customer's claim history and provide insights:
+      
+      Claims: ${JSON.stringify(claimsData, null, 2)}
+      
+      Provide a professional summary including:
+      - Overall claim frequency
+      - Common claim types
+      - Risk patterns
+      - Recommendations for the customer`;
+
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are an insurance analyst providing customer claim history summaries." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 400
+      });
+
+      return response.choices[0].message.content || 'Unable to generate claim history summary.';
+    } catch (error) {
+      console.error('AI claim summary error:', error);
+      throw new Error('Failed to summarize claim history');
+    }
+  }
+
+  async detectAnomalies(data: any, dataType: 'claim' | 'policy' | 'payment'): Promise<any> {
+    try {
+      const prompt = `Analyze this ${dataType} data for anomalies or unusual patterns:
+      
+      Data: ${JSON.stringify(data, null, 2)}
+      
+      Look for:
+      - Unusual amounts or values
+      - Timing irregularities
+      - Pattern deviations
+      - Potential fraud indicators
+      
+      Respond in JSON format with: anomalies (array), riskScore (0-1), explanation`;
+
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are a data analyst specializing in insurance fraud detection and anomaly detection." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      return JSON.parse(response.choices[0].message.content || '{}');
+    } catch (error) {
+      console.error('AI anomaly detection error:', error);
+      throw new Error('Failed to detect anomalies');
     }
   }
 }

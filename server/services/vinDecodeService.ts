@@ -1,154 +1,92 @@
-interface VehicleData {
-  vin: string;
-  year: number;
-  make: string;
-  model: string;
-  trim?: string;
-  bodyStyle?: string;
-  engineSize?: string;
-  fuelType?: string;
-  vehicleValue?: number;
-  success: boolean;
-  source: 'chromedata' | 'nhtsa' | 'manual';
-}
-
 export class VinDecodeService {
-  private chromedataApiKey: string;
-  private nhtsaApiBase: string;
-
-  constructor() {
-    this.chromedataApiKey = process.env.CHROMEDATA_API_KEY || '';
-    this.nhtsaApiBase = 'https://vpic.nhtsa.dot.gov/api';
-  }
-
-  async decodeVin(vin: string): Promise<VehicleData> {
+  async decodeVin(vin: string): Promise<any> {
+    // Validate VIN format
     if (!vin || vin.length !== 17) {
       throw new Error('Invalid VIN format');
     }
 
-    // Try ChromeData first (if API key available)
-    if (this.chromedataApiKey) {
-      try {
-        const chromedataResult = await this.decodeWithChromedata(vin);
-        if (chromedataResult.success) {
-          return chromedataResult;
-        }
-      } catch (error) {
-        console.error('ChromeData decode failed:', error);
-      }
-    }
-
-    // Fallback to NHTSA
     try {
-      const nhtsaResult = await this.decodeWithNhtsa(vin);
-      return nhtsaResult;
+      // Primary: Try NHTSA API
+      const nhtsa = await this.decodeVinNHTSA(vin);
+      if (nhtsa.success) {
+        return nhtsa.data;
+      }
+
+      // Fallback: Basic VIN structure parsing
+      return this.parseVinBasic(vin);
     } catch (error) {
-      console.error('NHTSA decode failed:', error);
-      throw new Error('VIN decode failed from all sources');
+      console.error('VIN decode error:', error);
+      throw new Error('Failed to decode VIN');
     }
   }
 
-  private async decodeWithChromedata(vin: string): Promise<VehicleData> {
+  private async decodeVinNHTSA(vin: string): Promise<{ success: boolean; data?: any }> {
     try {
-      const response = await fetch('https://api.chromedata.com/vehicles/decode', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.chromedataApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ vin }),
-      });
-
+      const response = await fetch(
+        `https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`
+      );
+      
       if (!response.ok) {
-        throw new Error(`ChromeData API error: ${response.status}`);
+        return { success: false };
       }
 
       const data = await response.json();
       
-      return {
-        vin,
-        year: data.year,
-        make: data.make,
-        model: data.model,
-        trim: data.trim,
-        bodyStyle: data.bodyStyle,
-        engineSize: data.engine?.displacement,
-        fuelType: data.engine?.fuelType,
-        vehicleValue: data.valuation?.msrp,
-        success: true,
-        source: 'chromedata',
-      };
+      if (data.Results && data.Results.length > 0) {
+        const results = data.Results.reduce((acc: any, item: any) => {
+          if (item.Value && item.Value !== 'Not Applicable' && item.Value !== '') {
+            acc[item.Variable] = item.Value;
+          }
+          return acc;
+        }, {});
+
+        return {
+          success: true,
+          data: {
+            vin,
+            make: results.Make || 'Unknown',
+            model: results.Model || 'Unknown',
+            year: results.ModelYear ? parseInt(results.ModelYear) : new Date().getFullYear(),
+            bodyStyle: results.BodyClass || 'Unknown',
+            engine: results.EngineModel || 'Unknown',
+            fuelType: results.FuelTypePrimary || 'Gasoline',
+            transmission: results.TransmissionStyle || 'Unknown',
+            driveType: results.DriveType || 'Unknown',
+            source: 'NHTSA'
+          }
+        };
+      }
+
+      return { success: false };
     } catch (error) {
-      console.error('ChromeData decode error:', error);
-      throw error;
+      console.error('NHTSA API error:', error);
+      return { success: false };
     }
   }
 
-  private async decodeWithNhtsa(vin: string): Promise<VehicleData> {
-    try {
-      const response = await fetch(
-        `${this.nhtsaApiBase}/vehicles/DecodeVinValues/${vin}?format=json`
-      );
-
-      if (!response.ok) {
-        throw new Error(`NHTSA API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const result = data.Results?.[0];
-
-      if (!result || result.ErrorCode !== '0') {
-        throw new Error('NHTSA decode failed');
-      }
-
-      return {
-        vin,
-        year: parseInt(result.ModelYear) || 0,
-        make: result.Make || '',
-        model: result.Model || '',
-        trim: result.Trim,
-        bodyStyle: result.BodyClass,
-        engineSize: result.DisplacementL ? `${result.DisplacementL}L` : undefined,
-        fuelType: result.FuelTypePrimary,
-        success: true,
-        source: 'nhtsa',
-      };
-    } catch (error) {
-      console.error('NHTSA decode error:', error);
-      throw error;
-    }
-  }
-
-  async getVehicleValue(year: number, make: string, model: string, trim?: string): Promise<number | null> {
-    if (!this.chromedataApiKey) {
-      return null;
+  private parseVinBasic(vin: string): any {
+    // Basic VIN parsing for year estimation
+    const yearChar = vin.charAt(9);
+    const yearCode = yearChar.charCodeAt(0);
+    
+    let year = new Date().getFullYear();
+    if (yearCode >= 65 && yearCode <= 90) { // A-Z
+      year = 2010 + (yearCode - 65);
+    } else if (yearCode >= 49 && yearCode <= 57) { // 1-9
+      year = 2001 + (yearCode - 49);
     }
 
-    try {
-      const response = await fetch('https://api.chromedata.com/vehicles/valuation', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.chromedataApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          year,
-          make,
-          model,
-          trim,
-          mileage: 50000, // Default mileage for valuation
-        }),
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-      return data.values?.retail || data.values?.msrp || null;
-    } catch (error) {
-      console.error('Vehicle valuation error:', error);
-      return null;
-    }
+    return {
+      vin,
+      make: 'Unknown',
+      model: 'Unknown',
+      year,
+      bodyStyle: 'Unknown',
+      engine: 'Unknown',
+      fuelType: 'Gasoline',
+      transmission: 'Unknown',
+      driveType: 'Unknown',
+      source: 'Basic Parser'
+    };
   }
 }

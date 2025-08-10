@@ -1,20 +1,5 @@
-import { storage } from '../storage';
-import type { InsertAnalyticsEvent } from '@shared/schema';
-
-interface DashboardMetrics {
-  activePolicies: number;
-  openClaims: number;
-  monthlyPremium: number;
-  conversionRate: number;
-  pendingRenewals: number;
-  newThisMonth: number;
-  urgentClaims: number;
-  underReview: number;
-  approvedClaims: number;
-  recentActivity: any[];
-  topResellers: any[];
-  analyticsOverview: any;
-}
+import { storage } from "../storage";
+import { type InsertAnalyticsEvent } from "@shared/schema";
 
 export class AnalyticsService {
   async trackEvent(eventData: InsertAnalyticsEvent): Promise<void> {
@@ -22,280 +7,207 @@ export class AnalyticsService {
       await storage.createAnalyticsEvent(eventData);
     } catch (error) {
       console.error('Analytics tracking error:', error);
-      // Don't fail the main operation if analytics tracking fails
+      // Don't throw error for analytics to avoid breaking main flows
     }
   }
 
-  async getDashboardMetrics(tenantId: string): Promise<DashboardMetrics> {
+  async getDashboardMetrics(tenantId: string, dateRange?: { start: Date; end: Date }): Promise<any> {
     try {
-      // Get basic analytics from storage
-      const basicAnalytics = await storage.getAnalytics(tenantId);
-      
-      // Get additional metrics
-      const additionalMetrics = await this.getAdditionalMetrics(tenantId);
-      
-      // Get recent activity
-      const recentActivity = await this.getRecentActivity(tenantId);
-      
-      // Get top resellers
-      const topResellers = await this.getTopResellers(tenantId);
-      
-      // Calculate conversion rate
-      const conversionRate = await this.calculateConversionRate(tenantId);
+      // Get basic metrics with placeholders for demonstration
+      const endDate = dateRange?.end || new Date();
+      const startDate = dateRange?.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
 
-      return {
-        activePolicies: basicAnalytics.activePolicies || 12847,
-        openClaims: basicAnalytics.openClaims || 342,
-        monthlyPremium: basicAnalytics.monthlyPremium || 2400000,
-        conversionRate: conversionRate || 24.8,
-        pendingRenewals: additionalMetrics.pendingRenewals || 247,
-        newThisMonth: additionalMetrics.newThisMonth || 1024,
-        urgentClaims: additionalMetrics.urgentClaims || 23,
-        underReview: additionalMetrics.underReview || 87,
-        approvedClaims: additionalMetrics.approvedClaims || 142,
-        recentActivity,
-        topResellers,
-        analyticsOverview: {
-          cac: 127, // Customer Acquisition Cost
-          ltv: 3247, // Lifetime Value
-          claimsRatio: 2.7,
-        },
+      // In a real implementation, these would be actual database queries
+      const metrics = {
+        totalPolicies: await this.getPolicyCount(tenantId),
+        activeClaims: await this.getActiveClaimsCount(tenantId),
+        monthlyPremium: await this.getMonthlyPremiumTotal(tenantId),
+        conversionRate: await this.getConversionRate(tenantId),
+        recentActivity: await this.getRecentActivity(tenantId),
+        chartData: await this.getChartData(tenantId, startDate, endDate)
       };
+
+      return metrics;
     } catch (error) {
       console.error('Dashboard metrics error:', error);
-      
-      // Return fallback metrics
-      return this.getFallbackMetrics();
+      throw new Error('Failed to fetch dashboard metrics');
     }
   }
 
-  private async getAdditionalMetrics(tenantId: string): Promise<any> {
+  async getRecentActivity(tenantId: string, limit: number = 10): Promise<any[]> {
     try {
-      // Get policies needing renewal (expiring in next 30 days)
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      
-      const policies = await storage.getPolicies(tenantId, { status: 'active' });
-      const pendingRenewals = policies.filter(p => 
-        p.expiryDate && new Date(p.expiryDate) <= thirtyDaysFromNow
-      ).length;
-
-      // Get new policies this month
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      const newThisMonth = policies.filter(p => 
-        p.createdAt && new Date(p.createdAt) >= startOfMonth
-      ).length;
-
-      // Get claim metrics
-      const claims = await storage.getClaims(tenantId);
-      const urgentClaims = claims.filter(c => c.status === 'open' && this.isUrgentClaim(c)).length;
-      const underReview = claims.filter(c => c.status === 'review').length;
-      const approvedClaims = claims.filter(c => c.status === 'approved').length;
-
-      return {
-        pendingRenewals,
-        newThisMonth,
-        urgentClaims,
-        underReview,
-        approvedClaims,
-      };
-    } catch (error) {
-      console.error('Additional metrics error:', error);
-      return {
-        pendingRenewals: 0,
-        newThisMonth: 0,
-        urgentClaims: 0,
-        underReview: 0,
-        approvedClaims: 0,
-      };
-    }
-  }
-
-  private async getRecentActivity(tenantId: string, limit: number = 10): Promise<any[]> {
-    try {
-      // Get recent policies
-      const recentPolicies = await storage.getPolicies(tenantId, { limit: 3 });
-      
-      // Get recent claims
-      const recentClaims = await storage.getClaims(tenantId, { limit: 3 });
-      
-      // Combine and sort by creation date
-      const activities = [
-        ...recentPolicies.map(p => ({
-          type: 'policy_issued',
-          description: `Policy ${p.policyNumber} issued for ${p.customerName}`,
-          timestamp: p.createdAt,
-          icon: 'check',
-          color: 'green',
-        })),
-        ...recentClaims.map(c => ({
-          type: 'claim_created',
-          description: `Claim ${c.claimNumber} assigned to adjuster`,
-          timestamp: c.createdAt,
-          icon: 'clipboard-list',
-          color: 'blue',
-        })),
-      ];
-
-      return activities
-        .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())
-        .slice(0, limit);
-    } catch (error) {
-      console.error('Recent activity error:', error);
-      return [];
-    }
-  }
-
-  private async getTopResellers(tenantId: string): Promise<any[]> {
-    try {
-      const resellers = await storage.getResellers(tenantId);
-      
-      // In a real implementation, you'd calculate performance metrics
-      // For now, return mock data
+      // Mock recent activity data for demonstration
       return [
         {
           id: '1',
-          name: 'AutoCare Partners',
-          initials: 'AC',
-          policiesThisMonth: 247,
-          revenue: 125000,
-          growth: 12.5,
+          type: 'policy_created',
+          message: 'New auto policy POL-2025-ABC123 created',
+          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+          entityType: 'policy',
+          entityId: 'pol-1'
         },
         {
           id: '2',
-          name: 'RV Masters',
-          initials: 'RM',
-          policiesThisMonth: 189,
-          revenue: 89500,
-          growth: 8.2,
+          type: 'claim_submitted',
+          message: 'Claim CLM-2025-DEF456 submitted for review',
+          timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+          entityType: 'claim',
+          entityId: 'clm-1'
         },
         {
           id: '3',
-          name: 'Marine Insurance Co',
-          initials: 'MI',
-          policiesThisMonth: 156,
-          revenue: 67800,
-          growth: 15.1,
+          type: 'payment_received',
+          message: 'Payment of $1,245.50 received for policy POL-2025-GHI789',
+          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+          entityType: 'payment',
+          entityId: 'pay-1'
         },
+        {
+          id: '4',
+          type: 'quote_generated',
+          message: 'Quote QTE-2025-JKL012 generated for RV insurance',
+          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+          entityType: 'quote',
+          entityId: 'qte-1'
+        }
       ];
     } catch (error) {
-      console.error('Top resellers error:', error);
-      return [];
+      console.error('Recent activity error:', error);
+      throw new Error('Failed to fetch recent activity');
     }
   }
 
-  private async calculateConversionRate(tenantId: string): Promise<number> {
+  private async getPolicyCount(tenantId: string): Promise<number> {
+    try {
+      const policies = await storage.getPolicies(tenantId);
+      return policies.length;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  private async getActiveClaimsCount(tenantId: string): Promise<number> {
+    try {
+      const claims = await storage.getClaims(tenantId, { status: ['submitted', 'under_review', 'approved'] });
+      return claims.length;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  private async getMonthlyPremiumTotal(tenantId: string): Promise<number> {
+    try {
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const policies = await storage.getPolicies(tenantId, { 
+        effectiveDate: { gte: startOfMonth } 
+      });
+      
+      return policies.reduce((total, policy) => {
+        return total + (parseFloat(policy.premium) || 0);
+      }, 0);
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  private async getConversionRate(tenantId: string): Promise<number> {
     try {
       const quotes = await storage.getQuotes(tenantId);
       const policies = await storage.getPolicies(tenantId);
       
       if (quotes.length === 0) return 0;
       
-      const convertedQuotes = quotes.filter(q => q.status === 'converted').length;
-      return (convertedQuotes / quotes.length) * 100;
+      return Math.round((policies.length / quotes.length) * 100 * 100) / 100; // Round to 2 decimals
     } catch (error) {
-      console.error('Conversion rate calculation error:', error);
       return 0;
     }
   }
 
-  private isUrgentClaim(claim: any): boolean {
-    // Define criteria for urgent claims
-    const urgentTypes = ['theft', 'fire', 'collision'];
-    const urgentAmount = 10000; // Claims over $10k
-    
-    return urgentTypes.includes(claim.type) || 
-           (claim.estimatedAmount && parseFloat(claim.estimatedAmount) > urgentAmount);
+  private async getChartData(tenantId: string, startDate: Date, endDate: Date): Promise<any> {
+    try {
+      // Generate mock chart data for demonstration
+      const days = [];
+      const currentDate = new Date(startDate);
+      
+      while (currentDate <= endDate) {
+        days.push({
+          date: new Date(currentDate).toISOString().split('T')[0],
+          policies: Math.floor(Math.random() * 10) + 1,
+          claims: Math.floor(Math.random() * 5),
+          revenue: Math.floor(Math.random() * 5000) + 1000
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      return {
+        dailyMetrics: days,
+        summary: {
+          totalPolicies: days.reduce((sum, day) => sum + day.policies, 0),
+          totalClaims: days.reduce((sum, day) => sum + day.claims, 0),
+          totalRevenue: days.reduce((sum, day) => sum + day.revenue, 0)
+        }
+      };
+    } catch (error) {
+      console.error('Chart data error:', error);
+      return { dailyMetrics: [], summary: { totalPolicies: 0, totalClaims: 0, totalRevenue: 0 } };
+    }
   }
 
-  private getFallbackMetrics(): DashboardMetrics {
+  async generateReport(tenantId: string, reportType: string, filters?: any): Promise<any> {
+    try {
+      switch (reportType) {
+        case 'policies':
+          return await this.generatePolicyReport(tenantId, filters);
+        case 'claims':
+          return await this.generateClaimsReport(tenantId, filters);
+        case 'financial':
+          return await this.generateFinancialReport(tenantId, filters);
+        default:
+          throw new Error('Invalid report type');
+      }
+    } catch (error) {
+      console.error('Report generation error:', error);
+      throw new Error('Failed to generate report');
+    }
+  }
+
+  private async generatePolicyReport(tenantId: string, filters?: any): Promise<any> {
+    const policies = await storage.getPolicies(tenantId, filters);
+    
     return {
-      activePolicies: 12847,
-      openClaims: 342,
-      monthlyPremium: 2400000,
-      conversionRate: 24.8,
-      pendingRenewals: 247,
-      newThisMonth: 1024,
-      urgentClaims: 23,
-      underReview: 87,
-      approvedClaims: 142,
-      recentActivity: [
-        {
-          type: 'policy_issued',
-          description: 'Policy POL-2024-001234 issued for Sarah Johnson',
-          timestamp: new Date(Date.now() - 2 * 60 * 1000),
-          icon: 'check',
-          color: 'green',
-        },
-        {
-          type: 'claim_assigned',
-          description: 'Claim CLM-2024-005678 assigned to Mike Rodriguez',
-          timestamp: new Date(Date.now() - 15 * 60 * 1000),
-          icon: 'clipboard-list',
-          color: 'blue',
-        },
-      ],
-      topResellers: [
-        {
-          id: '1',
-          name: 'AutoCare Partners',
-          initials: 'AC',
-          policiesThisMonth: 247,
-          revenue: 125000,
-          growth: 12.5,
-        },
-      ],
-      analyticsOverview: {
-        cac: 127,
-        ltv: 3247,
-        claimsRatio: 2.7,
-      },
+      reportType: 'policies',
+      generatedAt: new Date(),
+      totalPolicies: policies.length,
+      activePolicies: policies.filter(p => p.status === 'active').length,
+      totalPremium: policies.reduce((sum, p) => sum + parseFloat(p.premium), 0),
+      policies: policies
     };
   }
 
-  async getConversionFunnel(tenantId: string, dateRange?: { start: Date; end: Date }): Promise<any> {
-    try {
-      // Implementation for conversion funnel analytics
-      return {
-        steps: [
-          { name: 'Quote Started', count: 1500, conversionRate: 100 },
-          { name: 'Quote Completed', count: 900, conversionRate: 60 },
-          { name: 'Checkout Started', count: 450, conversionRate: 30 },
-          { name: 'Policy Issued', count: 372, conversionRate: 24.8 },
-        ],
-      };
-    } catch (error) {
-      console.error('Conversion funnel error:', error);
-      return { steps: [] };
-    }
+  private async generateClaimsReport(tenantId: string, filters?: any): Promise<any> {
+    const claims = await storage.getClaims(tenantId, filters);
+    
+    return {
+      reportType: 'claims',
+      generatedAt: new Date(),
+      totalClaims: claims.length,
+      openClaims: claims.filter(c => ['submitted', 'under_review'].includes(c.status)).length,
+      settledClaims: claims.filter(c => c.status === 'settled').length,
+      claims: claims
+    };
   }
 
-  async getResellerPerformance(tenantId: string): Promise<any[]> {
-    try {
-      const resellers = await storage.getResellers(tenantId);
-      
-      // Calculate performance metrics for each reseller
-      const performance = await Promise.all(
-        resellers.map(async (reseller) => {
-          const policies = await storage.getPolicies(tenantId, { resellerId: reseller.userId });
-          const revenue = policies.reduce((sum, p) => sum + parseFloat(p.premium), 0);
-          
-          return {
-            ...reseller,
-            totalPolicies: policies.length,
-            totalRevenue: revenue,
-            avgPolicyValue: policies.length > 0 ? revenue / policies.length : 0,
-          };
-        })
-      );
-      
-      return performance.sort((a, b) => b.totalRevenue - a.totalRevenue);
-    } catch (error) {
-      console.error('Reseller performance error:', error);
-      return [];
-    }
+  private async generateFinancialReport(tenantId: string, filters?: any): Promise<any> {
+    const policies = await storage.getPolicies(tenantId, filters);
+    const payments = await storage.getPayments(tenantId, filters);
+    
+    return {
+      reportType: 'financial',
+      generatedAt: new Date(),
+      totalPremium: policies.reduce((sum, p) => sum + parseFloat(p.premium), 0),
+      totalPayments: payments.reduce((sum, p) => sum + parseFloat(p.amount), 0),
+      policies: policies.length,
+      payments: payments.length
+    };
   }
 }
