@@ -4,18 +4,74 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ConnectedAutoCarePage() {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
+  const [vehicleData, setVehicleData] = useState<any>({});
+  const [quoteForm, setQuoteForm] = useState({
+    vin: '',
+    termLength: '',
+    coverageMiles: '',
+    vehicleClass: '',
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    customerAddress: {
+      street: '',
+      city: '',
+      state: '',
+      zip: ''
+    }
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch Connected Auto Care products
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['/api/connected-auto-care/products'],
+  });
+
+  // VIN decoder mutation
+  const vinDecodeMutation = useMutation({
+    mutationFn: async (vin: string) => {
+      const response = await apiRequest('POST', '/api/vehicles/decode-vin', { vin });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setVehicleData(data.vehicle);
+      // Auto-select vehicle class based on make
+      const make = data.vehicle.make?.toLowerCase();
+      let vehicleClass = 'Class B'; // Default
+      
+      const classAMakes = ['honda', 'hyundai', 'kia', 'mazda', 'mitsubishi', 'toyota', 'lexus', 'nissan', 'infiniti', 'subaru'];
+      const classCMakes = ['audi', 'bmw', 'cadillac', 'jaguar', 'mercedes', 'porsche', 'tesla'];
+      
+      if (classAMakes.some(m => make?.includes(m))) {
+        vehicleClass = 'Class A';
+      } else if (classCMakes.some(m => make?.includes(m))) {
+        vehicleClass = 'Class C';
+      }
+      
+      setQuoteForm(prev => ({ ...prev, vehicleClass }));
+      
+      toast({
+        title: "VIN Decoded Successfully",
+        description: `${data.vehicle.year} ${data.vehicle.make} ${data.vehicle.model}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "VIN Decode Failed",
+        description: error.message || "Could not decode VIN number",
+        variant: "destructive",
+      });
+    },
   });
 
   // Generate quote mutation
@@ -40,34 +96,62 @@ export default function ConnectedAutoCarePage() {
     },
   });
 
+  // Handle VIN decode
+  const handleVinDecode = () => {
+    if (!quoteForm.vin || quoteForm.vin.length !== 17) {
+      toast({
+        title: "Invalid VIN",
+        description: "Please enter a valid 17-character VIN number",
+        variant: "destructive",
+      });
+      return;
+    }
+    vinDecodeMutation.mutate(quoteForm.vin);
+  };
+
+  // Handle quote generation with form data
   const handleGenerateQuote = async (productId: string) => {
-    const sampleQuoteRequest = {
+    // Validate required fields
+    if (!quoteForm.termLength || !quoteForm.coverageMiles || !quoteForm.vehicleClass) {
+      toast({
+        title: "Missing Information",
+        description: "Please select term length, coverage miles, and vehicle class",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!quoteForm.customerName || !quoteForm.customerEmail) {
+      toast({
+        title: "Customer Information Required",
+        description: "Please enter customer name and email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const quoteRequest = {
       productId,
       coverageSelections: {
-        termLength: '36 months',
-        coverageMiles: '75,000',
-        vehicleClass: 'Class A'
+        termLength: quoteForm.termLength,
+        coverageMiles: quoteForm.coverageMiles,
+        vehicleClass: quoteForm.vehicleClass
       },
       customerData: {
-        name: 'Sample Customer',
-        email: 'customer@example.com',
-        phone: '555-123-4567',
-        address: {
-          street: '123 Main St',
-          city: 'Phoenix',
-          state: 'AZ',
-          zip: '85001'
-        }
+        name: quoteForm.customerName,
+        email: quoteForm.customerEmail,
+        phone: quoteForm.customerPhone,
+        address: quoteForm.customerAddress
       },
-      vehicleData: {
+      vehicleData: vehicleData || {
         year: 2021,
-        make: 'Honda',
-        model: 'Civic',
-        mileage: 45000
+        make: "Unknown",
+        model: "Unknown",
+        mileage: 50000
       }
     };
 
-    await generateQuoteMutation.mutateAsync(sampleQuoteRequest);
+    generateQuoteMutation.mutate(quoteRequest);
   };
 
   if (productsLoading) {
@@ -83,7 +167,7 @@ export default function ConnectedAutoCarePage() {
     );
   }
 
-  const products = productsData?.products || {};
+  const products = (productsData as any)?.products || {};
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -243,9 +327,209 @@ export default function ConnectedAutoCarePage() {
           </div>
         </div>
 
-        {/* Quote Results Section */}
+        {/* Quote Form Section */}
         <div className="lg:col-span-1">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Quote Results</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Get Quote</h2>
+          
+          {/* VIN Decoder Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Vehicle Information</CardTitle>
+              <CardDescription>Enter VIN to decode vehicle details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="vin">VIN Number</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="vin"
+                    value={quoteForm.vin}
+                    onChange={(e) => setQuoteForm(prev => ({ ...prev, vin: e.target.value.toUpperCase() }))}
+                    placeholder="Enter 17-character VIN"
+                    maxLength={17}
+                    className="font-mono"
+                  />
+                  <Button 
+                    onClick={handleVinDecode}
+                    disabled={vinDecodeMutation.isPending || quoteForm.vin.length !== 17}
+                    variant="outline"
+                  >
+                    {vinDecodeMutation.isPending ? 'Decoding...' : 'Decode'}
+                  </Button>
+                </div>
+              </div>
+              
+              {vehicleData && Object.keys(vehicleData).length > 0 && (
+                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                  <h4 className="font-medium text-green-900 mb-2">Vehicle Details</h4>
+                  <div className="text-sm text-green-800">
+                    <p><strong>Year:</strong> {vehicleData.year}</p>
+                    <p><strong>Make:</strong> {vehicleData.make}</p>
+                    <p><strong>Model:</strong> {vehicleData.model}</p>
+                    {vehicleData.trim && <p><strong>Trim:</strong> {vehicleData.trim}</p>}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Coverage Options Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Coverage Options</CardTitle>
+              <CardDescription>Select your coverage preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="termLength">Term Length</Label>
+                <Select value={quoteForm.termLength} onValueChange={(value) => setQuoteForm(prev => ({ ...prev, termLength: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select term length" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="12 months">12 months</SelectItem>
+                    <SelectItem value="24 months">24 months</SelectItem>
+                    <SelectItem value="36 months">36 months</SelectItem>
+                    <SelectItem value="48 months">48 months</SelectItem>
+                    <SelectItem value="60 months">60 months</SelectItem>
+                    <SelectItem value="72 months">72 months</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="coverageMiles">Coverage Miles</Label>
+                <Select value={quoteForm.coverageMiles} onValueChange={(value) => setQuoteForm(prev => ({ ...prev, coverageMiles: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select coverage miles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15,000">15,000 miles</SelectItem>
+                    <SelectItem value="25,000">25,000 miles</SelectItem>
+                    <SelectItem value="30,000">30,000 miles</SelectItem>
+                    <SelectItem value="45,000">45,000 miles</SelectItem>
+                    <SelectItem value="60,000">60,000 miles</SelectItem>
+                    <SelectItem value="75,000">75,000 miles</SelectItem>
+                    <SelectItem value="90,000">90,000 miles</SelectItem>
+                    <SelectItem value="100,000">100,000 miles</SelectItem>
+                    <SelectItem value="125,000">125,000 miles</SelectItem>
+                    <SelectItem value="Unlimited">Unlimited</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="vehicleClass">Vehicle Class</Label>
+                <Select value={quoteForm.vehicleClass} onValueChange={(value) => setQuoteForm(prev => ({ ...prev, vehicleClass: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select vehicle class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Class A">Class A (Economy/Compact)</SelectItem>
+                    <SelectItem value="Class B">Class B (Mid-size/Full-size)</SelectItem>
+                    <SelectItem value="Class C">Class C (Luxury/Premium)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Customer Information Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Customer Information</CardTitle>
+              <CardDescription>Enter customer details for the quote</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="customerName">Full Name</Label>
+                <Input
+                  id="customerName"
+                  value={quoteForm.customerName}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, customerName: e.target.value }))}
+                  placeholder="Enter full name"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="customerEmail">Email Address</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  value={quoteForm.customerEmail}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, customerEmail: e.target.value }))}
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="customerPhone">Phone Number</Label>
+                <Input
+                  id="customerPhone"
+                  type="tel"
+                  value={quoteForm.customerPhone}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, customerPhone: e.target.value }))}
+                  placeholder="Enter phone number"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={quoteForm.customerAddress.city}
+                    onChange={(e) => setQuoteForm(prev => ({
+                      ...prev,
+                      customerAddress: { ...prev.customerAddress, city: e.target.value }
+                    }))}
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="state">State</Label>
+                  <Input
+                    id="state"
+                    value={quoteForm.customerAddress.state}
+                    onChange={(e) => setQuoteForm(prev => ({
+                      ...prev,
+                      customerAddress: { ...prev.customerAddress, state: e.target.value }
+                    }))}
+                    placeholder="State"
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="zip">ZIP Code</Label>
+                <Input
+                  id="zip"
+                  value={quoteForm.customerAddress.zip}
+                  onChange={(e) => setQuoteForm(prev => ({
+                    ...prev,
+                    customerAddress: { ...prev.customerAddress, zip: e.target.value }
+                  }))}
+                  placeholder="ZIP Code"
+                  maxLength={5}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Generate Quote Button */}
+          {selectedProduct && (
+            <Button 
+              onClick={() => handleGenerateQuote(selectedProduct)}
+              disabled={generateQuoteMutation.isPending}
+              className="w-full mb-4"
+              size="lg"
+            >
+              {generateQuoteMutation.isPending ? 'Generating Quote...' : 'Generate Quote'}
+            </Button>
+          )}
+
+          {/* Quote Results */}
           
           {quoteData ? (
             <Card className="border-green-200 bg-green-50">

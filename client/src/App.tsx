@@ -11,6 +11,7 @@ import Policies from "@/pages/Policies";
 import Claims from "@/pages/Claims";
 import Analytics from "@/pages/Analytics";
 import Admin from "@/pages/Admin";
+import AdminUsers from "@/pages/AdminUsers";
 import HeroVscProducts from "@/pages/HeroVscProducts";
 import ConnectedAutoCarePage from "@/pages/ConnectedAutoCarePage";
 
@@ -30,6 +31,7 @@ function Router() {
           <Route path="/claims" component={Claims} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/admin" component={Admin} />
+          <Route path="/admin/users" component={AdminUsers} />
         </>
       )}
       <Route component={NotFound} />

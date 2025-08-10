@@ -90,7 +90,7 @@ export default function Admin() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{systemStats?.activeUsers || 1}</div>
+                <div className="text-2xl font-bold">{(systemStats as any)?.activeUsers || 1}</div>
                 <p className="text-sm text-gray-500">Currently logged in</p>
               </CardContent>
             </Card>
@@ -103,17 +103,23 @@ export default function Admin() {
                 <CardTitle>Product Management</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full justify-start">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Insurance Products
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Database className="h-4 w-4 mr-2" />
-                  Upload Rate Tables
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Configure Coverage Options
-                </Button>
+                <Link href="/hero-vsc" className="w-full">
+                  <Button className="w-full justify-start">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Insurance Products
+                  </Button>
+                </Link>
+                <Link href="/admin/rate-tables" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Database className="h-4 w-4 mr-2" />
+                    Upload Rate Tables
+                  </Button>
+                </Link>
+                <Link href="/admin/coverage-options" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    Configure Coverage Options
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -122,16 +128,22 @@ export default function Admin() {
                 <CardTitle>User Management</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full justify-start">
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage Users & Roles
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Tenant Configuration
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Reseller Management
-                </Button>
+                <Link href="/admin/users" className="w-full">
+                  <Button className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Users & Roles
+                  </Button>
+                </Link>
+                <Link href="/admin/tenants" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    Tenant Configuration
+                  </Button>
+                </Link>
+                <Link href="/admin/resellers" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    Reseller Management
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -140,16 +152,22 @@ export default function Admin() {
                 <CardTitle>System Configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full justify-start">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Payment Settings
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  API Integrations
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  System Logs
-                </Button>
+                <Link href="/admin/payment-settings" className="w-full">
+                  <Button className="w-full justify-start">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Payment Settings
+                  </Button>
+                </Link>
+                <Link href="/admin/api-integrations" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    API Integrations
+                  </Button>
+                </Link>
+                <Link href="/admin/system-logs" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    System Logs
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -158,15 +176,21 @@ export default function Admin() {
                 <CardTitle>AI Assistant</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full justify-start">
-                  Configure AI Models
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Training Data
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Response Templates
-                </Button>
+                <Link href="/admin/ai-models" className="w-full">
+                  <Button className="w-full justify-start">
+                    Configure AI Models
+                  </Button>
+                </Link>
+                <Link href="/admin/training-data" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    Training Data
+                  </Button>
+                </Link>
+                <Link href="/admin/response-templates" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    Response Templates
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -180,11 +204,11 @@ export default function Admin() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Logged in as</p>
-                  <p className="text-sm text-gray-900">{user?.email || 'Unknown'}</p>
+                  <p className="text-sm text-gray-900">{(user as any)?.email || 'Unknown'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">User ID</p>
-                  <p className="text-sm text-gray-900">{user?.id || 'N/A'}</p>
+                  <p className="text-sm text-gray-900">{(user as any)?.id || 'N/A'}</p>
                 </div>
               </div>
             </CardContent>
