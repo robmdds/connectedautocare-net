@@ -16,6 +16,7 @@ export default function ConnectedAutoCarePage() {
   const [vehicleData, setVehicleData] = useState<any>({});
   const [quoteForm, setQuoteForm] = useState({
     vin: '',
+    currentMileage: '',
     termLength: '',
     coverageMiles: '',
     vehicleClass: '',
@@ -145,6 +146,15 @@ export default function ConnectedAutoCarePage() {
       return;
     }
 
+    if (!quoteForm.currentMileage) {
+      toast({
+        title: "Current Mileage Required",
+        description: "Please enter the vehicle's current mileage for accurate pricing",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!quoteForm.customerName || !quoteForm.customerEmail) {
       toast({
         title: "Customer Information Required",
@@ -153,6 +163,16 @@ export default function ConnectedAutoCarePage() {
       });
       return;
     }
+
+    // Prepare vehicle data with current mileage
+    const finalVehicleData = {
+      ...vehicleData,
+      mileage: parseInt(quoteForm.currentMileage) || 0,
+      // Use manual entry if VIN decode failed
+      year: vehicleData?.year || parseInt(quoteForm.vehicleYear) || 2021,
+      make: vehicleData?.make || quoteForm.vehicleMake || "Unknown",
+      model: vehicleData?.model || quoteForm.vehicleModel || "Unknown"
+    };
 
     const quoteRequest = {
       productId,
@@ -167,12 +187,7 @@ export default function ConnectedAutoCarePage() {
         phone: quoteForm.customerPhone,
         address: quoteForm.customerAddress
       },
-      vehicleData: vehicleData || {
-        year: 2021,
-        make: "Unknown",
-        model: "Unknown",
-        mileage: 50000
-      }
+      vehicleData: finalVehicleData
     };
 
     generateQuoteMutation.mutate(quoteRequest);
@@ -444,6 +459,23 @@ export default function ConnectedAutoCarePage() {
                   </div>
                 </div>
               )}
+              
+              {/* Current Mileage Field */}
+              <div>
+                <Label htmlFor="currentMileage">Current Mileage</Label>
+                <Input
+                  id="currentMileage"
+                  type="number"
+                  placeholder="50,000"
+                  value={quoteForm.currentMileage}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, currentMileage: e.target.value }))}
+                  min="0"
+                  max="300000"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Enter current odometer reading (affects pricing tier)
+                </p>
+              </div>
             </CardContent>
           </Card>
 
