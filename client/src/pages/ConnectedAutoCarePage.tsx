@@ -19,6 +19,9 @@ export default function ConnectedAutoCarePage() {
     termLength: '',
     coverageMiles: '',
     vehicleClass: '',
+    vehicleYear: '',
+    vehicleMake: '',
+    vehicleModel: '',
     customerName: '',
     customerEmail: '',
     customerPhone: '',
@@ -46,29 +49,47 @@ export default function ConnectedAutoCarePage() {
     onSuccess: (data) => {
       setVehicleData(data.vehicle);
       // Auto-select vehicle class based on make
-      const make = data.vehicle.make?.toLowerCase();
+      const make = data.vehicle.make?.toLowerCase() || '';
       let vehicleClass = 'Class B'; // Default
       
       const classAMakes = ['honda', 'hyundai', 'kia', 'mazda', 'mitsubishi', 'toyota', 'lexus', 'nissan', 'infiniti', 'subaru'];
       const classCMakes = ['audi', 'bmw', 'cadillac', 'jaguar', 'mercedes', 'porsche', 'tesla'];
       
-      if (classAMakes.some(m => make?.includes(m))) {
+      if (classAMakes.some(m => make.includes(m))) {
         vehicleClass = 'Class A';
-      } else if (classCMakes.some(m => make?.includes(m))) {
+      } else if (classCMakes.some(m => make.includes(m))) {
         vehicleClass = 'Class C';
       }
       
       setQuoteForm(prev => ({ ...prev, vehicleClass }));
       
+      // Show different messages based on data completeness
+      const isCompleteData = data.vehicle.make !== 'Unknown' && data.vehicle.model !== 'Unknown';
+      const sourceMessage = data.vehicle.source === 'Basic Parser' ? ' (basic info only)' : '';
+      
       toast({
-        title: "VIN Decoded Successfully",
-        description: `${data.vehicle.year} ${data.vehicle.make} ${data.vehicle.model}`,
+        title: isCompleteData ? "VIN Decoded Successfully" : "VIN Processed",
+        description: isCompleteData ? 
+          `${data.vehicle.year} ${data.vehicle.make} ${data.vehicle.model}${sourceMessage}` :
+          `Year ${data.vehicle.year} detected. Please verify vehicle details manually.`,
+        variant: isCompleteData ? "default" : "default",
       });
     },
     onError: (error: any) => {
+      console.error('VIN decode error:', error);
+      const errorMessage = error.message || "Could not decode VIN number";
+      
+      // Provide more helpful error messages
+      let description = errorMessage;
+      if (errorMessage.includes('Invalid VIN format')) {
+        description = "Please enter a valid 17-character VIN number";
+      } else if (errorMessage.includes('Failed to decode')) {
+        description = "VIN decode service temporarily unavailable. You can continue manually.";
+      }
+      
       toast({
-        title: "VIN Decode Failed",
-        description: error.message || "Could not decode VIN number",
+        title: "VIN Decode Issue",
+        description,
         variant: "destructive",
       });
     },
@@ -367,6 +388,56 @@ export default function ConnectedAutoCarePage() {
                     <p><strong>Make:</strong> {vehicleData.make}</p>
                     <p><strong>Model:</strong> {vehicleData.model}</p>
                     {vehicleData.trim && <p><strong>Trim:</strong> {vehicleData.trim}</p>}
+                    {vehicleData.source && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Source: {vehicleData.source === 'Basic Parser' ? 'Basic VIN decode' : 'NHTSA Database'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Manual Vehicle Entry - Show if VIN decode failed or returned limited data */}
+              {(!vehicleData || vehicleData.make === 'Unknown') && (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>Manual Entry:</strong> You can enter vehicle details manually below.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="manualYear">Year</Label>
+                      <Input
+                        id="manualYear"
+                        type="number"
+                        placeholder="2020"
+                        value={quoteForm.vehicleYear}
+                        onChange={(e) => setQuoteForm(prev => ({ ...prev, vehicleYear: e.target.value }))}
+                        min="1990"
+                        max={new Date().getFullYear() + 1}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="manualMake">Make</Label>
+                      <Input
+                        id="manualMake"
+                        placeholder="Toyota"
+                        value={quoteForm.vehicleMake}
+                        onChange={(e) => setQuoteForm(prev => ({ ...prev, vehicleMake: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="manualModel">Model</Label>
+                    <Input
+                      id="manualModel"
+                      placeholder="Camry"
+                      value={quoteForm.vehicleModel}
+                      onChange={(e) => setQuoteForm(prev => ({ ...prev, vehicleModel: e.target.value }))}
+                    />
                   </div>
                 </div>
               )}
