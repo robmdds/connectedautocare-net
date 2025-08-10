@@ -21,10 +21,8 @@ export default function ConnectedAutoCarePage() {
   // Generate quote mutation
   const generateQuoteMutation = useMutation({
     mutationFn: async (quoteRequest: any) => {
-      return await apiRequest('/api/connected-auto-care/quotes', {
-        method: 'POST',
-        body: JSON.stringify(quoteRequest),
-      });
+      const response = await apiRequest('POST', '/api/connected-auto-care/quotes', quoteRequest);
+      return await response.json();
     },
     onSuccess: (data) => {
       setQuoteData(data);
