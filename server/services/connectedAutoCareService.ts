@@ -348,16 +348,142 @@ export const CONNECTED_AUTO_CARE_RATES = {
   ELEVATE_GOLD: {
     classA: {
       '12': {
-        'new_to_15000': { '15000': 1549, '25000': 1555, 'unlimited': 1576 },
-        '15000_to_50000': { '15000': 1574, '25000': 1575, 'unlimited': 1596 },
-        '50000_to_75000': { '15000': 1607, '25000': 1609, 'unlimited': 1635 },
-        '75000_to_100000': { '15000': 1625, '25000': 1627, 'unlimited': null },
-        '100000_to_125000': { '15000': 1652, '25000': 1655, 'unlimited': null },
-        '125000_to_150000': { '15000': 1662, '25000': 1675, 'unlimited': null }
+        'new_to_15000': { '15000': 1465, '25000': 1469, 'unlimited': 1505 },
+        '15000_to_50000': { '15000': 1533, '25000': 1536, 'unlimited': 1564 },
+        '50000_to_75000': { '15000': 1580, '25000': 1582, 'unlimited': 1620 },
+        '75000_to_100000': { '15000': 1604, '25000': 1607, 'unlimited': null },
+        '100000_to_125000': { '15000': 1642, '25000': 1646, 'unlimited': null },
+        '125000_to_150000': { '15000': 1679, '25000': 1692, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1473, '45000': 1482, 'unlimited': 1519 },
+        '15000_to_50000': { '30000': 1546, '45000': 1548, 'unlimited': 1567 },
+        '50000_to_75000': { '30000': 1595, '45000': 1597, 'unlimited': 1621 },
+        '75000_to_100000': { '30000': 1620, '45000': 1623, 'unlimited': null },
+        '100000_to_125000': { '30000': 1663, '45000': 1666, 'unlimited': null },
+        '125000_to_150000': { '30000': 1709, '45000': 1717, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1483, '60000': 1495, '75000': 1502, '100000': 1505, '125000': 1514, 'unlimited': 1532 },
+        '15000_to_50000': { '45000': 1550, '60000': 1556, '75000': 1564, '100000': 1569, '125000': 1574, 'unlimited': 1592 },
+        '50000_to_75000': { '45000': 1600, '60000': 1607, '75000': 1614, '100000': 1625, '125000': 1628, 'unlimited': 1639 },
+        '75000_to_100000': { '45000': 1627, '60000': 1634, '75000': 1647, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '45000': 1669, '60000': 1678, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '45000': 1716, '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 1494, '75000': 1512, '100000': 1517, '125000': 1519, 'unlimited': 1537 },
+        '15000_to_50000': { '60000': 1563, '75000': 1576, '100000': 1581, '125000': 1583, 'unlimited': 1601 },
+        '50000_to_75000': { '60000': 1616, '75000': 1632, '100000': 1637, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 1644, '75000': 1662, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1691, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': 1740, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 1497, '75000': 1515, '100000': 1518, '125000': 1526, 'unlimited': 1544 },
+        '15000_to_50000': { '60000': 1566, '75000': 1584, '100000': 1587, '125000': 1595, 'unlimited': 1613 },
+        '50000_to_75000': { '60000': 1618, '75000': 1634, '100000': 1640, '125000': 1621, 'unlimited': 1640 },
+        '75000_to_100000': { '60000': 1648, '75000': 1672, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1697, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 1519, '90000': 1537, '100000': 1555 },
+        '15000_to_50000': { '75000': 1590, '90000': 1600, '100000': 1609 },
+        '50000_to_75000': { '75000': 1646, '90000': 1656, '100000': 1670 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null },
+        '100000_to_125000': { '75000': null, '90000': null, '100000': null },
+        '125000_to_150000': { '75000': null, '90000': null, '100000': null }
       }
-      // Additional Gold rates would continue...
+    },
+    classB: {
+      '12': {
+        'new_to_15000': { '15000': 1601, '25000': 1607, 'unlimited': 1651 },
+        '15000_to_50000': { '15000': 1720, '25000': 1726, 'unlimited': 1759 },
+        '50000_to_75000': { '15000': 1764, '25000': 1772, 'unlimited': 1811 },
+        '75000_to_100000': { '15000': 1797, '25000': 1805, 'unlimited': null },
+        '100000_to_125000': { '15000': 1875, '25000': 1886, 'unlimited': null },
+        '125000_to_150000': { '15000': 1952, '25000': 1964, 'unlimited': null }
+      }
+    },
+    classC: {
+      '12': {
+        'new_to_15000': { '15000': 1713, '25000': 1756, 'unlimited': 1946 },
+        '15000_to_50000': { '15000': 2290, '25000': 2340, 'unlimited': null },
+        '50000_to_75000': { '15000': 2420, '25000': 2469, 'unlimited': null },
+        '75000_to_100000': { '15000': 2577, '25000': 2672, 'unlimited': null }
+      }
     }
-    // Class B and C rates for Gold would follow similar structure
+  },
+  PINNACLE_SILVER: {
+    classA: {
+      '12': {
+        'new_to_15000': { '15000': 1222, '25000': 1225, 'unlimited': 1256 },
+        '15000_to_50000': { '15000': 1279, '25000': 1281, 'unlimited': 1305 },
+        '50000_to_75000': { '15000': 1318, '25000': 1319, 'unlimited': 1350 },
+        '75000_to_100000': { '15000': 1339, '25000': 1341, 'unlimited': null },
+        '100000_to_125000': { '15000': 1371, '25000': 1373, 'unlimited': null },
+        '125000_to_150000': { '15000': 1399, '25000': 1410, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1229, '45000': 1236, 'unlimited': 1267 },
+        '15000_to_50000': { '30000': 1289, '45000': 1291, 'unlimited': 1307 },
+        '50000_to_75000': { '30000': 1328, '45000': 1331, 'unlimited': 1351 },
+        '75000_to_100000': { '30000': 1352, '45000': 1354, 'unlimited': null },
+        '100000_to_125000': { '30000': 1389, '45000': 1391, 'unlimited': null },
+        '125000_to_150000': { '30000': 1424, '45000': 1432, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1238, '60000': 1247, '75000': 1253, '100000': 1256, '125000': 1264, 'unlimited': 1279 },
+        '15000_to_50000': { '45000': 1292, '60000': 1298, '75000': 1305, '100000': 1309, '125000': 1313, 'unlimited': 1328 },
+        '50000_to_75000': { '45000': 1333, '60000': 1340, '75000': 1345, '100000': 1355, '125000': 1358, 'unlimited': 1366 },
+        '75000_to_100000': { '45000': 1357, '60000': 1364, '75000': 1374, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '45000': 1392, '60000': 1400, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '45000': 1430, '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 1247, '75000': 1262, '100000': 1266, '125000': 1267, 'unlimited': 1282 },
+        '15000_to_50000': { '60000': 1303, '75000': 1314, '100000': 1318, '125000': 1319, 'unlimited': 1334 },
+        '50000_to_75000': { '60000': 1346, '75000': 1361, '100000': 1365, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 1371, '75000': 1388, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1409, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': 1447, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 1249, '75000': 1264, '100000': 1266, '125000': 1273, 'unlimited': 1287 },
+        '15000_to_50000': { '60000': 1305, '75000': 1320, '100000': 1322, '125000': 1328, 'unlimited': 1344 },
+        '50000_to_75000': { '60000': 1348, '75000': 1361, '100000': 1367, '125000': 1352, 'unlimited': 1368 },
+        '75000_to_100000': { '60000': 1374, '75000': 1393, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1416, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 1266, '90000': 1281, '100000': 1296 },
+        '15000_to_50000': { '75000': 1325, '90000': 1333, '100000': 1340 },
+        '50000_to_75000': { '75000': 1373, '90000': 1381, '100000': 1393 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null },
+        '100000_to_125000': { '75000': null, '90000': null, '100000': null },
+        '125000_to_150000': { '75000': null, '90000': null, '100000': null }
+      }
+    },
+    classB: {
+      '12': {
+        'new_to_15000': { '15000': 1334, '25000': 1340, 'unlimited': 1377 },
+        '15000_to_50000': { '15000': 1433, '25000': 1439, 'unlimited': 1467 },
+        '50000_to_75000': { '15000': 1470, '25000': 1477, 'unlimited': 1510 },
+        '75000_to_100000': { '15000': 1498, '25000': 1505, 'unlimited': null },
+        '100000_to_125000': { '15000': 1566, '25000': 1577, 'unlimited': null },
+        '125000_to_150000': { '15000': 1635, '25000': 1646, 'unlimited': null }
+      }
+    },
+    classC: {
+      '12': {
+        'new_to_15000': { '15000': 1469, '25000': 1506, 'unlimited': 1669 },
+        '15000_to_50000': { '15000': 1963, '25000': 2007, 'unlimited': null },
+        '50000_to_75000': { '15000': 2077, '25000': 2117, 'unlimited': null },
+        '75000_to_100000': { '15000': 2211, '25000': 2290, 'unlimited': null }
+      }
+    }
   }
 } as const;
 
@@ -548,18 +674,57 @@ export class ConnectedAutoCareRatingService {
         }
       } else if (productId === 'ELEVATE_GOLD' && CONNECTED_AUTO_CARE_RATES.ELEVATE_GOLD) {
         const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
+        console.log('Looking up GOLD rate with classKey:', classKey);
         const classRates = CONNECTED_AUTO_CARE_RATES.ELEVATE_GOLD[classKey];
+        console.log('GOLD Class rates found:', !!classRates);
         if (classRates && classRates[termMonths as keyof typeof classRates]) {
           const termRates = classRates[termMonths as keyof typeof classRates];
+          console.log('GOLD Term rates found:', !!termRates);
           if (termRates && termRates[mileageBracket as keyof typeof termRates]) {
             const bracketRates = termRates[mileageBracket as keyof typeof termRates];
+            console.log('GOLD Bracket rates found:', !!bracketRates);
             if (bracketRates && bracketRates[coverageMiles as keyof typeof bracketRates]) {
               const premium = bracketRates[coverageMiles as keyof typeof bracketRates];
+              console.log('GOLD Premium lookup result:', premium);
               if (typeof premium === 'number') {
                 basePremium = premium;
+                console.log('GOLD Base premium set to:', basePremium);
               }
+            } else {
+              console.log('GOLD Available coverage miles for this bracket:', Object.keys(bracketRates || {}));
             }
+          } else {
+            console.log('GOLD Available mileage brackets for this term:', Object.keys(termRates || {}));
           }
+        } else {
+          console.log('GOLD Available term lengths for this class:', Object.keys(classRates || {}));
+        }
+      } else if (productId === 'PINNACLE_SILVER' && CONNECTED_AUTO_CARE_RATES.PINNACLE_SILVER) {
+        const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
+        console.log('Looking up SILVER rate with classKey:', classKey);
+        const classRates = CONNECTED_AUTO_CARE_RATES.PINNACLE_SILVER[classKey];
+        console.log('SILVER Class rates found:', !!classRates);
+        if (classRates && classRates[termMonths as keyof typeof classRates]) {
+          const termRates = classRates[termMonths as keyof typeof classRates];
+          console.log('SILVER Term rates found:', !!termRates);
+          if (termRates && termRates[mileageBracket as keyof typeof termRates]) {
+            const bracketRates = termRates[mileageBracket as keyof typeof termRates];
+            console.log('SILVER Bracket rates found:', !!bracketRates);
+            if (bracketRates && bracketRates[coverageMiles as keyof typeof bracketRates]) {
+              const premium = bracketRates[coverageMiles as keyof typeof bracketRates];
+              console.log('SILVER Premium lookup result:', premium);
+              if (typeof premium === 'number') {
+                basePremium = premium;
+                console.log('SILVER Base premium set to:', basePremium);
+              }
+            } else {
+              console.log('SILVER Available coverage miles for this bracket:', Object.keys(bracketRates || {}));
+            }
+          } else {
+            console.log('SILVER Available mileage brackets for this term:', Object.keys(termRates || {}));
+          }
+        } else {
+          console.log('SILVER Available term lengths for this class:', Object.keys(classRates || {}));
         }
       }
       
