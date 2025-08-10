@@ -1,0 +1,14 @@
+{
+  "name": "tpa-platform-replit",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "bootstrap": "npm --prefix apps/web install && npm --prefix apps/api install",
+    "dev": "concurrently \"npm --prefix apps/api run start\" \"npm --prefix apps/web run dev\""
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

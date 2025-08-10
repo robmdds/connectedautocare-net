@@ -1,0 +1,12 @@
+{
+  "name": "tpa-platform-helcim-issue",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "bootstrap": "npm --prefix apps/web install && npm --prefix apps/api install",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:api": "npm --prefix apps/api run start:dev"
+  }
+}

@@ -1,0 +1,1 @@
+export const metadata={title:'TPA (Helcim Auto-Issuance)',description:'Helcim webhook triggers policy issuance'};export default function Root({children}:{children:React.ReactNode}){return(<html lang='en'><body><div style={{maxWidth:980,margin:'0 auto',padding:24}}>{children}</div></body></html>);}

@@ -1,0 +1,8 @@
+
+project: { name: tpa-platform }
+stack: { monorepo: true, languages: [typescript], frontend: { framework: nextjs@14 }, backend: { framework: nestjs, orm: prisma, db: postgres } }
+payments: { provider: helcim }
+endpoints_rest: ["POST /payments/intent","POST /webhooks/helcim"]
+instructions_for_softgen: >
+  Implement real Helcim API calls and webhook signature validation.
+  On confirmed payment success, issue policy and generate receipt artifacts, then proceed with contract doc generation.
