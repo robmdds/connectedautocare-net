@@ -12,6 +12,7 @@ import Claims from "@/pages/Claims";
 import Analytics from "@/pages/Analytics";
 import Admin from "@/pages/Admin";
 import HeroVscProducts from "@/pages/HeroVscProducts";
+import ConnectedAutoCarePage from "@/pages/ConnectedAutoCarePage";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -24,6 +25,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/hero-vsc" component={HeroVscProducts} />
+          <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
           <Route path="/policies" component={Policies} />
           <Route path="/claims" component={Claims} />
           <Route path="/analytics" component={Analytics} />

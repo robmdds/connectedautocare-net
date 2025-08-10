@@ -10,6 +10,7 @@ import { ClaimsService } from "./services/claimsService";
 import { AnalyticsService } from "./services/analyticsService";
 import { AIAssistantService } from "./services/aiAssistantService";
 import { HeroVscRatingService, HERO_VSC_PRODUCTS } from "./services/heroVscService";
+import { ConnectedAutoCareRatingService, CONNECTED_AUTO_CARE_PRODUCTS } from "./services/connectedAutoCareService";
 import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -25,6 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const analyticsService = new AnalyticsService();
   const aiAssistantService = new AIAssistantService();
   const heroVscService = new HeroVscRatingService();
+  const cacService = new ConnectedAutoCareRatingService();
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -446,6 +448,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching resellers:", error);
       res.status(500).json({ error: "Failed to fetch resellers" });
+    }
+  });
+
+  // Connected Auto Care Product Listing API
+  app.get('/api/connected-auto-care/products', async (req, res) => {
+    try {
+      const products = cacService.getConnectedAutoCareProducts();
+      res.json({ products });
+    } catch (error) {
+      console.error('Connected Auto Care products fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch Connected Auto Care products' });
+    }
+  });
+
+  // Connected Auto Care Quote Generation API
+  app.post('/api/connected-auto-care/quotes', async (req, res) => {
+    try {
+      const { productId, coverageSelections, vehicleData, customerData } = req.body;
+      
+      if (!productId) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      // Validate coverage selections
+      const validation = cacService.validateConnectedAutoCareCoverage(productId, coverageSelections);
+      if (!validation.isValid) {
+        return res.status(400).json({ error: "Invalid coverage selections", details: validation.errors });
+      }
+
+      // Generate quote number
+      const quoteNumber = `CAC-${Date.now()}`;
+      
+      // Get Connected Auto Care rating
+      const ratingResult = await cacService.calculateConnectedAutoCarePremium(
+        productId, 
+        coverageSelections, 
+        vehicleData, 
+        customerData
+      );
+
+      // Get the actual product ID from Connected Auto Care product data
+      const cacProduct = cacService.getConnectedAutoCareProduct(productId);
+      const actualProductId = cacProduct?.id || productId;
+
+      // Create quote using Connected Auto Care data
+      const quote = await storage.createQuote({
+        tenantId: 'connected-auto-care', // Connected Auto Care tenant
+        productId: actualProductId,
+        quoteNumber,
+        customerEmail: customerData?.email,
+        customerName: customerData?.name,
+        customerPhone: customerData?.phone,
+        customerAddress: customerData?.address,
+        vehicleId: vehicleData?.id,
+        coverageSelections: coverageSelections,
+        basePremium: ratingResult.basePremium.toString(),
+        taxes: ratingResult.taxes.toString(),
+        fees: ratingResult.fees.toString(),
+        totalPremium: ratingResult.totalPremium.toString(),
+        ratingData: ratingResult.factors,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      });
+
+      // Track analytics event
+      await analyticsService.trackEvent({
+        tenantId: 'connected-auto-care',
+        eventType: 'cac_quote_created',
+        entityType: 'quote',
+        entityId: quote.id,
+        properties: {
+          productId: productId,
+          productName: ratingResult.productDetails.name,
+          premium: ratingResult.totalPremium,
+          coverageSelections: coverageSelections,
+        },
+      });
+
+      res.json({
+        quote,
+        ratingResult,
+        productDetails: ratingResult.productDetails
+      });
+    } catch (error) {
+      console.error("Connected Auto Care quote creation error:", error);
+      res.status(500).json({ error: "Failed to create Connected Auto Care quote" });
     }
   });
 

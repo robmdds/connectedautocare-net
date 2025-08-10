@@ -90,7 +90,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {analyticsLoading ? "..." : analytics?.totalPolicies || 0}
+                {analyticsLoading ? "..." : (analytics as any)?.totalPolicies || 0}
               </div>
               <p className="text-xs text-muted-foreground">Active insurance policies</p>
             </CardContent>
@@ -103,7 +103,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {analyticsLoading ? "..." : analytics?.activeClaims || 0}
+                {analyticsLoading ? "..." : (analytics as any)?.activeClaims || 0}
               </div>
               <p className="text-xs text-muted-foreground">Claims in progress</p>
             </CardContent>
@@ -116,7 +116,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${analyticsLoading ? "..." : analytics?.monthlyPremium?.toLocaleString() || "0"}
+                ${analyticsLoading ? "..." : (analytics as any)?.monthlyPremium?.toLocaleString() || "0"}
               </div>
               <p className="text-xs text-muted-foreground">This month's revenue</p>
             </CardContent>
@@ -129,9 +129,56 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {analyticsLoading ? "..." : analytics?.conversionRate || 0}%
+                {analyticsLoading ? "..." : (analytics as any)?.conversionRate || 0}%
               </div>
               <p className="text-xs text-muted-foreground">Quote to policy</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* VSC Products Section */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>VSC Product Partners</CardTitle>
+              <CardDescription>Access vehicle service contracts from our integrated providers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/hero-vsc">
+                  <Card className="hover:bg-gray-50 transition-colors cursor-pointer border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Shield className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">Hero VSC</h3>
+                          <p className="text-sm text-gray-600">7 VSC products available</p>
+                          <p className="text-xs text-blue-600 mt-1">Auto • RV • Marine • Powersports</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+                
+                <Link href="/connected-auto-care">
+                  <Card className="hover:bg-gray-50 transition-colors cursor-pointer border-green-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Shield className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">Connected Auto Care</h3>
+                          <p className="text-sm text-gray-600">Elevate & Pinnacle VSC</p>
+                          <p className="text-xs text-green-600 mt-1">Premium vehicle protection</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -173,9 +220,9 @@ export default function Dashboard() {
             <CardContent>
               {activityLoading ? (
                 <p className="text-sm text-gray-500">Loading activity...</p>
-              ) : recentActivity && recentActivity.length > 0 ? (
+              ) : recentActivity && (recentActivity as any[]).length > 0 ? (
                 <div className="space-y-4">
-                  {recentActivity.slice(0, 5).map((activity: any) => (
+                  {(recentActivity as any[]).slice(0, 5).map((activity: any) => (
                     <div key={activity.id} className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
                         <Badge variant={activity.type === 'claim_submitted' ? 'destructive' : 'default'}>
