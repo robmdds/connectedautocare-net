@@ -44,10 +44,13 @@ export default function ConnectedAutoCarePage() {
   const vinDecodeMutation = useMutation({
     mutationFn: async (vin: string) => {
       const response = await apiRequest('POST', '/api/vehicles/decode-vin', { vin });
-      return await response.json();
+      const result = await response.json();
+      console.log('VIN decode response:', result);
+      return result;
     },
     onSuccess: (data) => {
-      setVehicleData(data.vehicle);
+      console.log('VIN decode success data:', data);
+      setVehicleData(data.vehicle || data);
       // Auto-select vehicle class based on make
       const make = data.vehicle.make?.toLowerCase() || '';
       let vehicleClass = 'Class B'; // Default
