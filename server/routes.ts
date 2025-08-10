@@ -9,6 +9,7 @@ import { PolicyService } from "./services/policyService";
 import { ClaimsService } from "./services/claimsService";
 import { AnalyticsService } from "./services/analyticsService";
 import { AIAssistantService } from "./services/aiAssistantService";
+import { HeroVscRatingService, HERO_VSC_PRODUCTS } from "./services/heroVscService";
 import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -23,6 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const claimsService = new ClaimsService();
   const analyticsService = new AnalyticsService();
   const aiAssistantService = new AIAssistantService();
+  const heroVscService = new HeroVscRatingService();
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -52,7 +54,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Quote Generation API
+  // Hero VSC Products API
+  app.get('/api/hero-vsc/products', async (req, res) => {
+    try {
+      const products = heroVscService.getHeroVscProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching Hero VSC products:", error);
+      res.status(500).json({ error: "Failed to fetch Hero VSC products" });
+    }
+  });
+
+  app.get('/api/hero-vsc/products/:productId', async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const product = heroVscService.getHeroVscProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error("Error fetching Hero VSC product:", error);
+      res.status(500).json({ error: "Failed to fetch Hero VSC product" });
+    }
+  });
+
+  // Hero VSC Quote Generation API
+  app.post('/api/hero-vsc/quotes', async (req, res) => {
+    try {
+      const { productId, coverageSelections, vehicleData, customerData } = req.body;
+      
+      if (!productId) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      // Validate coverage selections
+      const validation = heroVscService.validateHeroVscCoverage(productId, coverageSelections);
+      if (!validation.isValid) {
+        return res.status(400).json({ error: "Invalid coverage selections", details: validation.errors });
+      }
+
+      // Generate quote number
+      const quoteNumber = `HERO-${Date.now()}`;
+      
+      // Get Hero VSC rating
+      const ratingResult = await heroVscService.calculateHeroVscPremium(
+        productId, 
+        coverageSelections, 
+        vehicleData, 
+        customerData
+      );
+
+      // Get the actual product ID from Hero VSC product data
+      const heroProduct = heroVscService.getHeroVscProduct(productId);
+      const actualProductId = heroProduct?.id || productId;
+
+      // Create quote using Hero VSC data
+      const quote = await storage.createQuote({
+        tenantId: 'hero-vsc', // Hero VSC tenant
+        productId: actualProductId,
+        quoteNumber,
+        customerEmail: customerData?.email,
+        customerName: customerData?.name,
+        customerPhone: customerData?.phone,
+        customerAddress: customerData?.address,
+        vehicleId: vehicleData?.id,
+        coverageSelections: coverageSelections,
+        basePremium: ratingResult.basePremium.toString(),
+        taxes: ratingResult.taxes.toString(),
+        fees: ratingResult.fees.toString(),
+        totalPremium: ratingResult.totalPremium.toString(),
+        ratingData: ratingResult.factors,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      });
+
+      // Track analytics event
+      await analyticsService.trackEvent({
+        tenantId: 'hero-vsc',
+        eventType: 'hero_vsc_quote_created',
+        entityType: 'quote',
+        entityId: quote.id,
+        properties: {
+          productId: productId,
+          productName: ratingResult.productDetails.name,
+          premium: ratingResult.totalPremium,
+          coverageSelections: coverageSelections,
+        },
+      });
+
+      res.json({
+        quote,
+        ratingResult,
+        productDetails: ratingResult.productDetails
+      });
+    } catch (error) {
+      console.error("Hero VSC quote creation error:", error);
+      res.status(500).json({ error: "Failed to create Hero VSC quote" });
+    }
+  });
+
+  // Quote Generation API (Legacy)
   app.post('/api/quotes', async (req, res) => {
     try {
       const quoteData = insertQuoteSchema.parse(req.body);

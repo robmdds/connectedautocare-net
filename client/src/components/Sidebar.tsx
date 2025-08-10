@@ -18,6 +18,12 @@ const menuItems = [
     ],
   },
   {
+    title: "Hero VSC Products",
+    items: [
+      { name: "Hero VSC Catalog", icon: "fas fa-shield-alt", href: "/hero-vsc" },
+    ],
+  },
+  {
     title: "Claims",
     items: [
       { name: "All Claims", icon: "fas fa-clipboard-list", href: "/claims" },
