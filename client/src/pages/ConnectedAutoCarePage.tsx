@@ -107,15 +107,45 @@ export default function ConnectedAutoCarePage() {
     },
     onSuccess: (data) => {
       setQuoteData(data);
-      toast({
-        title: "Quote Generated Successfully",
-        description: `Connected Auto Care quote #${data.quote.quoteNumber} created`,
-      });
+      // Handle different quote statuses
+      if (data.quote?.status === 'ineligible') {
+        toast({
+          title: "Vehicle Not Eligible",
+          description: "This vehicle does not qualify for standard coverage. See options below.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Quote Generated Successfully",
+          description: `Connected Auto Care quote #${data.quote.quoteNumber} created`,
+        });
+      }
     },
     onError: (error: any) => {
       toast({
         title: "Quote Generation Failed",
         description: error.message || "Failed to generate Connected Auto Care quote",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Special quote request mutation
+  const specialQuoteRequestMutation = useMutation({
+    mutationFn: async (requestData: any) => {
+      const response = await apiRequest('POST', '/api/special-quote-requests', requestData);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Special Quote Request Submitted",
+        description: data.message,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Request Failed",
+        description: error.message || "Failed to submit special quote request",
         variant: "destructive",
       });
     },
@@ -132,6 +162,47 @@ export default function ConnectedAutoCarePage() {
       return;
     }
     vinDecodeMutation.mutate(quoteForm.vin);
+  };
+
+  // Handle special quote request
+  const handleSpecialQuoteRequest = async (productId: string, requestReason: string = '') => {
+    // Validate required fields for special quote request
+    if (!quoteForm.customerName || !quoteForm.customerEmail) {
+      toast({
+        title: "Customer Information Required",
+        description: "Please enter customer name and email to submit special quote request",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const finalVehicleData = {
+      ...vehicleData,
+      mileage: parseInt(quoteForm.currentMileage) || 0,
+      year: vehicleData?.year || parseInt(quoteForm.vehicleYear) || 2021,
+      make: vehicleData?.make || quoteForm.vehicleMake || "Unknown",
+      model: vehicleData?.model || quoteForm.vehicleModel || "Unknown"
+    };
+
+    const requestData = {
+      productId,
+      vehicleData: finalVehicleData,
+      coverageSelections: {
+        termLength: quoteForm.termLength,
+        coverageMiles: quoteForm.coverageMiles,
+        vehicleClass: quoteForm.vehicleClass
+      },
+      customerData: {
+        name: quoteForm.customerName,
+        email: quoteForm.customerEmail,
+        phone: quoteForm.customerPhone,
+        address: quoteForm.customerAddress
+      },
+      eligibilityReasons: quoteData?.quote?.eligibilityReasons || [],
+      requestReason: requestReason || 'Customer requested special review for ineligible vehicle'
+    };
+
+    specialQuoteRequestMutation.mutate(requestData);
   };
 
   // Handle quote generation with form data
@@ -637,14 +708,57 @@ export default function ConnectedAutoCarePage() {
 
           {/* Quote Results */}
           
-          {quoteData ? (
-            <Card className="border-green-200 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-green-900">Quote Generated!</CardTitle>
-                <CardDescription className="text-green-700">
-                  Quote #{quoteData.quote.quoteNumber}
-                </CardDescription>
-              </CardHeader>
+          {quoteData && quoteData.quote ? (
+            quoteData.quote.status === 'ineligible' ? (
+              <Card className="border-red-200 bg-red-50">
+                <CardHeader>
+                  <CardTitle className="text-red-900">Vehicle Not Eligible</CardTitle>
+                  <CardDescription className="text-red-700">
+                    This vehicle does not qualify for standard coverage
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-red-900 mb-2">Eligibility Issues</h4>
+                    <ul className="space-y-1">
+                      {quoteData.quote.eligibilityReasons?.map((reason: string, index: number) => (
+                        <li key={index} className="text-sm text-red-800 flex items-start">
+                          <span className="text-red-600 mr-2">•</span>
+                          {reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {quoteData.quote.allowSpecialQuote && (
+                    <>
+                      <Separator className="bg-red-200" />
+                      <div>
+                        <h4 className="font-semibold text-red-900 mb-2">Special Quote Available</h4>
+                        <p className="text-sm text-red-800 mb-3">
+                          While your vehicle doesn't qualify for standard coverage, an admin can manually review your request and may be able to offer alternative products or special pricing.
+                        </p>
+                        <Button
+                          onClick={() => handleSpecialQuoteRequest(selectedProduct!)}
+                          disabled={specialQuoteRequestMutation.isPending}
+                          className="w-full bg-red-600 hover:bg-red-700"
+                        >
+                          {specialQuoteRequestMutation.isPending ? 'Submitting Request...' : 'Request Special Quote Review'}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="text-green-900">Quote Generated!</CardTitle>
+                  <CardDescription className="text-green-700">
+                    Quote #{quoteData.quote.quoteNumber}
+                  </CardDescription>
+                </CardHeader>
               
               <CardContent className="space-y-4">
                 <div>
@@ -717,6 +831,7 @@ export default function ConnectedAutoCarePage() {
                 </div>
               </CardContent>
             </Card>
+            )
           ) : (
             <Card className="border-gray-200">
               <CardContent className="pt-6">

@@ -323,7 +323,6 @@ export const CONNECTED_AUTO_CARE_RATES = {
       }
     },
     classB: {
-      // Similar structure for Class B vehicles - rates are higher
       '12': {
         'new_to_15000': { '15000': 1779, '25000': 1786, 'unlimited': 1836 },
         '15000_to_50000': { '15000': 1911, '25000': 1918, 'unlimited': 1954 },
@@ -331,18 +330,85 @@ export const CONNECTED_AUTO_CARE_RATES = {
         '75000_to_100000': { '15000': 1997, '25000': 2006, 'unlimited': null },
         '100000_to_125000': { '15000': 2083, '25000': 2096, 'unlimited': null },
         '125000_to_150000': { '15000': 2169, '25000': 2182, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1790, '45000': 1801, 'unlimited': 1855 },
+        '15000_to_50000': { '30000': 1928, '25000': 1935, 'unlimited': 1979 },
+        '50000_to_75000': { '30000': 1981, '45000': 1990, 'unlimited': 2036 },
+        '75000_to_100000': { '30000': 2020, '45000': 2029, 'unlimited': null },
+        '100000_to_125000': { '30000': 2111, '45000': 2124, 'unlimited': null },
+        '125000_to_150000': { '30000': 2202, '45000': 2219, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1802, '60000': 1817, '75000': 1826, '100000': 1830, '125000': 1841, 'unlimited': 1864 },
+        '15000_to_50000': { '45000': 1942, '60000': 1951, '75000': 1962, '100000': 1968, '125000': 1975, 'unlimited': 1998 },
+        '50000_to_75000': { '45000': 1998, '60000': 2007, '75000': 2016, '100000': 2030, '125000': 2033, 'unlimited': 2047 },
+        '75000_to_100000': { '45000': 2038, '60000': 2047, '75000': 2063, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '45000': 2087, '60000': 2098, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '45000': 2142, '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 1815, '75000': 1836, '100000': 1842, '125000': 1844, 'unlimited': 1868 },
+        '15000_to_50000': { '60000': 1959, '75000': 1976, '100000': 1982, '125000': 1984, 'unlimited': 2008 },
+        '50000_to_75000': { '60000': 2021, '75000': 2040, '100000': 2046, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 2062, '75000': 2083, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 2118, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': 2174, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 1818, '75000': 1839, '100000': 1843, '125000': 1852, 'unlimited': 1876 },
+        '15000_to_50000': { '60000': 1962, '75000': 1982, '100000': 1986, '125000': 1996, 'unlimited': 2021 },
+        '50000_to_75000': { '60000': 2024, '75000': 2043, '100000': 2051, '125000': 2032, 'unlimited': 2051 },
+        '75000_to_100000': { '60000': 2066, '75000': 2091, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 2125, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 1843, '90000': 1868, '100000': 1892 },
+        '15000_to_50000': { '75000': 1989, '90000': 2000, '100000': 2011 },
+        '50000_to_75000': { '75000': 2058, '90000': 2068, '100000': 2085 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null },
+        '100000_to_125000': { '75000': null, '90000': null, '100000': null },
+        '125000_to_150000': { '75000': null, '90000': null, '100000': null }
       }
-      // Additional Class B rates would continue...
     },
     classC: {
-      // Class C rates are significantly higher for luxury vehicles
       '12': {
         'new_to_15000': { '15000': 1956, '25000': 2007, 'unlimited': 2224 },
         '15000_to_50000': { '15000': 2617, '25000': 2672, 'unlimited': null },
         '50000_to_75000': { '15000': 2766, '25000': 2822, 'unlimited': null },
         '75000_to_100000': { '15000': 2946, '25000': 3053, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1970, '45000': 2025, 'unlimited': 2252 },
+        '15000_to_50000': { '30000': 2645, '45000': 2703, 'unlimited': null },
+        '50000_to_75000': { '30000': 2799, '45000': 2858, 'unlimited': null },
+        '75000_to_100000': { '30000': 2984, '45000': 3095, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1985, '60000': 2043, '75000': 2060, '100000': 2065, '125000': 2078, 'unlimited': 2281 },
+        '15000_to_50000': { '45000': 2674, '60000': 2735, '75000': 2755, '100000': 2761, '125000': 2779, 'unlimited': null },
+        '50000_to_75000': { '45000': 2835, '60000': 2896, '75000': 2919, '100000': 2935, '125000': 2940, 'unlimited': null },
+        '75000_to_100000': { '45000': 3025, '60000': 3089, '75000': 3116, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 2002, '75000': 2027, '100000': 2034, '125000': 2037, 'unlimited': 2311 },
+        '15000_to_50000': { '60000': 2706, '75000': 2734, '100000': 2742, '125000': 2745, 'unlimited': null },
+        '50000_to_75000': { '60000': 2872, '75000': 2904, '100000': 2913, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 3068, '75000': 3105, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 2005, '75000': 2030, '100000': 2034, '125000': 2045, 'unlimited': 2341 },
+        '15000_to_50000': { '60000': 2709, '75000': 2740, '100000': 2745, '125000': 2758, 'unlimited': null },
+        '50000_to_75000': { '60000': 2875, '75000': 2907, '100000': 2916, '125000': 2896, 'unlimited': null },
+        '75000_to_100000': { '60000': 3072, '75000': 3110, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 2034, '90000': 2064, '100000': 2094 },
+        '15000_to_50000': { '75000': 2748, '90000': 2761, '100000': 2774 },
+        '50000_to_75000': { '75000': 2918, '90000': 2931, '100000': 2950 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null }
       }
-      // Additional Class C rates would continue...
     }
   },
   ELEVATE_GOLD: {
@@ -404,6 +470,46 @@ export const CONNECTED_AUTO_CARE_RATES = {
         '75000_to_100000': { '15000': 1797, '25000': 1805, 'unlimited': null },
         '100000_to_125000': { '15000': 1875, '25000': 1886, 'unlimited': null },
         '125000_to_150000': { '15000': 1952, '25000': 1964, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1612, '45000': 1621, 'unlimited': 1671 },
+        '15000_to_50000': { '30000': 1734, '45000': 1741, 'unlimited': 1783 },
+        '50000_to_75000': { '30000': 1783, '45000': 1792, 'unlimited': 1831 },
+        '75000_to_100000': { '30000': 1818, '45000': 1825, 'unlimited': null },
+        '100000_to_125000': { '30000': 1900, '45000': 1912, 'unlimited': null },
+        '125000_to_150000': { '30000': 1982, '45000': 1996, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1622, '60000': 1634, '75000': 1642, '100000': 1646, '125000': 1655, 'unlimited': 1684 },
+        '15000_to_50000': { '45000': 1751, '60000': 1758, '75000': 1768, '100000': 1773, '125000': 1779, 'unlimited': 1798 },
+        '50000_to_75000': { '45000': 1798, '60000': 1806, '75000': 1814, '100000': 1826, '125000': 1829, 'unlimited': 1840 },
+        '75000_to_100000': { '45000': 1834, '60000': 1840, '75000': 1854, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '45000': 1878, '60000': 1888, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '45000': 1928, '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 1633, '75000': 1651, '100000': 1656, '125000': 1658, 'unlimited': 1687 },
+        '15000_to_50000': { '60000': 1765, '75000': 1779, '100000': 1784, '125000': 1786, 'unlimited': 1807 },
+        '50000_to_75000': { '60000': 1818, '75000': 1834, '100000': 1839, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 1856, '75000': 1871, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1906, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': 1956, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 1635, '75000': 1653, '100000': 1657, '125000': 1667, 'unlimited': 1694 },
+        '15000_to_50000': { '60000': 1767, '75000': 1784, '100000': 1788, '125000': 1797, 'unlimited': 1818 },
+        '50000_to_75000': { '60000': 1820, '75000': 1837, '100000': 1843, '125000': 1829, 'unlimited': 1843 },
+        '75000_to_100000': { '60000': 1859, '75000': 1882, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1913, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 1666, '90000': 1684, '100000': 1703 },
+        '15000_to_50000': { '75000': 1790, '90000': 1800, '100000': 1810 },
+        '50000_to_75000': { '75000': 1850, '90000': 1858, '100000': 1872 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null },
+        '100000_to_125000': { '75000': null, '90000': null, '100000': null },
+        '125000_to_150000': { '75000': null, '90000': null, '100000': null }
       }
     },
     classC: {
@@ -474,6 +580,46 @@ export const CONNECTED_AUTO_CARE_RATES = {
         '75000_to_100000': { '15000': 1498, '25000': 1505, 'unlimited': null },
         '100000_to_125000': { '15000': 1566, '25000': 1577, 'unlimited': null },
         '125000_to_150000': { '15000': 1635, '25000': 1646, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1343, '45000': 1351, 'unlimited': 1392 },
+        '15000_to_50000': { '30000': 1446, '45000': 1453, 'unlimited': 1485 },
+        '50000_to_75000': { '30000': 1486, '45000': 1494, 'unlimited': 1527 },
+        '75000_to_100000': { '30000': 1515, '45000': 1521, 'unlimited': null },
+        '100000_to_125000': { '30000': 1584, '45000': 1594, 'unlimited': null },
+        '125000_to_150000': { '30000': 1652, '45000': 1664, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1352, '60000': 1362, '75000': 1369, '100000': 1372, '125000': 1379, 'unlimited': 1403 },
+        '15000_to_50000': { '45000': 1459, '60000': 1465, '75000': 1473, '100000': 1477, '125000': 1482, 'unlimited': 1498 },
+        '50000_to_75000': { '45000': 1498, '60000': 1505, '75000': 1511, '100000': 1521, '125000': 1524, 'unlimited': 1533 },
+        '75000_to_100000': { '45000': 1528, '60000': 1533, '75000': 1544, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '45000': 1565, '60000': 1574, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '45000': 1608, '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 1361, '75000': 1376, '100000': 1380, '125000': 1382, 'unlimited': 1407 },
+        '15000_to_50000': { '60000': 1470, '75000': 1483, '100000': 1487, '125000': 1489, 'unlimited': 1506 },
+        '50000_to_75000': { '60000': 1515, '75000': 1528, '100000': 1532, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 1546, '75000': 1558, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1588, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': 1631, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 1363, '75000': 1378, '100000': 1381, '125000': 1389, 'unlimited': 1413 },
+        '15000_to_50000': { '60000': 1472, '75000': 1487, '100000': 1490, '125000': 1497, 'unlimited': 1518 },
+        '50000_to_75000': { '60000': 1517, '75000': 1530, '100000': 1535, '125000': 1521, 'unlimited': 1535 },
+        '75000_to_100000': { '60000': 1549, '75000': 1567, '100000': null, '125000': null, 'unlimited': null },
+        '100000_to_125000': { '60000': 1595, '75000': null, '100000': null, '125000': null, 'unlimited': null },
+        '125000_to_150000': { '60000': null, '75000': null, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 1388, '90000': 1402, '100000': 1417 },
+        '15000_to_50000': { '75000': 1493, '90000': 1500, '100000': 1508 },
+        '50000_to_75000': { '75000': 1540, '90000': 1547, '100000': 1558 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null },
+        '100000_to_125000': { '75000': null, '90000': null, '100000': null },
+        '125000_to_150000': { '75000': null, '90000': null, '100000': null }
       }
     },
     classC: {
@@ -482,12 +628,97 @@ export const CONNECTED_AUTO_CARE_RATES = {
         '15000_to_50000': { '15000': 1963, '25000': 2007, 'unlimited': null },
         '50000_to_75000': { '15000': 2077, '25000': 2117, 'unlimited': null },
         '75000_to_100000': { '15000': 2211, '25000': 2290, 'unlimited': null }
+      },
+      '24': {
+        'new_to_15000': { '30000': 1478, '45000': 1519, 'unlimited': 1689 },
+        '15000_to_50000': { '30000': 1984, '45000': 2027, 'unlimited': null },
+        '50000_to_75000': { '30000': 2099, '45000': 2143, 'unlimited': null },
+        '75000_to_100000': { '30000': 2238, '45000': 2321, 'unlimited': null }
+      },
+      '36': {
+        'new_to_15000': { '45000': 1489, '60000': 1532, '75000': 1545, '100000': 1549, '125000': 1559, 'unlimited': 1711 },
+        '15000_to_50000': { '45000': 2006, '60000': 2051, '75000': 2066, '100000': 2071, '125000': 2084, 'unlimited': null },
+        '50000_to_75000': { '45000': 2126, '60000': 2172, '75000': 2189, '100000': 2201, '125000': 2205, 'unlimited': null },
+        '75000_to_100000': { '45000': 2269, '60000': 2317, '75000': 2337, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '48': {
+        'new_to_15000': { '60000': 1502, '75000': 1521, '100000': 1526, '125000': 1528, 'unlimited': 1733 },
+        '15000_to_50000': { '60000': 2030, '75000': 2051, '100000': 2057, '125000': 2059, 'unlimited': null },
+        '50000_to_75000': { '60000': 2154, '75000': 2178, '100000': 2185, '125000': null, 'unlimited': null },
+        '75000_to_100000': { '60000': 2301, '75000': 2329, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '60': {
+        'new_to_15000': { '60000': 1504, '75000': 1523, '100000': 1526, '125000': 1534, 'unlimited': 1756 },
+        '15000_to_50000': { '60000': 2032, '75000': 2055, '100000': 2059, '125000': 2069, 'unlimited': null },
+        '50000_to_75000': { '60000': 2156, '75000': 2180, '100000': 2187, '125000': 2172, 'unlimited': null },
+        '75000_to_100000': { '60000': 2304, '75000': 2333, '100000': null, '125000': null, 'unlimited': null }
+      },
+      '72': {
+        'new_to_15000': { '75000': 1526, '90000': 1548, '100000': 1571 },
+        '15000_to_50000': { '75000': 2061, '90000': 2071, '100000': 2081 },
+        '50000_to_75000': { '75000': 2189, '90000': 2198, '100000': 2213 },
+        '75000_to_100000': { '75000': null, '90000': null, '100000': null }
       }
     }
   }
 } as const;
 
+// Eligibility validation interface
+interface EligibilityCheck {
+  isEligible: boolean;
+  reasons: string[];
+  allowSpecialQuote: boolean;
+}
+
 export class ConnectedAutoCareRatingService {
+  
+  // Check vehicle eligibility for Connected Auto Care VSC
+  checkEligibility(vehicleData: any, coverageSelections: any): EligibilityCheck {
+    const reasons: string[] = [];
+    let isEligible = true;
+    let allowSpecialQuote = false;
+
+    // Check vehicle age (must be 20 years or newer)
+    const currentYear = new Date().getFullYear();
+    const vehicleAge = currentYear - parseInt(vehicleData.year);
+    if (vehicleAge > 20) {
+      isEligible = false;
+      allowSpecialQuote = true;
+      reasons.push(`Vehicle is ${vehicleAge} years old. Maximum age is 20 years.`);
+    }
+
+    // Check mileage limits
+    const currentMileage = parseInt(vehicleData.mileage || 0);
+    if (currentMileage > 150000) {
+      isEligible = false;
+      allowSpecialQuote = true;
+      reasons.push(`Vehicle has ${currentMileage.toLocaleString()} miles. Maximum mileage is 150,000 miles.`);
+    }
+
+    // Check vehicle class (INELIGIBLE means excluded make/model)
+    const vehicleClass = this.determineVehicleClass(vehicleData.make, vehicleData.model);
+    if (vehicleClass === 'INELIGIBLE') {
+      isEligible = false;
+      allowSpecialQuote = false; // Excluded vehicles cannot be special quoted
+      reasons.push(`${vehicleData.make} ${vehicleData.model || ''} is not eligible for coverage.`);
+    }
+
+    // Check for specific coverage limitations
+    if (isEligible && currentMileage > 125000) {
+      const coverageMiles = coverageSelections.coverageMiles?.replace(',', '') || '';
+      if (['100000', '125000', 'unlimited'].includes(coverageMiles.toLowerCase())) {
+        isEligible = false;
+        allowSpecialQuote = true;
+        reasons.push(`Vehicles with over 125,000 miles are limited to lower coverage options.`);
+      }
+    }
+
+    return {
+      isEligible,
+      reasons,
+      allowSpecialQuote
+    };
+  }
   
   // Determine vehicle class based on make and model
   determineVehicleClass(make: string, model?: string): 'A' | 'B' | 'C' | 'INELIGIBLE' {
@@ -615,6 +846,28 @@ export class ConnectedAutoCareRatingService {
       console.log('ProductID:', productId);
       console.log('Vehicle Data:', vehicleData);
       console.log('Coverage Selections:', coverageSelections);
+      
+      // Check eligibility first
+      const eligibilityCheck = this.checkEligibility(vehicleData, coverageSelections);
+      console.log('Eligibility Check:', eligibilityCheck);
+
+      if (!eligibilityCheck.isEligible) {
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          productId: productId,
+          vehicleData: vehicleData,
+          coverageSelections: coverageSelections,
+          customerData: customerData,
+          basePremium: 0,
+          taxes: 0,
+          fees: 0,
+          totalPremium: 0,
+          status: 'ineligible',
+          eligibilityReasons: eligibilityCheck.reasons,
+          allowSpecialQuote: eligibilityCheck.allowSpecialQuote,
+          createdAt: new Date().toISOString()
+        };
+      }
       
       const product = CONNECTED_AUTO_CARE_PRODUCTS[productId as keyof typeof CONNECTED_AUTO_CARE_PRODUCTS];
       if (!product) {

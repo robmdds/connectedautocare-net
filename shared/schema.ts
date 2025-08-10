@@ -201,6 +201,32 @@ export const claims = pgTable("claims", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Special Quote Requests
+export const specialQuoteRequestStatusEnum = pgEnum("special_quote_request_status", [
+  "pending", "reviewing", "quoted", "declined", "expired"
+]);
+
+export const specialQuoteRequests = pgTable("special_quote_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestNumber: varchar("request_number").unique().notNull(),
+  tenantId: varchar("tenant_id").references(() => tenants.id),
+  productId: varchar("product_id").references(() => products.id),
+  vehicleData: jsonb("vehicle_data").notNull(),
+  coverageSelections: jsonb("coverage_selections").notNull(),
+  customerData: jsonb("customer_data").notNull(),
+  eligibilityReasons: jsonb("eligibility_reasons").default([]),
+  requestReason: text("request_reason"),
+  status: specialQuoteRequestStatusEnum("status").default("pending"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  alternativeQuote: jsonb("alternative_quote"),
+  declineReason: text("decline_reason"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Payments
 export const paymentStatusEnum = pgEnum("payment_status", [
   "pending", "processing", "succeeded", "failed", "cancelled", "refunded"
@@ -486,6 +512,13 @@ export const insertResellerSchema = createInsertSchema(resellers).omit({
   updatedAt: true,
 });
 
+export const insertSpecialQuoteRequestSchema = createInsertSchema(specialQuoteRequests).omit({
+  id: true,
+  requestNumber: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -501,6 +534,7 @@ export type Document = typeof documents.$inferSelect;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type Webhook = typeof webhooks.$inferSelect;
 export type Reseller = typeof resellers.$inferSelect;
+export type SpecialQuoteRequest = typeof specialQuoteRequests.$inferSelect;
 
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -514,3 +548,4 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
 export type InsertWebhook = z.infer<typeof insertWebhookSchema>;
 export type InsertReseller = z.infer<typeof insertResellerSchema>;
+export type InsertSpecialQuoteRequest = z.infer<typeof insertSpecialQuoteRequestSchema>;

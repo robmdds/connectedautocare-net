@@ -11,7 +11,8 @@ import { AnalyticsService } from "./services/analyticsService";
 import { AIAssistantService } from "./services/aiAssistantService";
 import { HeroVscRatingService, HERO_VSC_PRODUCTS } from "./services/heroVscService";
 import { ConnectedAutoCareRatingService, CONNECTED_AUTO_CARE_PRODUCTS } from "./services/connectedAutoCareService";
-import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema } from "@shared/schema";
+import { SpecialQuoteRequestService } from "./services/specialQuoteRequestService";
+import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema, insertSpecialQuoteRequestSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -27,6 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const aiAssistantService = new AIAssistantService();
   const heroVscService = new HeroVscRatingService();
   const cacService = new ConnectedAutoCareRatingService();
+  const specialQuoteRequestService = new SpecialQuoteRequestService();
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -476,6 +478,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Special Quote Requests API
+  app.post('/api/special-quote-requests', async (req, res) => {
+    try {
+      const requestData = req.body;
+      
+      // Basic validation
+      if (!requestData.productId || !requestData.vehicleData || !requestData.customerData) {
+        return res.status(400).json({ error: "Missing required fields: productId, vehicleData, customerData" });
+      }
+
+      const specialRequest = await specialQuoteRequestService.createSpecialQuoteRequest({
+        tenantId: 'default-tenant', // For now using default tenant
+        productId: requestData.productId,
+        vehicleData: requestData.vehicleData,
+        coverageSelections: requestData.coverageSelections || {},
+        customerData: requestData.customerData,
+        eligibilityReasons: requestData.eligibilityReasons || [],
+        requestReason: requestData.requestReason || 'Customer requested special review'
+      });
+
+      res.json({
+        message: "Special quote request submitted successfully. Our team will review your request and contact you within 24 hours.",
+        requestNumber: specialRequest.requestNumber,
+        requestId: specialRequest.id
+      });
+    } catch (error) {
+      console.error('Special quote request error:', error);
+      res.status(500).json({ error: 'Failed to submit special quote request' });
+    }
+  });
+
+  app.get('/api/special-quote-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Admin only for now
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ error: "Access denied. Admin role required." });
+      }
+
+      const requests = await specialQuoteRequestService.getAllSpecialQuoteRequests(user.tenantId);
+      res.json(requests);
+    } catch (error) {
+      console.error('Error fetching special quote requests:', error);
+      res.status(500).json({ error: 'Failed to fetch special quote requests' });
+    }
+  });
+
+  app.get('/api/special-quote-requests/summary', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Admin only for now
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ error: "Access denied. Admin role required." });
+      }
+
+      const summary = await specialQuoteRequestService.getRequestsSummary(user.tenantId);
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching special quote requests summary:', error);
+      res.status(500).json({ error: 'Failed to fetch summary' });
+    }
+  });
+
+  app.put('/api/special-quote-requests/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status, reviewNotes, alternativeQuote, declineReason } = req.body;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Admin only for now
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ error: "Access denied. Admin role required." });
+      }
+
+      const updated = await specialQuoteRequestService.updateSpecialQuoteRequestStatus(
+        id,
+        status,
+        {
+          reviewedBy: userId,
+          reviewNotes,
+          alternativeQuote,
+          declineReason
+        }
+      );
+
+      if (!updated) {
+        return res.status(404).json({ error: "Special quote request not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating special quote request:', error);
+      res.status(500).json({ error: 'Failed to update special quote request' });
+    }
+  });
+
   // Connected Auto Care Product Listing API
   app.get('/api/connected-auto-care/products', async (req, res) => {
     try {
@@ -558,6 +661,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Connected Auto Care quote creation error:", error);
       res.status(500).json({ error: "Failed to create Connected Auto Care quote" });
+    }
+  });
+
+  // Special quote request endpoint
+  app.post('/api/special-quote-requests', async (req, res) => {
+    try {
+      const {
+        productId,
+        vehicleData,
+        coverageSelections,
+        customerData,
+        eligibilityReasons,
+        requestReason
+      } = req.body;
+
+      // Create special quote request record
+      const specialQuoteRequest = {
+        id: Math.random().toString(36).substr(2, 9),
+        productId,
+        vehicleData,
+        coverageSelections,
+        customerData,
+        eligibilityReasons,
+        requestReason,
+        status: 'pending_admin_review',
+        createdAt: new Date().toISOString(),
+        requestedBy: customerData.email || 'unknown'
+      };
+
+      // In a real application, this would be saved to a database
+      // For now, just log it for admin review
+      console.log('=== SPECIAL QUOTE REQUEST ===');
+      console.log('Request ID:', specialQuoteRequest.id);
+      console.log('Product:', productId);
+      console.log('Vehicle:', `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`);
+      console.log('Mileage:', vehicleData.mileage);
+      console.log('Customer:', customerData.email);
+      console.log('Eligibility Issues:', eligibilityReasons);
+      console.log('Request Reason:', requestReason);
+      console.log('=============================');
+
+      // Track analytics event
+      await analyticsService.trackEvent({
+        tenantId: 'connected-auto-care',
+        eventType: 'special_quote_requested',
+        entityType: 'special_quote_request',
+        entityId: specialQuoteRequest.id,
+        properties: {
+          productId: productId,
+          vehicleYear: vehicleData.year,
+          vehicleMake: vehicleData.make,
+          vehicleModel: vehicleData.model,
+          currentMileage: vehicleData.mileage,
+          eligibilityReasons: eligibilityReasons,
+          requestReason: requestReason
+        },
+      });
+
+      res.json({
+        success: true,
+        requestId: specialQuoteRequest.id,
+        message: 'Special quote request submitted successfully. An admin will review and contact you within 24 hours.'
+      });
+    } catch (error) {
+      console.error('Error submitting special quote request:', error);
+      res.status(500).json({
+        error: 'Failed to submit special quote request',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
