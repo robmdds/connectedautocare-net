@@ -504,10 +504,12 @@ export class ConnectedAutoCareRatingService {
       
       // Get coverage selections
       const termLength = coverageSelections.termLength || '36 months';
-      const coverageMiles = coverageSelections.coverageMiles || '75000';
+      const rawCoverageMiles = coverageSelections.coverageMiles || '75000';
+      // Remove commas from coverage miles to match rate table format
+      const coverageMiles = rawCoverageMiles.replace(/,/g, '');
       const termMonths = termLength.replace(' months', '');
       console.log('Term Length:', termLength, '-> Term Months:', termMonths);
-      console.log('Coverage Miles:', coverageMiles);
+      console.log('Coverage Miles (raw):', rawCoverageMiles, '-> Coverage Miles (cleaned):', coverageMiles);
       
       // Get current mileage and determine bracket
       const currentMileage = vehicleData.mileage || 0;
