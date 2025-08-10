@@ -485,6 +485,11 @@ export class ConnectedAutoCareRatingService {
     customerData: any
   ): Promise<any> {
     try {
+      console.log('=== Connected Auto Care Premium Calculation ===');
+      console.log('ProductID:', productId);
+      console.log('Vehicle Data:', vehicleData);
+      console.log('Coverage Selections:', coverageSelections);
+      
       const product = CONNECTED_AUTO_CARE_PRODUCTS[productId as keyof typeof CONNECTED_AUTO_CARE_PRODUCTS];
       if (!product) {
         throw new Error('Invalid Connected Auto Care product ID');
@@ -492,6 +497,7 @@ export class ConnectedAutoCareRatingService {
       
       // Determine vehicle class
       const vehicleClass = this.determineVehicleClass(vehicleData.make, vehicleData.model);
+      console.log('Determined Vehicle Class:', vehicleClass);
       if (vehicleClass === 'INELIGIBLE') {
         throw new Error('Vehicle is not eligible for Connected Auto Care VSC coverage');
       }
@@ -500,28 +506,43 @@ export class ConnectedAutoCareRatingService {
       const termLength = coverageSelections.termLength || '36 months';
       const coverageMiles = coverageSelections.coverageMiles || '75000';
       const termMonths = termLength.replace(' months', '');
+      console.log('Term Length:', termLength, '-> Term Months:', termMonths);
+      console.log('Coverage Miles:', coverageMiles);
       
       // Get current mileage and determine bracket
       const currentMileage = vehicleData.mileage || 0;
       const mileageBracket = this.getMileageBracket(currentMileage);
+      console.log('Current Mileage:', currentMileage, '-> Mileage Bracket:', mileageBracket);
       
       // Look up base premium from rate card
       let basePremium = 1500; // Default fallback
       
       if (productId === 'ELEVATE_PLATINUM' && CONNECTED_AUTO_CARE_RATES.ELEVATE_PLATINUM) {
         const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
+        console.log('Looking up rate with classKey:', classKey);
         const classRates = CONNECTED_AUTO_CARE_RATES.ELEVATE_PLATINUM[classKey];
+        console.log('Class rates found:', !!classRates);
         if (classRates && classRates[termMonths as keyof typeof classRates]) {
           const termRates = classRates[termMonths as keyof typeof classRates];
+          console.log('Term rates found:', !!termRates);
           if (termRates && termRates[mileageBracket as keyof typeof termRates]) {
             const bracketRates = termRates[mileageBracket as keyof typeof termRates];
+            console.log('Bracket rates found:', !!bracketRates);
             if (bracketRates && bracketRates[coverageMiles as keyof typeof bracketRates]) {
               const premium = bracketRates[coverageMiles as keyof typeof bracketRates];
+              console.log('Premium lookup result:', premium);
               if (typeof premium === 'number') {
                 basePremium = premium;
+                console.log('Base premium set to:', basePremium);
               }
+            } else {
+              console.log('Available coverage miles for this bracket:', Object.keys(bracketRates || {}));
             }
+          } else {
+            console.log('Available mileage brackets for this term:', Object.keys(termRates || {}));
           }
+        } else {
+          console.log('Available term lengths for this class:', Object.keys(classRates || {}));
         }
       } else if (productId === 'ELEVATE_GOLD' && CONNECTED_AUTO_CARE_RATES.ELEVATE_GOLD) {
         const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
@@ -560,10 +581,22 @@ export class ConnectedAutoCareRatingService {
       const totalSurcharges = mandatorySurcharges + optionalSurcharges + oilChangeSurcharge;
       const premiumBeforeTax = basePremium + totalSurcharges;
       
+      console.log('=== Final Calculation Summary ===');
+      console.log('Base Premium:', basePremium);
+      console.log('Mandatory Surcharges:', mandatorySurcharges);
+      console.log('Optional Surcharges:', optionalSurcharges);
+      console.log('Oil Change Surcharge:', oilChangeSurcharge);
+      console.log('Premium Before Tax:', premiumBeforeTax);
+      
       // Calculate taxes and fees
       const taxes = this.calculateTaxes(premiumBeforeTax, customerData?.address?.state);
       const fees = this.calculateFees(premiumBeforeTax);
       const totalPremium = premiumBeforeTax + taxes + fees;
+      
+      console.log('Taxes:', taxes);
+      console.log('Fees:', fees);
+      console.log('Total Premium:', totalPremium);
+      console.log('===========================================');
       
       return {
         basePremium: premiumBeforeTax,
