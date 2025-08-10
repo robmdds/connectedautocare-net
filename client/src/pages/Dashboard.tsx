@@ -45,7 +45,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome, {user?.firstName || user?.email || 'User'}
+                Welcome, {(user as any)?.firstName || (user as any)?.email || 'User'}
               </span>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
