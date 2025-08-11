@@ -16,6 +16,16 @@ export default function AdminResellers() {
   const [newResellerEmail, setNewResellerEmail] = useState('');
   const [newResellerCommission, setNewResellerCommission] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
+  // Edit reseller state
+  const [editReseller, setEditReseller] = useState<any>(null);
+  const [editResellerName, setEditResellerName] = useState('');
+  const [editResellerEmail, setEditResellerEmail] = useState('');
+  const [editResellerCommission, setEditResellerCommission] = useState('');
+  const [editResellerTier, setEditResellerTier] = useState('');
+  const [editResellerStatus, setEditResellerStatus] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -48,6 +58,34 @@ export default function AdminResellers() {
     onError: (error: Error) => {
       toast({
         title: "Creation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateResellerMutation = useMutation({
+    mutationFn: async ({ id, reseller }: { id: string, reseller: any }) => {
+      const response = await fetch(`/api/admin/resellers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reseller),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Reseller Updated",
+        description: "Reseller has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/resellers'] });
+      setIsEditDialogOpen(false);
+      setEditReseller(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -124,6 +162,52 @@ export default function AdminResellers() {
       name: newResellerName,
       email: newResellerEmail,
       commissionRate: parseFloat(newResellerCommission) || 10.0,
+    });
+  };
+
+  const handleEditReseller = (reseller: any) => {
+    setEditReseller(reseller);
+    setEditResellerName(reseller.name);
+    setEditResellerEmail(reseller.email);
+    setEditResellerCommission(reseller.commissionRate.toString());
+    setEditResellerTier(reseller.tier);
+    setEditResellerStatus(reseller.status);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateReseller = () => {
+    if (!editResellerName.trim() || !editResellerEmail.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Reseller name and email are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateResellerMutation.mutate({
+      id: editReseller.id,
+      reseller: {
+        name: editResellerName,
+        email: editResellerEmail,
+        commissionRate: parseFloat(editResellerCommission),
+        tier: editResellerTier,
+        status: editResellerStatus,
+      }
+    });
+  };
+
+  const handleViewCommissions = (reseller: any) => {
+    toast({
+      title: "Commission Details",
+      description: `${reseller.name} has a ${reseller.commissionRate}% commission rate with total earnings of $${(reseller.totalSales * reseller.commissionRate / 100).toFixed(2)}.`,
+    });
+  };
+
+  const handleViewPerformance = (reseller: any) => {
+    toast({
+      title: "Performance Metrics",
+      description: `${reseller.name} has sold ${reseller.policiesSold} policies generating $${reseller.totalSales.toLocaleString()} in total sales.`,
     });
   };
 
@@ -228,6 +312,84 @@ export default function AdminResellers() {
         </div>
       </header>
 
+      {/* Edit Reseller Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Reseller</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editResellerName">Company Name</Label>
+              <Input
+                id="editResellerName"
+                value={editResellerName}
+                onChange={(e) => setEditResellerName(e.target.value)}
+                placeholder="Enter company name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editResellerEmail">Email Address</Label>
+              <Input
+                id="editResellerEmail"
+                type="email"
+                value={editResellerEmail}
+                onChange={(e) => setEditResellerEmail(e.target.value)}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editResellerCommission">Commission Rate (%)</Label>
+              <Input
+                id="editResellerCommission"
+                type="number"
+                value={editResellerCommission}
+                onChange={(e) => setEditResellerCommission(e.target.value)}
+                placeholder="10.0"
+                min="0"
+                max="50"
+                step="0.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editResellerTier">Tier</Label>
+              <Select value={editResellerTier} onValueChange={setEditResellerTier}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="platinum">Platinum</SelectItem>
+                  <SelectItem value="gold">Gold</SelectItem>
+                  <SelectItem value="silver">Silver</SelectItem>
+                  <SelectItem value="bronze">Bronze</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="editResellerStatus">Status</Label>
+              <Select value={editResellerStatus} onValueChange={setEditResellerStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateReseller} disabled={updateResellerMutation.isPending}>
+                {updateResellerMutation.isPending ? 'Updating...' : 'Update Reseller'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Reseller Overview */}
@@ -306,13 +468,28 @@ export default function AdminResellers() {
                           {getTierBadge(reseller.tier)}
                         </div>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditReseller(reseller)}
+                            title="Edit Reseller"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewCommissions(reseller)}
+                            title="View Commissions"
+                          >
                             <DollarSign className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewPerformance(reseller)}
+                            title="View Performance"
+                          >
                             <TrendingUp className="h-4 w-4" />
                           </Button>
                         </div>

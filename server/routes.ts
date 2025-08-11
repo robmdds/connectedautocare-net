@@ -1114,6 +1114,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/admin/resellers', isAuthenticated, async (req: any, res) => {
+    try {
+      const { name, email, commissionRate } = req.body;
+      
+      // In a real app, this would create a new reseller
+      console.log('Creating reseller:', { name, email, commissionRate });
+      
+      const newReseller = {
+        id: Math.random().toString(36).substr(2, 9),
+        name,
+        contactEmail: email,
+        commissionRate,
+        tier: 'Bronze',
+        status: 'pending',
+        totalSales: 0,
+        activePolicies: 0,
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json(newReseller);
+    } catch (error) {
+      console.error('Error creating reseller:', error);
+      res.status(500).json({ error: 'Failed to create reseller' });
+    }
+  });
+
+  app.put('/api/admin/resellers/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { name, email, commissionRate, tier, status } = req.body;
+      
+      // In a real app, this would update the reseller
+      console.log('Updating reseller:', { id, name, email, commissionRate, tier, status });
+      
+      const updatedReseller = {
+        id,
+        name,
+        contactEmail: email,
+        commissionRate,
+        tier,
+        status,
+        updatedAt: new Date().toISOString()
+      };
+      
+      res.json(updatedReseller);
+    } catch (error) {
+      console.error('Error updating reseller:', error);
+      res.status(500).json({ error: 'Failed to update reseller' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
