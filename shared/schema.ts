@@ -179,6 +179,7 @@ export const claims = pgTable("claims", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   claimNumber: varchar("claim_number").unique().notNull(),
   policyId: varchar("policy_id").references(() => policies.id),
+  policyNumber: varchar("policy_number").notNull(),
   claimantName: varchar("claimant_name").notNull(),
   claimantEmail: varchar("claimant_email"),
   claimantPhone: varchar("claimant_phone"),

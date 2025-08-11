@@ -11,14 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertTriangle, Search, Plus, Shield } from "lucide-react";
+import { AlertTriangle, Search, Plus, Shield, Upload, X, FileText, Image } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 // Form schema for new claims
 const claimFormSchema = z.object({
-  policyId: z.string().optional(),
+  policyNumber: z.string().min(1, "Policy/Contract number is required"),
   claimantName: z.string().min(1, "Claimant name is required"),
   claimantEmail: z.string().email("Valid email is required"),
   claimantPhone: z.string().optional(),
@@ -42,6 +42,7 @@ export default function Claims() {
   const form = useForm<z.infer<typeof claimFormSchema>>({
     resolver: zodResolver(claimFormSchema),
     defaultValues: {
+      policyNumber: "",
       claimantName: "",
       claimantEmail: "",
       claimantPhone: "",
@@ -52,6 +53,8 @@ export default function Claims() {
     },
   });
 
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   const createClaimMutation = useMutation({
     mutationFn: async (claimData: z.infer<typeof claimFormSchema>) => {
       // Convert form data to API format
@@ -59,6 +62,11 @@ export default function Claims() {
         ...claimData,
         dateOfLoss: new Date(claimData.dateOfLoss),
         estimatedAmount: claimData.estimatedAmount ? parseFloat(claimData.estimatedAmount) : undefined,
+        documents: uploadedFiles.map(file => ({
+          name: file.name,
+          type: file.type,
+          size: file.size
+        }))
       };
       return apiRequest("/api/claims", "POST", apiData);
     },
@@ -66,6 +74,7 @@ export default function Claims() {
       queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
       setShowNewClaimModal(false);
       form.reset();
+      setUploadedFiles([]);
       toast({
         title: "Claim Created",
         description: "New claim has been successfully filed",
@@ -82,6 +91,34 @@ export default function Claims() {
 
   const onSubmit = (data: z.infer<typeof claimFormSchema>) => {
     createClaimMutation.mutate(data);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('text/');
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+      return isValidType && isValidSize;
+    });
+    
+    setUploadedFiles(prev => [...prev, ...validFiles]);
+    
+    if (validFiles.length !== files.length) {
+      toast({
+        title: "Some files were skipped",
+        description: "Only images, PDFs, and text files under 10MB are allowed",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) return <Image className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" />;
   };
 
   const filteredClaims = Array.isArray(claims) ? claims.filter((claim: any) =>
@@ -258,6 +295,19 @@ export default function Claims() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
+                  name="policyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Policy/Contract Number *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter policy or contract number" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
                   name="claimantName"
                   render={({ field }) => (
                     <FormItem>
@@ -363,6 +413,69 @@ export default function Claims() {
                   </FormItem>
                 )}
               />
+
+              {/* File Upload Section */}
+              <div className="space-y-4">
+                <div>
+                  <FormLabel>Documents & Photos</FormLabel>
+                  <p className="text-sm text-gray-500">Upload relevant documents, photos, or receipts (max 10MB each)</p>
+                </div>
+                
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="text-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="mt-4">
+                      <label htmlFor="file-upload" className="cursor-pointer">
+                        <span className="mt-2 block text-sm font-medium text-gray-900">
+                          Drop files here or click to upload
+                        </span>
+                        <span className="mt-1 block text-xs text-gray-500">
+                          PNG, JPG, PDF up to 10MB each
+                        </span>
+                      </label>
+                      <input
+                        id="file-upload"
+                        name="file-upload"
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.txt"
+                        className="sr-only"
+                        onChange={handleFileUpload}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Uploaded Files List */}
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <FormLabel>Uploaded Files ({uploadedFiles.length})</FormLabel>
+                    <div className="space-y-2">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            {getFileIcon(file)}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <div className="flex justify-end space-x-3">
                 <Button 
