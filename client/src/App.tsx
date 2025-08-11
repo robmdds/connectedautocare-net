@@ -12,6 +12,16 @@ import Claims from "@/pages/Claims";
 import Analytics from "@/pages/Analytics";
 import Admin from "@/pages/Admin";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminRateTables from "@/pages/AdminRateTables";
+import AdminCoverageOptions from "@/pages/AdminCoverageOptions";
+import AdminTenants from "@/pages/AdminTenants";
+import AdminResellers from "@/pages/AdminResellers";
+import AdminPaymentSettings from "@/pages/AdminPaymentSettings";
+import AdminApiIntegrations from "@/pages/AdminApiIntegrations";
+import AdminSystemLogs from "@/pages/AdminSystemLogs";
+import AdminAiModels from "@/pages/AdminAiModels";
+import AdminTrainingData from "@/pages/AdminTrainingData";
+import AdminResponseTemplates from "@/pages/AdminResponseTemplates";
 import HeroVscProducts from "@/pages/HeroVscProducts";
 import ConnectedAutoCarePage from "@/pages/ConnectedAutoCarePage";
 
@@ -36,6 +46,16 @@ function Router() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/rate-tables" component={AdminRateTables} />
+          <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
+          <Route path="/admin/tenants" component={AdminTenants} />
+          <Route path="/admin/resellers" component={AdminResellers} />
+          <Route path="/admin/payment-settings" component={AdminPaymentSettings} />
+          <Route path="/admin/api-integrations" component={AdminApiIntegrations} />
+          <Route path="/admin/system-logs" component={AdminSystemLogs} />
+          <Route path="/admin/ai-models" component={AdminAiModels} />
+          <Route path="/admin/training-data" component={AdminTrainingData} />
+          <Route path="/admin/response-templates" component={AdminResponseTemplates} />
         </>
       )}
       <Route component={NotFound} />
