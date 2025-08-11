@@ -6,25 +6,14 @@ export class VinDecodeService {
     }
 
     try {
-      // Primary: Use VIN structure parsing for accurate year detection
-      const basicParse = this.parseVinBasic(vin);
-      
-      // Secondary: Try to enhance with NHTSA data but keep the year from VIN parsing
-      try {
-        const nhtsa = await this.decodeVinNHTSA(vin);
-        if (nhtsa.success && nhtsa.data) {
-          // Use NHTSA data for make/model but keep VIN-parsed year
-          return {
-            ...nhtsa.data,
-            year: basicParse.year, // Always use VIN-parsed year
-            source: 'NHTSA + VIN Parse'
-          };
-        }
-      } catch (nhtsaError) {
-        console.log('NHTSA enhancement failed, using basic VIN parse only');
+      // Primary: Try NHTSA API first - most reliable
+      const nhtsa = await this.decodeVinNHTSA(vin);
+      if (nhtsa.success && nhtsa.data && nhtsa.data.year) {
+        return nhtsa.data;
       }
 
-      return basicParse;
+      // Fallback: Enhanced VIN structure parsing
+      return this.parseVinBasic(vin);
     } catch (error) {
       console.error('VIN decode error:', error);
       throw new Error('Failed to decode VIN');
@@ -33,11 +22,13 @@ export class VinDecodeService {
 
   private async decodeVinNHTSA(vin: string): Promise<{ success: boolean; data?: any }> {
     try {
+      console.log(`NHTSA API request for VIN: ${vin}`);
       const response = await fetch(
         `https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`
       );
       
       if (!response.ok) {
+        console.log(`NHTSA API response not ok: ${response.status}`);
         return { success: false };
       }
 
@@ -45,29 +36,42 @@ export class VinDecodeService {
       
       if (data.Results && data.Results.length > 0) {
         const results = data.Results.reduce((acc: any, item: any) => {
-          if (item.Value && item.Value !== 'Not Applicable' && item.Value !== '') {
+          if (item.Value && item.Value !== 'Not Applicable' && item.Value !== '' && item.Value !== null) {
             acc[item.Variable] = item.Value;
           }
           return acc;
         }, {});
 
-        return {
-          success: true,
-          data: {
-            vin,
-            make: results.Make || 'Unknown',
-            model: results.Model || 'Unknown',
-            year: results.ModelYear ? parseInt(results.ModelYear) : new Date().getFullYear(),
-            bodyStyle: results.BodyClass || 'Unknown',
-            engine: results.EngineModel || 'Unknown',
-            fuelType: results.FuelTypePrimary || 'Gasoline',
-            transmission: results.TransmissionStyle || 'Unknown',
-            driveType: results.DriveType || 'Unknown',
-            source: 'NHTSA'
-          }
-        };
+        console.log('NHTSA decoded data:', {
+          Make: results.Make,
+          Model: results.Model,
+          ModelYear: results.ModelYear,
+          BodyClass: results.BodyClass
+        });
+
+        // Only consider it successful if we have critical data
+        if (results.Make || results.Model || results.ModelYear) {
+          const year = results.ModelYear ? parseInt(results.ModelYear) : null;
+          
+          return {
+            success: true,
+            data: {
+              vin,
+              make: results.Make || 'Unknown',
+              model: results.Model || 'Unknown', 
+              year: year,
+              bodyStyle: results.BodyClass || 'Unknown',
+              engine: results.EngineModel || 'Unknown',
+              fuelType: results.FuelTypePrimary || 'Gasoline',
+              transmission: results.TransmissionStyle || 'Unknown',
+              driveType: results.DriveType || 'Unknown',
+              source: 'NHTSA'
+            }
+          };
+        }
       }
 
+      console.log('NHTSA API: No useful data returned');
       return { success: false };
     } catch (error) {
       console.error('NHTSA API error:', error);
@@ -103,17 +107,15 @@ export class VinDecodeService {
         // Letters can be 1980s or 2010s - use context to decide
         const currentYear = new Date().getFullYear();
         
-        // For testing purposes, let's examine the VIN structure
-        // Most modern vehicles (2010+) have different WMI patterns
-        const wmi = vin.substring(0, 3);
+        // For ambiguous letters, choose the most recent valid year
+        // Modern VINs are more likely to be 2010+ than 1980s vehicles still in use
+        const validYears = possibleYears.filter(y => y <= currentYear);
         
-        // If both years are valid, prefer the older one for reliability
-        // as most vehicles in use are older rather than future models
-        year = possibleYears.find(y => y <= currentYear) || possibleYears[0];
-        
-        // For letters A-K, if we're past 2010, default to the older year
-        if (currentYear >= 2010) {
-          year = possibleYears[0]; // Choose 1980s era
+        if (validYears.length > 0) {
+          // Choose the most recent valid year (2010s over 1980s/1990s)
+          year = Math.max(...validYears);
+        } else {
+          year = possibleYears[0];
         }
       }
     }
