@@ -22,7 +22,7 @@ const claimFormSchema = z.object({
   claimantName: z.string().min(1, "Claimant name is required"),
   claimantEmail: z.string().email("Valid email is required"),
   claimantPhone: z.string().optional(),
-  type: z.enum(["collision", "comprehensive", "liability", "theft", "vandalism", "weather", "fire", "other"]),
+  type: z.enum(["mechanical_breakdown", "deductible_reimbursement", "tire_wheel", "key_replacement", "theft", "ding_dent"]),
   dateOfLoss: z.string().min(1, "Date of loss is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   estimatedAmount: z.string().optional(),
@@ -45,7 +45,7 @@ export default function Claims() {
       claimantName: "",
       claimantEmail: "",
       claimantPhone: "",
-      type: "other",
+      type: "mechanical_breakdown",
       dateOfLoss: "",
       description: "",
       estimatedAmount: "",
@@ -60,10 +60,7 @@ export default function Claims() {
         dateOfLoss: new Date(claimData.dateOfLoss),
         estimatedAmount: claimData.estimatedAmount ? parseFloat(claimData.estimatedAmount) : undefined,
       };
-      return apiRequest("/api/claims", {
-        method: "POST",
-        body: JSON.stringify(apiData),
-      });
+      return apiRequest("/api/claims", "POST", apiData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
@@ -87,18 +84,21 @@ export default function Claims() {
     createClaimMutation.mutate(data);
   };
 
-  const filteredClaims = claims?.filter((claim: any) =>
+  const filteredClaims = Array.isArray(claims) ? claims.filter((claim: any) =>
     claim.claimNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     claim.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'submitted': return 'default';
-      case 'under_review': return 'secondary';
+      case 'open': return 'default';
+      case 'review': return 'secondary';
+      case 'awaiting_docs': return 'secondary';
+      case 'estimate': return 'secondary';
+      case 'decision': return 'secondary';
       case 'approved': return 'default';
       case 'denied': return 'destructive';
-      case 'settled': return 'default';
+      case 'payout': return 'default';
       case 'closed': return 'outline';
       default: return 'outline';
     }
@@ -308,14 +308,12 @@ export default function Claims() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="collision">Collision</SelectItem>
-                          <SelectItem value="comprehensive">Comprehensive</SelectItem>
-                          <SelectItem value="liability">Liability</SelectItem>
+                          <SelectItem value="mechanical_breakdown">Mechanical Breakdown</SelectItem>
+                          <SelectItem value="deductible_reimbursement">Deductible Reimbursement</SelectItem>
+                          <SelectItem value="tire_wheel">Tire & Wheel</SelectItem>
+                          <SelectItem value="key_replacement">Key Replacement</SelectItem>
                           <SelectItem value="theft">Theft</SelectItem>
-                          <SelectItem value="vandalism">Vandalism</SelectItem>
-                          <SelectItem value="weather">Weather Damage</SelectItem>
-                          <SelectItem value="fire">Fire</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="ding_dent">Ding & Dent</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>

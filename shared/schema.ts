@@ -172,7 +172,7 @@ export const claimStatusEnum = pgEnum("claim_status", [
 ]);
 
 export const claimTypeEnum = pgEnum("claim_type", [
-  "collision", "comprehensive", "liability", "theft", "vandalism", "weather", "fire", "other"
+  "mechanical_breakdown", "deductible_reimbursement", "tire_wheel", "key_replacement", "theft", "ding_dent"
 ]);
 
 export const claims = pgTable("claims", {
