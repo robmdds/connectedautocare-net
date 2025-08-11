@@ -540,50 +540,65 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                               Share
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-md">
+                          <DialogContent className="max-w-lg">
                             <DialogHeader>
                               <DialogTitle>Share Quote</DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="p-3 bg-gray-50 rounded-lg">
-                                <p className="font-semibold">{config.name}</p>
-                                <p className="text-sm text-gray-600">${quote.totalPremium.toLocaleString()} • {quote.termLength}</p>
+                            <div className="space-y-6">
+                              <div className="p-4 bg-gray-50 rounded-lg">
+                                <p className="font-semibold text-lg">{config.name}</p>
+                                <p className="text-gray-600">${quote.totalPremium.toLocaleString()} • {quote.termLength}</p>
                               </div>
                               
-                              <div className="space-y-3">
+                              <div className="space-y-4">
                                 {/* Email Share */}
-                                <div className="flex items-center gap-3">
-                                  <Mail className="h-4 w-4 text-gray-500" />
-                                  <div className="flex-1">
-                                    <Input placeholder="Enter email address" className="h-8 text-sm" />
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4 text-gray-600" />
+                                    <Label className="text-sm font-medium">Share via Email</Label>
                                   </div>
-                                  <Button size="sm" variant="outline">Send</Button>
+                                  <div className="flex gap-2">
+                                    <Input placeholder="Enter email address" className="flex-1" />
+                                    <Button size="sm">Send</Button>
+                                  </div>
                                 </div>
 
                                 {/* Link Share */}
-                                <div className="flex items-center gap-3">
-                                  <Link className="h-4 w-4 text-gray-500" />
-                                  <div className="flex-1 p-2 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate">
-                                    {window.location.origin}/quote/{quote.id}
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Link className="h-4 w-4 text-gray-600" />
+                                    <Label className="text-sm font-medium">Share Link</Label>
                                   </div>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(`${window.location.origin}/quote/${quote.id}`);
-                                    }}
-                                  >
-                                    Copy
-                                  </Button>
+                                  <div className="flex gap-2">
+                                    <div className="flex-1 p-2 bg-gray-50 rounded text-sm font-mono text-gray-700 truncate border">
+                                      {window.location.origin}/quote/{quote.id}
+                                    </div>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(`${window.location.origin}/quote/${quote.id}`);
+                                        toast({
+                                          title: "Link Copied",
+                                          description: "Quote link copied to clipboard"
+                                        });
+                                      }}
+                                    >
+                                      Copy
+                                    </Button>
+                                  </div>
                                 </div>
 
                                 {/* SMS Share */}
-                                <div className="flex items-center gap-3">
-                                  <MessageSquare className="h-4 w-4 text-gray-500" />
-                                  <div className="flex-1">
-                                    <Input placeholder="Enter phone number" className="h-8 text-sm" />
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4 text-gray-600" />
+                                    <Label className="text-sm font-medium">Share via Text</Label>
                                   </div>
-                                  <Button size="sm" variant="outline">Text</Button>
+                                  <div className="flex gap-2">
+                                    <Input placeholder="Enter phone number" className="flex-1" />
+                                    <Button size="sm">Text</Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>

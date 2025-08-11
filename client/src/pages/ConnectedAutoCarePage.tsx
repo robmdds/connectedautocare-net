@@ -57,9 +57,6 @@ export default function ConnectedAutoCarePage() {
                 <p className="text-green-700">
                   Total Premium: <span className="font-bold">${selectedQuote.totalPremium.toLocaleString()}</span>
                 </p>
-                <p className="text-green-700">
-                  Monthly Payment: <span className="font-bold">${selectedQuote.monthlyPremium}/month</span>
-                </p>
                 <p className="text-sm text-green-600 mt-2">
                   {selectedQuote.termLength} • {selectedQuote.coverageMiles} miles • ${selectedQuote.deductible} deductible
                 </p>
