@@ -41,7 +41,7 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
   // Auto-decode VIN when entered
   useEffect(() => {
     const decodeVin = async () => {
-      if (vin && vin.length === 17 && !isLoadingVin) {
+      if (vin && vin.length === 17) {
         setIsLoadingVin(true);
         try {
           const response = await fetch(`/api/vin-decode/${vin}`);
@@ -49,48 +49,90 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
           setVehicleInfo(data.vehicle || data);
         } catch (error) {
           console.error('VIN decode error:', error);
+          setVehicleInfo(null);
         } finally {
           setIsLoadingVin(false);
         }
+      } else if (vin.length < 17) {
+        setVehicleInfo(null);
+        setIsLoadingVin(false);
       }
     };
 
-    const timeoutId = setTimeout(decodeVin, 500); // Debounce VIN input
+    const timeoutId = setTimeout(decodeVin, 800); // Debounce VIN input
     return () => clearTimeout(timeoutId);
-  }, [vin, isLoadingVin]);
+  }, [vin]); // Remove isLoadingVin from dependencies to prevent infinite loop
 
   const generateQuotesMutation = useMutation({
     mutationFn: async () => {
-      if (!vehicleInfo) {
-        throw new Error('Please enter a valid VIN first');
+      console.log('Starting quote generation with:', { vin, mileage, vehicleInfo });
+      
+      if (!vin || vin.length !== 17) {
+        throw new Error('Please enter a valid 17-character VIN');
+      }
+
+      // First ensure we have vehicle info
+      let currentVehicleInfo = vehicleInfo;
+      if (!currentVehicleInfo) {
+        console.log('Fetching vehicle info first...');
+        const vehicleResponse = await fetch(`/api/vin-decode/${vin}`);
+        const vehicleData = await vehicleResponse.json();
+        currentVehicleInfo = vehicleData.vehicle || vehicleData;
+        setVehicleInfo(currentVehicleInfo);
       }
 
       // Generate quotes for all three products
       const products = ['ELEVATE_PLATINUM', 'ELEVATE_GOLD', 'PINNACLE_SILVER'];
-      const quotePromises = products.map(async (productId) => {
-        const response = await fetch('/api/connected-auto-care/quotes', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            vin,
-            mileage: parseInt(mileage),
-            productId,
-            termLength,
-            coverageMiles
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to generate quote for ${productId}`);
-        }
-        
-        const data = await response.json();
-        return data.quote;
-      });
+      const allQuotes = [];
 
-      const allQuotes = await Promise.all(quotePromises);
+      for (const productId of products) {
+        try {
+          console.log(`Generating quote for ${productId}...`);
+          const response = await fetch('/api/connected-auto-care/quotes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              vin,
+              mileage: parseInt(mileage),
+              productId,
+              termLength,
+              coverageMiles
+            }),
+          });
+          
+          const responseText = await response.text();
+          console.log(`Response for ${productId}:`, responseText);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to generate quote for ${productId}: ${responseText}`);
+          }
+          
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            throw new Error(`Invalid JSON response for ${productId}: ${responseText}`);
+          }
+          
+          if (data.quote) {
+            allQuotes.push({
+              ...data.quote,
+              id: `${productId}_${Date.now()}`,
+              productId
+            });
+          }
+        } catch (error) {
+          console.error(`Error generating quote for ${productId}:`, error);
+          // Continue with other products instead of failing completely
+        }
+      }
+
+      if (allQuotes.length === 0) {
+        throw new Error('Unable to generate any quotes. Please check vehicle eligibility.');
+      }
+
       return allQuotes;
     },
     onSuccess: (data) => {
