@@ -362,15 +362,28 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                 <CardContent className="space-y-4">
                   {/* Price Display */}
                   <div className="text-center py-4 bg-gray-50 rounded-lg">
-                    <div className="text-3xl font-bold text-gray-900">
-                      ${quote.totalPremium.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      ${quote.monthlyPremium}/month • {quote.termLength}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {quote.coverageMiles} miles • ${quote.deductible} deductible
-                    </div>
+                    {quote.totalPremium > 0 ? (
+                      <>
+                        <div className="text-3xl font-bold text-gray-900">
+                          ${quote.totalPremium.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Total Premium • {quote.termLength}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {quote.coverageMiles} miles • ${quote.deductible} deductible
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-gray-500">
+                          Not Available
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          This configuration is not eligible
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Key Features */}
@@ -386,11 +399,12 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                   {/* Select Button */}
                   <Button
                     onClick={() => onQuoteSelect?.(quote)}
-                    className={`w-full ${config.color} hover:opacity-90`}
+                    disabled={quote.totalPremium <= 0}
+                    className={`w-full ${quote.totalPremium > 0 ? config.color + ' hover:opacity-90' : 'bg-gray-400'}`}
                     size="lg"
                   >
                     <Clock className="h-4 w-4 mr-2" />
-                    Select Coverage
+                    {quote.totalPremium > 0 ? 'Select Coverage' : 'Not Available'}
                   </Button>
 
                   {/* Coverage Details Link */}

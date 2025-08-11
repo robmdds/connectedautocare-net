@@ -711,7 +711,14 @@ export class ConnectedAutoCareRatingService {
     }
 
     // STRICT: Check vehicle class (INELIGIBLE means excluded make/model)
-    const vehicleClass = this.determineVehicleClass(vehicleData.make, vehicleData.model);
+    // Use vehicle class from coverage selections if provided, otherwise determine it
+    let vehicleClass = 'A'; // default
+    if (coverageSelections.vehicleClass) {
+      vehicleClass = coverageSelections.vehicleClass.replace('Class ', ''); // Convert "Class A" to "A"
+    } else {
+      vehicleClass = this.determineVehicleClass(vehicleData.make, vehicleData.model);
+    }
+    
     if (vehicleClass === 'INELIGIBLE') {
       isEligible = false;
       allowSpecialQuote = false; // Excluded vehicles cannot be special quoted
@@ -740,7 +747,7 @@ export class ConnectedAutoCareRatingService {
     const productId = 'ELEVATE_PLATINUM'; // Default for now
     const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
     const termMonths = (coverageSelections.termLength || '36 months').replace(' months', '');
-    const coverageMiles = (coverageSelections.coverageMiles || '75000').replace(/,/g, '').toLowerCase();
+    const coverageMiles = (coverageSelections.coverageMiles || '45000').replace(/,/g, '').toLowerCase();
     const mileageBracket = this.getMileageBracket(currentMileage);
 
     // Check if rate table exists for this product and class
