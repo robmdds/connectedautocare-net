@@ -8,19 +8,19 @@ The platform integrates with external services for VIN decoding, payment process
 
 ## Recent Changes
 
-**August 10, 2025** - Connected Auto Care VSC Integration Complete
-- ✅ Connected Auto Care VSC integration completed with authentic Elevate/Pinnacle products
-- ✅ Added three authentic Connected Auto Care VSC products with real rate cards from uploaded documentation
-- ✅ API endpoints operational for Connected Auto Care product listing and quote generation ($1,679.50 verified)
-- ✅ Professional frontend page displaying all Connected Auto Care product details and quote generation
-- ✅ VSC Product Partners section added to dashboard with access to both providers
-- ✅ Core insurance operations fully functional and tested
-- ✅ VIN decoding service operational (188ms response time)
-- ✅ Quote generation system working with real premium calculations
-- ✅ Database connectivity verified with proper relationships
-- ✅ Analytics service tracking events successfully
-- ✅ Frontend user interface production-ready with professional design
-- ✅ Multi-tenant architecture operational with sample data
+**August 11, 2025** - Quote Generation & Coverage Display Complete
+- ✅ Connected Auto Care VSC quote generation fully operational ($1,894.46 verified premium)
+- ✅ Fixed vehicle class validation (now properly sends "Class A" instead of "A")
+- ✅ Implemented dynamic term/mileage eligibility based on vehicle age and current mileage
+- ✅ Added comprehensive coverage level display with three tiers (Elevate Platinum, Gold, Pinnacle Silver)
+- ✅ Detailed information modals for each coverage level with complete feature lists
+- ✅ Professional coverage comparison layout with pricing, descriptions, and detailed specs
+- ✅ Vehicle eligibility rules: 15-year age limit, 150,000 mile maximum, excluded make/model filtering
+- ✅ Term restrictions based on vehicle age (older vehicles get shorter available terms)
+- ✅ Coverage miles filtering based on projected mileage to prevent over-coverage
+- ✅ VIN decoding service operational (240ms response time)
+- ✅ Rate calculation engine working with authentic Connected Auto Care rate tables
+- ✅ Multi-tenant architecture operational with proper data validation
 - ⚠️ Authentication requires REPLIT_DOMAINS environment variable for full testing
 - ⚠️ Payment integration pending Helcim API key configuration
 

@@ -100,6 +100,18 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
         try {
           console.log(`Generating quote for ${productId}...`);
           
+          // Determine vehicle class based on make (Subaru = Class A)
+          const getVehicleClass = (make: string) => {
+            const classAMakes = ['Honda', 'Hyundai', 'Isuzu', 'Kia', 'Mazda', 'Mitsubishi', 'Scion', 'Subaru', 'Toyota', 'Lexus', 'Nissan', 'Infiniti'];
+            const classBMakes = ['Acura', 'Buick', 'Chevrolet', 'Chrysler', 'Dodge', 'Plymouth', 'Fiat', 'Ford', 'GMC', 'Jeep', 'Mercury', 'Mini', 'Oldsmobile', 'Pontiac', 'VW', 'Volvo'];
+            
+            if (classAMakes.includes(make)) return 'Class A';
+            if (classBMakes.includes(make)) return 'Class B';
+            return 'Class C';
+          };
+          
+          const vehicleClass = getVehicleClass(currentVehicleInfo?.make || 'Unknown');
+          
           // Prepare coverage selections in the format expected by backend
           const coverageSelections = {
             termLength: termLength,
@@ -108,9 +120,9 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
             coverageMiles: coverageMiles,
             coveragemiles: coverageMiles, // fallback
             miles: coverageMiles, // another fallback
-            vehicleClass: 'A', // Default vehicle class for now
-            vehicleclass: 'A', // fallback
-            class: 'A' // another fallback
+            vehicleClass: vehicleClass,
+            vehicleclass: vehicleClass, // fallback
+            class: vehicleClass // another fallback
           };
           
           console.log('Coverage selections:', coverageSelections);
@@ -123,7 +135,10 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
             body: JSON.stringify({
               productId,
               coverageSelections,
-              vehicleData: currentVehicleInfo,
+              vehicleData: {
+                ...currentVehicleInfo,
+                mileage: parseInt(mileage) || 0 // Include current mileage for eligibility
+              },
               customerData: {
                 state: 'TX', // Default state for now
                 zipCode: '75001' // Default zip code for now
@@ -513,17 +528,160 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
         </DialogContent>
       </Dialog>
 
-      {/* No Quotes Message */}
-      {quotes.length === 0 && !generateQuotesMutation.isPending && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Get Quotes</h3>
-            <p className="text-gray-600">
-              Enter your vehicle information above and click "Get Quotes" to see all available VSC options.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Coverage Options Overview - Always Visible */}
+      {quotes.length === 0 && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Available Coverage Levels</CardTitle>
+              <p className="text-gray-600">Choose from three tiers of Connected Auto Care VSC protection</p>
+            </CardHeader>
+          </Card>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {[
+              {
+                id: 'ELEVATE_PLATINUM',
+                name: 'Elevate Platinum',
+                tier: 'Premium',
+                color: 'bg-purple-600',
+                price: 'Starting at $1,679',
+                features: ['Comprehensive Coverage', 'Rental Car Benefits', '24/7 Roadside Assistance', 'Trip Interruption'],
+                detailedFeatures: [
+                  'Engine & Engine Components', 'Transmission & Transaxle', 'Drive Axle Assembly',
+                  'Electrical Components', 'A/C & Heating', 'Fuel System', 'Cooling System',
+                  'Brake System', 'Suspension & Steering', 'Seals & Gaskets Coverage'
+                ],
+                description: 'Most comprehensive protection with extensive component coverage and premium benefits.'
+              },
+              {
+                id: 'ELEVATE_GOLD',
+                name: 'Elevate Gold',
+                tier: 'Popular',
+                color: 'bg-yellow-600',
+                price: 'Starting at $1,299',
+                features: ['Extended Coverage', 'Roadside Assistance', 'Towing Benefits', 'Parts & Labor'],
+                detailedFeatures: [
+                  'Engine & Major Components', 'Transmission', 'Drive Axle',
+                  'Electrical System', 'A/C System', 'Fuel System', 'Cooling System',
+                  'Brake System', 'Power Steering'
+                ],
+                description: 'Popular choice with solid coverage of major vehicle systems and roadside assistance.'
+              },
+              {
+                id: 'PINNACLE_SILVER',
+                name: 'Pinnacle Silver',
+                tier: 'Value',
+                color: 'bg-gray-600',
+                price: 'Starting at $899',
+                features: ['Essential Coverage', 'Major Components', 'Engine & Transmission', 'Basic Protection'],
+                detailedFeatures: [
+                  'Engine Block & Internal Parts', 'Transmission Case & Internal Parts',
+                  'Drive Axle Assembly', 'Electrical System', 'A/C Compressor',
+                  'Fuel Pump', 'Water Pump', 'Master Cylinder'
+                ],
+                description: 'Essential protection for key powertrain components at an affordable price.'
+              }
+            ].map((level) => (
+              <Card key={level.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+                <div className={`absolute top-0 left-0 right-0 h-1 ${level.color}`} />
+                
+                {level.tier === 'Popular' && (
+                  <div className="absolute -top-2 right-4">
+                    <Badge className="bg-yellow-500 text-yellow-50 text-xs">
+                      Most Popular
+                    </Badge>
+                  </div>
+                )}
+
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`p-2 rounded-lg ${level.color} text-white`}>
+                        {level.id === 'ELEVATE_PLATINUM' ? <Shield className="h-5 w-5" /> :
+                         level.id === 'ELEVATE_GOLD' ? <Zap className="h-5 w-5" /> :
+                         <Car className="h-5 w-5" />}
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{level.name}</CardTitle>
+                        <p className="text-sm text-gray-600">{level.tier}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">{level.price}</div>
+                  <p className="text-sm text-gray-600">{level.description}</p>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2 text-sm">Key Features:</h4>
+                    <ul className="text-sm space-y-1">
+                      {level.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Info className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{level.name} - Detailed Coverage</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold mb-2">Coverage Details</h4>
+                            <ul className="text-sm space-y-1">
+                              {level.detailedFeatures.map((feature, idx) => (
+                                <li key={idx} className="flex items-start gap-2">
+                                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Contract Information</h4>
+                            <div className="text-sm space-y-2">
+                              <p><strong>Administrator:</strong> Ascent Administration Services</p>
+                              <p><strong>Phone:</strong> 866-660-7003</p>
+                              <p><strong>Deductible:</strong> $0 at selling dealer, $100 elsewhere</p>
+                              <p><strong>Labor Rate:</strong> $150/hour maximum</p>
+                              <p><strong>Roadside:</strong> 877-626-0880</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <Card>
+            <CardContent className="text-center py-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Get Your Personalized Quotes</h3>
+              <p className="text-gray-600 mb-4">
+                Enter your vehicle information above and click "Get Quotes" to see exact pricing for your vehicle.
+              </p>
+              <p className="text-sm text-gray-500">
+                • Quotes based on your specific vehicle year, make, model, and mileage<br/>
+                • Terms and coverage miles adjusted for your vehicle's eligibility<br/>
+                • Instant pricing with no hidden fees
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
