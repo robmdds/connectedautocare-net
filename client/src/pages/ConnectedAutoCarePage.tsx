@@ -53,9 +53,27 @@ export default function ConnectedAutoCarePage() {
     },
     onSuccess: (data) => {
       setCoverageOptions(data.coverageOptions);
+      
+      // Clear invalid selections when new options are loaded
+      setQuoteForm(prev => {
+        const updatedForm = { ...prev };
+        
+        // Clear term length if current selection is not in valid options
+        if (prev.termLength && !data.coverageOptions.validTermLengths.includes(prev.termLength)) {
+          updatedForm.termLength = '';
+        }
+        
+        // Clear coverage miles if current selection is not in valid options
+        if (prev.coverageMiles && !data.coverageOptions.validCoverageMiles.includes(prev.coverageMiles)) {
+          updatedForm.coverageMiles = '';
+        }
+        
+        return updatedForm;
+      });
+      
       if (data.coverageOptions.reasons && data.coverageOptions.reasons.length > 0) {
         toast({
-          title: "Coverage Options Limited",
+          title: "Coverage Options Updated",
           description: data.coverageOptions.reasons.join('. '),
           variant: "default",
         });
@@ -264,11 +282,40 @@ export default function ConnectedAutoCarePage() {
 
   // Handle quote generation with form data
   const handleGenerateQuote = async (productId: string) => {
+    // Check if coverage options are loaded and valid
+    if (!coverageOptions) {
+      toast({
+        title: "Coverage Options Not Loaded",
+        description: "Please wait for coverage options to load or check vehicle information",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate required fields
     if (!quoteForm.termLength || !quoteForm.coverageMiles || !quoteForm.vehicleClass) {
       toast({
         title: "Missing Information",
         description: "Please select term length, coverage miles, and vehicle class",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate that selected options are valid for this vehicle
+    if (!coverageOptions.validTermLengths.includes(quoteForm.termLength)) {
+      toast({
+        title: "Invalid Term Length",
+        description: "Selected term length is not available for this vehicle. Please choose from available options.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!coverageOptions.validCoverageMiles.includes(quoteForm.coverageMiles)) {
+      toast({
+        title: "Invalid Coverage Miles",
+        description: "Selected coverage miles is not available for this vehicle. Please choose from available options.",
         variant: "destructive",
       });
       return;
@@ -482,7 +529,17 @@ export default function ConnectedAutoCarePage() {
                     </Button>
                     <Button
                       onClick={() => handleGenerateQuote(key)}
-                      disabled={generateQuoteMutation.isPending}
+                      disabled={
+                        generateQuoteMutation.isPending || 
+                        !coverageOptions ||
+                        coverageOptions.validTermLengths.length === 0 ||
+                        coverageOptions.validCoverageMiles.length === 0 ||
+                        !quoteForm.termLength ||
+                        !quoteForm.coverageMiles ||
+                        !quoteForm.vehicleClass ||
+                        !coverageOptions.validTermLengths.includes(quoteForm.termLength) ||
+                        !coverageOptions.validCoverageMiles.includes(quoteForm.coverageMiles)
+                      }
                       variant="default"
                     >
                       {generateQuoteMutation.isPending ? 'Generating...' : 'Get Quote'}
@@ -788,7 +845,17 @@ export default function ConnectedAutoCarePage() {
           {selectedProduct && (
             <Button 
               onClick={() => handleGenerateQuote(selectedProduct)}
-              disabled={generateQuoteMutation.isPending}
+              disabled={
+                generateQuoteMutation.isPending || 
+                !coverageOptions ||
+                coverageOptions.validTermLengths.length === 0 ||
+                coverageOptions.validCoverageMiles.length === 0 ||
+                !quoteForm.termLength ||
+                !quoteForm.coverageMiles ||
+                !quoteForm.vehicleClass ||
+                !coverageOptions.validTermLengths.includes(quoteForm.termLength) ||
+                !coverageOptions.validCoverageMiles.includes(quoteForm.coverageMiles)
+              }
               className="w-full mb-4"
               size="lg"
             >
