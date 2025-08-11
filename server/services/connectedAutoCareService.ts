@@ -678,16 +678,25 @@ export class ConnectedAutoCareRatingService {
     let isEligible = true;
     let allowSpecialQuote = false;
 
-    // Check vehicle age (must be 20 years or newer)
+    // STRICT: Check vehicle age (must be 15 years or newer - NO EXCEPTIONS)
     const currentYear = new Date().getFullYear();
-    const vehicleAge = currentYear - parseInt(vehicleData.year);
-    if (vehicleAge > 20) {
+    const vehicleYear = parseInt(vehicleData.year);
+    
+    // Handle invalid/missing year data
+    if (!vehicleYear || vehicleYear < 1990 || vehicleYear > currentYear + 1) {
       isEligible = false;
       allowSpecialQuote = true;
-      reasons.push(`Vehicle is ${vehicleAge} years old. Maximum age is 20 years.`);
+      reasons.push(`Vehicle year (${vehicleData.year}) is invalid or missing. Valid vehicle identification required.`);
+    } else {
+      const vehicleAge = currentYear - vehicleYear;
+      if (vehicleAge > 15) {
+        isEligible = false;
+        allowSpecialQuote = true;
+        reasons.push(`Vehicle is ${vehicleAge} years old (${vehicleYear}). Maximum age is 15 years.`);
+      }
     }
 
-    // Check mileage limits
+    // STRICT: Check mileage limits (must be 150,000 miles or less)
     const currentMileage = parseInt(vehicleData.mileage || 0);
     if (currentMileage > 150000) {
       isEligible = false;
@@ -695,7 +704,7 @@ export class ConnectedAutoCareRatingService {
       reasons.push(`Vehicle has ${currentMileage.toLocaleString()} miles. Maximum mileage is 150,000 miles.`);
     }
 
-    // Check vehicle class (INELIGIBLE means excluded make/model)
+    // STRICT: Check vehicle class (INELIGIBLE means excluded make/model)
     const vehicleClass = this.determineVehicleClass(vehicleData.make, vehicleData.model);
     if (vehicleClass === 'INELIGIBLE') {
       isEligible = false;
@@ -703,13 +712,13 @@ export class ConnectedAutoCareRatingService {
       reasons.push(`${vehicleData.make} ${vehicleData.model || ''} is not eligible for coverage.`);
     }
 
-    // Check for specific coverage limitations
-    if (isEligible && currentMileage > 125000) {
-      const coverageMiles = coverageSelections.coverageMiles?.replace(',', '') || '';
-      if (['100000', '125000', 'unlimited'].includes(coverageMiles.toLowerCase())) {
+    // STRICT: Verify rate exists in rate table - NO FALLBACK ALLOWED
+    if (isEligible && vehicleClass !== 'INELIGIBLE') {
+      const rateExists = this.verifyRateExists(vehicleClass, coverageSelections, currentMileage);
+      if (!rateExists.hasRate) {
         isEligible = false;
         allowSpecialQuote = true;
-        reasons.push(`Vehicles with over 125,000 miles are limited to lower coverage options.`);
+        reasons.push(rateExists.reason);
       }
     }
 
@@ -718,6 +727,50 @@ export class ConnectedAutoCareRatingService {
       reasons,
       allowSpecialQuote
     };
+  }
+
+  // Verify that an actual rate exists in the rate table for the given parameters
+  verifyRateExists(vehicleClass: string, coverageSelections: any, currentMileage: number): { hasRate: boolean; reason: string } {
+    const productId = 'ELEVATE_PLATINUM'; // Default for now
+    const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
+    const termMonths = (coverageSelections.termLength || '36 months').replace(' months', '');
+    const coverageMiles = (coverageSelections.coverageMiles || '75000').replace(/,/g, '').toLowerCase();
+    const mileageBracket = this.getMileageBracket(currentMileage);
+
+    // Check if rate table exists for this product and class
+    const productRates = CONNECTED_AUTO_CARE_RATES[productId as keyof typeof CONNECTED_AUTO_CARE_RATES];
+    if (!productRates || !productRates[classKey]) {
+      return { 
+        hasRate: false, 
+        reason: `No rate table available for ${vehicleClass} class vehicles` 
+      };
+    }
+
+    const classRates = productRates[classKey];
+    if (!classRates || !classRates[termMonths as keyof typeof classRates]) {
+      return { 
+        hasRate: false, 
+        reason: `${termMonths}-month term not available for ${vehicleClass} class vehicles` 
+      };
+    }
+
+    const termRates = classRates[termMonths as keyof typeof classRates];
+    if (!termRates || !termRates[mileageBracket as keyof typeof termRates]) {
+      return { 
+        hasRate: false, 
+        reason: `No coverage available for vehicles with ${currentMileage.toLocaleString()} miles in ${vehicleClass} class` 
+      };
+    }
+
+    const bracketRates = termRates[mileageBracket as keyof typeof termRates];
+    if (!bracketRates || !bracketRates[coverageMiles as keyof typeof bracketRates] || bracketRates[coverageMiles as keyof typeof bracketRates] === null) {
+      return { 
+        hasRate: false, 
+        reason: `${coverageSelections.coverageMiles} coverage not available for vehicles with ${currentMileage.toLocaleString()} miles` 
+      };
+    }
+
+    return { hasRate: true, reason: '' };
   }
   
   // Determine vehicle class based on make and model
@@ -895,8 +948,8 @@ export class ConnectedAutoCareRatingService {
       const mileageBracket = this.getMileageBracket(currentMileage);
       console.log('Current Mileage:', currentMileage, '-> Mileage Bracket:', mileageBracket);
       
-      // Look up base premium from rate card
-      let basePremium = 1500; // Default fallback
+      // Look up base premium from rate card - NO FALLBACKS ALLOWED
+      let basePremium: number | null = null;
       
       if (productId === 'ELEVATE_PLATINUM' && CONNECTED_AUTO_CARE_RATES.ELEVATE_PLATINUM) {
         const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
@@ -979,6 +1032,25 @@ export class ConnectedAutoCareRatingService {
         } else {
           console.log('SILVER Available term lengths for this class:', Object.keys(classRates || {}));
         }
+      }
+      
+      // STRICT ENFORCEMENT: If no rate found in table, vehicle is ineligible
+      if (basePremium === null) {
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          productId: productId,
+          vehicleData: vehicleData,
+          coverageSelections: coverageSelections,
+          customerData: customerData,
+          basePremium: 0,
+          taxes: 0,
+          fees: 0,
+          totalPremium: 0,
+          status: 'ineligible',
+          eligibilityReasons: [`No rate available for this vehicle configuration: ${vehicleClass} class, ${termMonths} months, ${mileageBracket} mileage, ${coverageMiles} coverage miles`],
+          allowSpecialQuote: true,
+          createdAt: new Date().toISOString()
+        };
       }
       
       // Calculate mandatory surcharges

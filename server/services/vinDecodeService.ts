@@ -65,28 +65,45 @@ export class VinDecodeService {
   }
 
   private parseVinBasic(vin: string): any {
-    // Basic VIN parsing for year estimation
-    const yearChar = vin.charAt(9);
-    const yearCode = yearChar.charCodeAt(0);
-    
+    // Enhanced VIN parsing for accurate year estimation
+    const yearChar = vin.charAt(9).toUpperCase();
     let year = new Date().getFullYear();
-    if (yearCode >= 65 && yearCode <= 90) { // A-Z
-      year = 2010 + (yearCode - 65);
-    } else if (yearCode >= 49 && yearCode <= 57) { // 1-9
-      year = 2001 + (yearCode - 49);
+    
+    // VIN year codes (10th digit)
+    const yearCodes: { [key: string]: number } = {
+      // 1980s
+      'A': 1980, 'B': 1981, 'C': 1982, 'D': 1983, 'E': 1984, 'F': 1985, 'G': 1986, 'H': 1987, 'J': 1988, 'K': 1989,
+      // 1990s
+      'L': 1990, 'M': 1991, 'N': 1992, 'P': 1993, 'R': 1994, 'S': 1995, 'T': 1996, 'V': 1997, 'W': 1998, 'X': 1999,
+      // 2000s
+      'Y': 2000, '1': 2001, '2': 2002, '3': 2003, '4': 2004, '5': 2005, '6': 2006, '7': 2007, '8': 2008, '9': 2009,
+      // 2010s (repeats)
+      // 'A': 2010 would conflict, so we need logic to differentiate
+    };
+    
+    if (yearCodes[yearChar]) {
+      year = yearCodes[yearChar];
+      
+      // Handle the A-K codes that could be 1980s or 2010s
+      if (yearChar >= 'A' && yearChar <= 'K') {
+        const possibleYears = [yearCodes[yearChar], yearCodes[yearChar] + 30];
+        const currentYear = new Date().getFullYear();
+        // Choose the year that makes more sense based on context
+        year = possibleYears.find(y => y <= currentYear && y >= 1980) || possibleYears[0];
+      }
     }
 
     return {
       vin,
       make: 'Unknown',
       model: 'Unknown',
-      year,
+      year: year,
       bodyStyle: 'Unknown',
       engine: 'Unknown',
       fuelType: 'Gasoline',
       transmission: 'Unknown',
       driveType: 'Unknown',
-      source: 'Basic Parser'
+      source: 'Basic VIN Parse'
     };
   }
 }
