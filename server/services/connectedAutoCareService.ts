@@ -3,6 +3,12 @@
  * Handles Elevate and Pinnacle VSC products with authentic rate cards and contract templates
  */
 
+interface CoverageOptions {
+  validTermLengths: string[];
+  validCoverageMiles: string[];
+  reasons?: string[];
+}
+
 // Connected Auto Care VSC Product Definitions from uploaded documentation
 export const CONNECTED_AUTO_CARE_PRODUCTS = {
   ELEVATE_PLATINUM: {
@@ -1212,6 +1218,138 @@ export class ConnectedAutoCareRatingService {
     }
     
     return { isValid: errors.length === 0, errors };
+  }
+
+  // Get valid coverage options based on vehicle data and current mileage
+  getValidCoverageOptions(productId: string, vehicleData: any): CoverageOptions {
+    const product = CONNECTED_AUTO_CARE_PRODUCTS[productId as keyof typeof CONNECTED_AUTO_CARE_PRODUCTS];
+    if (!product) {
+      return { validTermLengths: [], validCoverageMiles: [], reasons: ['Invalid product ID'] };
+    }
+
+    // Check basic eligibility first
+    const currentYear = new Date().getFullYear();
+    const vehicleAge = currentYear - (vehicleData.year || 0);
+    const currentMileage = vehicleData.mileage || 0;
+    
+    // Basic eligibility checks
+    if (vehicleAge > 15) {
+      return { 
+        validTermLengths: [], 
+        validCoverageMiles: [], 
+        reasons: [`Vehicle is ${vehicleAge} years old. Maximum age is 15 years.`] 
+      };
+    }
+    
+    if (currentMileage > 150000) {
+      return { 
+        validTermLengths: [], 
+        validCoverageMiles: [], 
+        reasons: [`Vehicle has ${currentMileage.toLocaleString()} miles. Maximum mileage is 150,000 miles.`] 
+      };
+    }
+
+    // Determine vehicle class
+    const vehicleClass = this.determineVehicleClass(vehicleData.make, vehicleData.model);
+    if (vehicleClass === 'INELIGIBLE') {
+      return { 
+        validTermLengths: [], 
+        validCoverageMiles: [], 
+        reasons: ['Vehicle make/model is not eligible for coverage'] 
+      };
+    }
+
+    // Get rate table for this product
+    let rateTable: any = null;
+    if (productId === 'ELEVATE_PLATINUM') {
+      rateTable = CONNECTED_AUTO_CARE_RATES.ELEVATE_PLATINUM;
+    } else if (productId === 'ELEVATE_GOLD') {
+      rateTable = CONNECTED_AUTO_CARE_RATES.ELEVATE_GOLD;
+    } else if (productId === 'PINNACLE_SILVER') {
+      rateTable = CONNECTED_AUTO_CARE_RATES.PINNACLE_SILVER;
+    }
+
+    if (!rateTable) {
+      return { validTermLengths: [], validCoverageMiles: [], reasons: ['Rate table not available'] };
+    }
+
+    const classKey = `class${vehicleClass}` as 'classA' | 'classB' | 'classC';
+    const classRates = rateTable[classKey];
+    if (!classRates) {
+      return { validTermLengths: [], validCoverageMiles: [], reasons: ['Vehicle class not found in rate table'] };
+    }
+
+    // Get current mileage bracket
+    const mileageBracket = this.getMileageBracket(currentMileage);
+    
+    const validTermLengths: string[] = [];
+    const validCoverageMiles: string[] = [];
+    
+    // Check each term length to see if any coverage options are available
+    Object.keys(classRates).forEach(termKey => {
+      const termRates = classRates[termKey as keyof typeof classRates];
+      if (!termRates || !termRates[mileageBracket as keyof typeof termRates]) {
+        return; // Skip terms not available for this mileage bracket
+      }
+
+      const bracketRates = termRates[mileageBracket as keyof typeof termRates];
+      if (!bracketRates) return;
+
+      // Check if any coverage miles are available for this term/mileage combination
+      const availableCoverageMiles = Object.keys(bracketRates).filter(miles => {
+        const rate = bracketRates[miles as keyof typeof bracketRates];
+        return rate !== null && typeof rate === 'number';
+      });
+
+      if (availableCoverageMiles.length > 0) {
+        // Add term to valid options
+        const termMonths = parseInt(termKey);
+        validTermLengths.push(`${termMonths} months`);
+        
+        // Add coverage miles options (with formatting)
+        availableCoverageMiles.forEach(miles => {
+          if (miles === 'unlimited') {
+            if (!validCoverageMiles.includes('Unlimited')) {
+              validCoverageMiles.push('Unlimited');
+            }
+          } else {
+            const formattedMiles = parseInt(miles).toLocaleString();
+            if (!validCoverageMiles.includes(formattedMiles)) {
+              validCoverageMiles.push(formattedMiles);
+            }
+          }
+        });
+      }
+    });
+
+    // Sort options logically
+    validTermLengths.sort((a, b) => {
+      const aMonths = parseInt(a.replace(' months', ''));
+      const bMonths = parseInt(b.replace(' months', ''));
+      return aMonths - bMonths;
+    });
+
+    validCoverageMiles.sort((a, b) => {
+      if (a === 'Unlimited') return 1;
+      if (b === 'Unlimited') return -1;
+      const aNum = parseInt(a.replace(/,/g, ''));
+      const bNum = parseInt(b.replace(/,/g, ''));
+      return aNum - bNum;
+    });
+
+    const reasons: string[] = [];
+    if (validTermLengths.length === 0) {
+      reasons.push('No valid term lengths available for this vehicle and mileage');
+    }
+    if (validCoverageMiles.length === 0) {
+      reasons.push('No valid coverage miles available for this vehicle and mileage');
+    }
+
+    return {
+      validTermLengths,
+      validCoverageMiles,
+      reasons: reasons.length > 0 ? reasons : undefined
+    };
   }
 }
 

@@ -14,6 +14,7 @@ export default function ConnectedAutoCarePage() {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
   const [vehicleData, setVehicleData] = useState<any>({});
+  const [coverageOptions, setCoverageOptions] = useState<any>(null);
   const [quoteForm, setQuoteForm] = useState({
     vin: '',
     currentMileage: '',
@@ -41,6 +42,34 @@ export default function ConnectedAutoCarePage() {
     queryKey: ['/api/connected-auto-care/products'],
   });
 
+  // Coverage options mutation
+  const coverageOptionsMutation = useMutation({
+    mutationFn: async ({ productId, vehicleData }: { productId: string; vehicleData: any }) => {
+      const response = await apiRequest('POST', '/api/connected-auto-care/coverage-options', {
+        productId,
+        vehicleData: { ...vehicleData, mileage: parseInt(quoteForm.currentMileage) || 0 }
+      });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setCoverageOptions(data.coverageOptions);
+      if (data.coverageOptions.reasons && data.coverageOptions.reasons.length > 0) {
+        toast({
+          title: "Coverage Options Limited",
+          description: data.coverageOptions.reasons.join('. '),
+          variant: "default",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Coverage Options Error",
+        description: "Could not load coverage options. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // VIN decoder mutation
   const vinDecodeMutation = useMutation({
     mutationFn: async (vin: string) => {
@@ -66,6 +95,18 @@ export default function ConnectedAutoCarePage() {
       }
       
       setQuoteForm(prev => ({ ...prev, vehicleClass }));
+      
+      // Auto-fetch coverage options if we have a selected product
+      if (selectedProduct && quoteForm.currentMileage) {
+        const vehicleDataWithMileage = { 
+          ...data.vehicle, 
+          mileage: parseInt(quoteForm.currentMileage) || 0 
+        };
+        coverageOptionsMutation.mutate({ 
+          productId: selectedProduct, 
+          vehicleData: vehicleDataWithMileage 
+        });
+      }
       
       // Show different messages based on data completeness
       const isCompleteData = data.vehicle.make !== 'Unknown' && data.vehicle.model !== 'Unknown';
@@ -150,6 +191,22 @@ export default function ConnectedAutoCarePage() {
       });
     },
   });
+
+  // Effect to fetch coverage options when vehicle data, mileage, or product changes
+  useEffect(() => {
+    if (selectedProduct && vehicleData?.year && quoteForm.currentMileage) {
+      const vehicleDataWithMileage = { 
+        ...vehicleData, 
+        mileage: parseInt(quoteForm.currentMileage) || 0 
+      };
+      coverageOptionsMutation.mutate({ 
+        productId: selectedProduct, 
+        vehicleData: vehicleDataWithMileage 
+      });
+    } else {
+      setCoverageOptions(null);
+    }
+  }, [selectedProduct, vehicleData?.year, quoteForm.currentMileage]);
 
   // Handle VIN decode
   const handleVinDecode = () => {
@@ -557,42 +614,75 @@ export default function ConnectedAutoCarePage() {
               <CardDescription>Select your coverage preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Dynamic Coverage Options Status */}
+              {coverageOptionsMutation.isPending && (
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800">Loading coverage options for your vehicle...</p>
+                </div>
+              )}
+
+              {coverageOptions && coverageOptions.reasons && (
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  <p className="text-sm text-amber-800">
+                    <strong>Coverage Limitations:</strong> {coverageOptions.reasons.join('. ')}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="termLength">Term Length</Label>
-                <Select value={quoteForm.termLength} onValueChange={(value) => setQuoteForm(prev => ({ ...prev, termLength: value }))}>
+                <Select 
+                  value={quoteForm.termLength} 
+                  onValueChange={(value) => setQuoteForm(prev => ({ ...prev, termLength: value }))}
+                  disabled={!coverageOptions || coverageOptions.validTermLengths.length === 0}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select term length" />
+                    <SelectValue placeholder={
+                      !coverageOptions ? "Select vehicle and mileage first" :
+                      coverageOptions.validTermLengths.length === 0 ? "No valid terms available" :
+                      "Select term length"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="12 months">12 months</SelectItem>
-                    <SelectItem value="24 months">24 months</SelectItem>
-                    <SelectItem value="36 months">36 months</SelectItem>
-                    <SelectItem value="48 months">48 months</SelectItem>
-                    <SelectItem value="60 months">60 months</SelectItem>
-                    <SelectItem value="72 months">72 months</SelectItem>
+                    {coverageOptions?.validTermLengths?.map((term: string) => (
+                      <SelectItem key={term} value={term}>{term}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {coverageOptions && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    {coverageOptions.validTermLengths.length} option(s) available for your vehicle
+                  </p>
+                )}
               </div>
 
               <div>
                 <Label htmlFor="coverageMiles">Coverage Miles</Label>
-                <Select value={quoteForm.coverageMiles} onValueChange={(value) => setQuoteForm(prev => ({ ...prev, coverageMiles: value }))}>
+                <Select 
+                  value={quoteForm.coverageMiles} 
+                  onValueChange={(value) => setQuoteForm(prev => ({ ...prev, coverageMiles: value }))}
+                  disabled={!coverageOptions || coverageOptions.validCoverageMiles.length === 0}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select coverage miles" />
+                    <SelectValue placeholder={
+                      !coverageOptions ? "Select vehicle and mileage first" :
+                      coverageOptions.validCoverageMiles.length === 0 ? "No valid coverage available" :
+                      "Select coverage miles"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="15,000">15,000 miles</SelectItem>
-                    <SelectItem value="25,000">25,000 miles</SelectItem>
-                    <SelectItem value="30,000">30,000 miles</SelectItem>
-                    <SelectItem value="45,000">45,000 miles</SelectItem>
-                    <SelectItem value="60,000">60,000 miles</SelectItem>
-                    <SelectItem value="75,000">75,000 miles</SelectItem>
-                    <SelectItem value="90,000">90,000 miles</SelectItem>
-                    <SelectItem value="100,000">100,000 miles</SelectItem>
-                    <SelectItem value="125,000">125,000 miles</SelectItem>
-                    <SelectItem value="Unlimited">Unlimited</SelectItem>
+                    {coverageOptions?.validCoverageMiles?.map((miles: string) => (
+                      <SelectItem key={miles} value={miles}>
+                        {miles === 'Unlimited' ? 'Unlimited' : `${miles} miles`}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {coverageOptions && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    {coverageOptions.validCoverageMiles.length} option(s) available for your vehicle
+                  </p>
+                )}
               </div>
 
               <div>

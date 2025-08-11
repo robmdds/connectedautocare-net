@@ -590,6 +590,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get valid coverage options for Connected Auto Care based on vehicle data
+  app.post('/api/connected-auto-care/coverage-options', async (req, res) => {
+    try {
+      const { productId, vehicleData } = req.body;
+      
+      if (!productId) {
+        return res.status(400).json({ error: 'Product ID is required' });
+      }
+      
+      if (!vehicleData) {
+        return res.status(400).json({ error: 'Vehicle data is required' });
+      }
+      
+      const options = cacService.getValidCoverageOptions(productId, vehicleData);
+      
+      res.json({
+        success: true,
+        productId,
+        vehicleData,
+        coverageOptions: options
+      });
+      
+    } catch (error) {
+      console.error('Error getting coverage options:', error);
+      res.status(500).json({ error: 'Failed to get coverage options' });
+    }
+  });
+
   // Connected Auto Care Quote Generation API
   app.post('/api/connected-auto-care/quotes', async (req, res) => {
     try {
