@@ -23,55 +23,80 @@ export class VinDecodeService {
   private async decodeVinNHTSA(vin: string): Promise<{ success: boolean; data?: any }> {
     try {
       console.log(`NHTSA API request for VIN: ${vin}`);
-      const response = await fetch(
+      // Try different NHTSA API endpoints for better data
+      const endpoints = [
+        `https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${vin}?format=json`,
         `https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`
-      );
+      ];
       
-      if (!response.ok) {
-        console.log(`NHTSA API response not ok: ${response.status}`);
-        return { success: false };
-      }
+      for (const endpoint of endpoints) {
+        console.log(`Trying NHTSA endpoint: ${endpoint}`);
+        const response = await fetch(endpoint);
+        
+        if (!response.ok) {
+          console.log(`NHTSA API response not ok: ${response.status}`);
+          continue;
+        }
 
-      const data = await response.json();
-      
-      if (data.Results && data.Results.length > 0) {
-        const results = data.Results.reduce((acc: any, item: any) => {
-          if (item.Value && item.Value !== 'Not Applicable' && item.Value !== '' && item.Value !== null) {
-            acc[item.Variable] = item.Value;
-          }
-          return acc;
-        }, {});
-
-        console.log('NHTSA decoded data:', {
-          Make: results.Make,
-          Model: results.Model,
-          ModelYear: results.ModelYear,
-          BodyClass: results.BodyClass
+        const data = await response.json();
+        console.log(`NHTSA raw response structure:`, {
+          hasResults: !!data.Results,
+          resultsLength: data.Results?.length,
+          firstResult: data.Results?.[0]
         });
-
-        // Only consider it successful if we have critical data
-        if (results.Make || results.Model || results.ModelYear) {
-          const year = results.ModelYear ? parseInt(results.ModelYear) : null;
+        
+        if (data.Results && data.Results.length > 0) {
+          // Handle different response formats
+          let results: any = {};
           
-          return {
-            success: true,
-            data: {
-              vin,
-              make: results.Make || 'Unknown',
-              model: results.Model || 'Unknown', 
-              year: year,
-              bodyStyle: results.BodyClass || 'Unknown',
-              engine: results.EngineModel || 'Unknown',
-              fuelType: results.FuelTypePrimary || 'Gasoline',
-              transmission: results.TransmissionStyle || 'Unknown',
-              driveType: results.DriveType || 'Unknown',
-              source: 'NHTSA'
-            }
-          };
+          if (endpoint.includes('decodevinvalues')) {
+            // decodevinvalues returns data directly in first result
+            results = data.Results[0] || {};
+            console.log('decodevinvalues format - direct fields:', {
+              Make: results.Make,
+              Model: results.Model,
+              ModelYear: results.ModelYear
+            });
+          } else {
+            // decodevin returns Variable/Value pairs
+            results = data.Results.reduce((acc: any, item: any) => {
+              if (item.Value && item.Value !== 'Not Applicable' && item.Value !== '' && item.Value !== null) {
+                acc[item.Variable] = item.Value;
+              }
+              return acc;
+            }, {});
+            console.log('decodevin format - Variable/Value pairs:', {
+              Make: results.Make,
+              Model: results.Model,
+              ModelYear: results.ModelYear
+            });
+          }
+
+          // Check if we have useful data including year
+          if ((results.Make || results.Model) && results.ModelYear) {
+            const year = parseInt(results.ModelYear);
+            console.log(`NHTSA SUCCESS: Found year ${year} for ${results.Make} ${results.Model}`);
+            
+            return {
+              success: true,
+              data: {
+                vin,
+                make: results.Make || 'Unknown',
+                model: results.Model || 'Unknown', 
+                year: year,
+                bodyStyle: results.BodyClass || 'Unknown',
+                engine: results.EngineModel || 'Unknown',
+                fuelType: results.FuelTypePrimary || 'Gasoline',
+                transmission: results.TransmissionStyle || 'Unknown',
+                driveType: results.DriveType || 'Unknown',
+                source: 'NHTSA'
+              }
+            };
+          }
         }
       }
 
-      console.log('NHTSA API: No useful data returned');
+      console.log('NHTSA API: No useful data returned from any endpoint');
       return { success: false };
     } catch (error) {
       console.error('NHTSA API error:', error);
