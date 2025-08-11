@@ -1,0 +1,77 @@
+API Methods
+Output Format
+Decode VIN
+/vehicles/DecodeVin/5UXWX7C5*BA?format=xml&modelyear=2011XML CSV JSON
+More Information
+Decode VIN (flat format)
+/vehicles/DecodeVinValues/5UXWX7C5*BA?format=xml&modelyear=2011XML CSV JSON
+More Information
+Decode VIN Extended
+/vehicles/DecodeVinExtended/5UXWX7C5*BA?format=json&modelyear=2011XML CSV JSON
+More Information
+Decode VIN Extended (flat format)
+/vehicles/DecodeVinValuesExtended/5UXWX7C5*BA?format=json&modelyear=2011XML CSV JSON
+More Information
+Decode WMI
+/vehicles/DecodeWMI/1FD?format=xmlXML CSV JSON
+More Information
+Get WMIs for Manufacturer
+/vehicles/GetWMIsForManufacturer/hon?format=xmlXML CSV JSON
+/vehicles/GetWMIsForManufacturer/987?format=xmlXML CSV JSON
+/vehicles/GetWMIsForManufacturer/hon?vehicleType=car&format=xmlXML CSV JSON
+/vehicles/GetWMIsForManufacturer/987?vehicleType=2&format=xmlXML CSV JSON
+More Information
+Get All Makes
+/vehicles/GetAllMakes?format=csvXML CSV JSON
+More Information
+Get Parts
+/vehicles/GetParts?type=565&fromDate=1/1/2015&toDate=5/5/2015&format=xml&page=1XML CSV JSON/vehicles/GetParts?type=565&fromDate=1/1/2015&toDate=5/5/2015&format=xml&page=1&manufacturer=honXML CSV JSON
+More Information
+Get All Manufacturers
+/vehicles/GetAllManufacturers?format=xml&page=2XML CSV JSON
+/vehicles/GetAllManufacturers?ManufacturerType=Intermediate&page=2XML CSV JSON
+More Information
+Get Manufacturer Details
+/vehicles/GetManufacturerDetails/honda?format=xmlXML CSV JSON
+/vehicles/GetManufacturerDetails/str?page=2XML CSV JSON
+/vehicles/GetManufacturerDetails/989XML CSV JSON
+More Information
+Get Makes for Manufacturer by Manufacturer Name
+/vehicles/GetMakeForManufacturer/honda?format=jsonXML CSV JSON
+/vehicles/GetMakeForManufacturer/988?format=xmlXML CSV JSON
+More Information
+Get Makes for Manufacturer by Manufacturer Name and Year
+/vehicles/GetMakesForManufacturerAndYear/mer?year=2013&format=jsonXML CSV JSON
+/vehicles/GetMakesForManufacturerAndYear/988?year=2013&format=jsonXML CSV JSON
+More Information
+Get Makes for Vehicle Type by Vehicle Type Name
+/vehicles/GetMakesForVehicleType/car?format=jsonXML CSV JSON
+More Information
+Get Vehicle Types for Make by Name
+/vehicles/GetVehicleTypesForMake/mercedes?format=jsonXML CSV JSON
+More Information
+Get Vehicle Types for Make by Id
+/vehicles/GetVehicleTypesForMakeId/450?format=jsonXML CSV JSON
+More Information
+Get Equipment Plant Codes
+/vehicles/GetEquipmentPlantCodes/2015?format=jsonXML CSV JSON
+More Information
+Get Models for Make
+/vehicles/GetModelsForMake/honda?format=jsonXML CSV JSON
+More Information
+Get Models for MakeId
+/vehicles/GetModelsForMakeId/440?format=jsonXML CSV JSON
+More Information
+Get Models for Make and a combination of Year and Vehicle Type
+/vehicles/GetModelsForMakeYear/make/honda/modelyear/2015?format=csv
+/vehicles/GetModelsForMakeYear/make/honda/vehicletype/truck?format=csv
+/vehicles/GetModelsForMakeYear/make/honda/modelyear/2015/vehicletype/truck?format=csvXML CSV JSON
+XML CSV JSON
+XML CSV JSON
+More Information
+Get Models for Make Id and a combination of Year and Vehicle Type
+/vehicles/GetModelsForMakeIdYear/makeId/474/modelyear/2015?format=csv
+/vehicles/GetModelsForMakeIdYear/makeId/474/vehicletype/truck?format=csv
+/vehicles/GetModelsForMakeIdYear/makeId/474/modelyear/2015/vehicletype/truck?format=csvXML CSV JSON
+XML CSV JSON
+XML CSV JSON

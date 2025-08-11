@@ -23,8 +23,10 @@ export class VinDecodeService {
   private async decodeVinNHTSA(vin: string): Promise<{ success: boolean; data?: any }> {
     try {
       console.log(`NHTSA API request for VIN: ${vin}`);
-      // Try different NHTSA API endpoints for better data
+      // Try different NHTSA API endpoints for better data (Extended versions provide more complete data)
       const endpoints = [
+        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${vin}?format=json`,
+        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinExtended/${vin}?format=json`,
         `https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${vin}?format=json`,
         `https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`
       ];
@@ -49,26 +51,28 @@ export class VinDecodeService {
           // Handle different response formats
           let results: any = {};
           
-          if (endpoint.includes('decodevinvalues')) {
-            // decodevinvalues returns data directly in first result
+          if (endpoint.includes('decodevinvalues') || endpoint.includes('DecodeVinValues')) {
+            // decodevinvalues and DecodeVinValuesExtended return data directly in first result
             results = data.Results[0] || {};
-            console.log('decodevinvalues format - direct fields:', {
+            console.log(`${endpoint.includes('Extended') ? 'Extended ' : ''}decodevinvalues format - direct fields:`, {
               Make: results.Make,
               Model: results.Model,
-              ModelYear: results.ModelYear
+              ModelYear: results.ModelYear,
+              BodyClass: results.BodyClass
             });
           } else {
-            // decodevin returns Variable/Value pairs
+            // decodevin and DecodeVinExtended return Variable/Value pairs
             results = data.Results.reduce((acc: any, item: any) => {
               if (item.Value && item.Value !== 'Not Applicable' && item.Value !== '' && item.Value !== null) {
                 acc[item.Variable] = item.Value;
               }
               return acc;
             }, {});
-            console.log('decodevin format - Variable/Value pairs:', {
+            console.log(`${endpoint.includes('Extended') ? 'Extended ' : ''}decodevin format - Variable/Value pairs:`, {
               Make: results.Make,
               Model: results.Model,
-              ModelYear: results.ModelYear
+              ModelYear: results.ModelYear,
+              BodyClass: results.BodyClass
             });
           }
 
