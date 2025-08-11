@@ -99,17 +99,35 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
       for (const productId of products) {
         try {
           console.log(`Generating quote for ${productId}...`);
+          
+          // Prepare coverage selections in the format expected by backend
+          const coverageSelections = {
+            termLength: termLength,
+            termlength: termLength, // fallback
+            term: termLength, // another fallback
+            coverageMiles: coverageMiles,
+            coveragemiles: coverageMiles, // fallback
+            miles: coverageMiles, // another fallback
+            vehicleClass: 'A', // Default vehicle class for now
+            vehicleclass: 'A', // fallback
+            class: 'A' // another fallback
+          };
+          
+          console.log('Coverage selections:', coverageSelections);
+          
           const response = await fetch('/api/connected-auto-care/quotes', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              vin,
-              mileage: parseInt(mileage),
               productId,
-              termLength,
-              coverageMiles
+              coverageSelections,
+              vehicleData: currentVehicleInfo,
+              customerData: {
+                state: 'TX', // Default state for now
+                zipCode: '75001' // Default zip code for now
+              }
             }),
           });
           

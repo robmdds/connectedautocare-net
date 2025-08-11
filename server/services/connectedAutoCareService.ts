@@ -1180,7 +1180,7 @@ export class ConnectedAutoCareRatingService {
         let value = null;
         
         for (const possibleKey of [key, ...altKeys]) {
-          if (coverageSelections[possibleKey]) {
+          if (coverageSelections && typeof coverageSelections === 'object' && coverageSelections[possibleKey]) {
             found = true;
             value = coverageSelections[possibleKey];
             break;
@@ -1188,21 +1188,21 @@ export class ConnectedAutoCareRatingService {
         }
         
         // Special handling for common variations
-        if (option.name === 'Term Length' && !found) {
+        if (option.name === 'Term Length' && !found && coverageSelections) {
           if (coverageSelections.termLength || coverageSelections.term || coverageSelections.termlength) {
             found = true;
             value = coverageSelections.termLength || coverageSelections.term || coverageSelections.termlength;
           }
         }
         
-        if (option.name === 'Coverage Miles' && !found) {
+        if (option.name === 'Coverage Miles' && !found && coverageSelections) {
           if (coverageSelections.coverageMiles || coverageSelections.miles || coverageSelections.coveragemiles) {
             found = true;
             value = coverageSelections.coverageMiles || coverageSelections.miles || coverageSelections.coveragemiles;
           }
         }
         
-        if (option.name === 'Vehicle Class' && !found) {
+        if (option.name === 'Vehicle Class' && !found && coverageSelections) {
           if (coverageSelections.vehicleClass || coverageSelections.class || coverageSelections.vehicleclass) {
             found = true;
             value = coverageSelections.vehicleClass || coverageSelections.class || coverageSelections.vehicleclass;
