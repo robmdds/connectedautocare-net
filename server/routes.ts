@@ -83,6 +83,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // VIN Decode API (GET endpoint for frontend VIN widget)
+  app.get('/api/vin-decode/:vin', async (req, res) => {
+    try {
+      const { vin } = req.params;
+      if (!vin || vin.length !== 17) {
+        return res.status(400).json({ error: "Valid 17-character VIN is required" });
+      }
+
+      console.log('VIN decode GET request:', vin);
+      const vehicleData = await vinDecodeService.decodeVin(vin);
+      console.log('VIN decode result:', vehicleData);
+      
+      res.json(vehicleData);
+    } catch (error: any) {
+      console.error("VIN decode error:", error);
+      res.status(400).json({ 
+        error: error.message || "Failed to decode VIN" 
+      });
+    }
+  });
+
   // Hero VSC Products API
   app.get('/api/hero-vsc/products', async (req, res) => {
     try {

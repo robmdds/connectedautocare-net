@@ -44,9 +44,15 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
       if (vin && vin.length === 17) {
         setIsLoadingVin(true);
         try {
+          console.log('Decoding VIN:', vin);
           const response = await fetch(`/api/vin-decode/${vin}`);
           const data = await response.json();
-          setVehicleInfo(data.vehicle || data);
+          console.log('VIN decode response:', data);
+          
+          // Handle both possible response formats
+          const vehicleData = data.vehicle || data.data || data;
+          console.log('Processed vehicle data:', vehicleData);
+          setVehicleInfo(vehicleData);
         } catch (error) {
           console.error('VIN decode error:', error);
           setVehicleInfo(null);
@@ -59,8 +65,13 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
       }
     };
 
-    const timeoutId = setTimeout(decodeVin, 800); // Debounce VIN input
-    return () => clearTimeout(timeoutId);
+    // Immediately decode if VIN is already 17 characters (like the default)
+    if (vin && vin.length === 17 && !vehicleInfo && !isLoadingVin) {
+      decodeVin();
+    } else {
+      const timeoutId = setTimeout(decodeVin, 800); // Debounce VIN input
+      return () => clearTimeout(timeoutId);
+    }
   }, [vin]); // Remove isLoadingVin from dependencies to prevent infinite loop
 
   const generateQuotesMutation = useMutation({
