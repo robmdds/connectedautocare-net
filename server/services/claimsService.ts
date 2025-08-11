@@ -11,8 +11,7 @@ export class ClaimsService {
       const claim = await storage.createClaim({
         ...claimData,
         claimNumber,
-        status: 'submitted',
-        submittedAt: new Date()
+        status: 'open'
       });
 
       // Auto-assign adjuster (placeholder logic)
@@ -22,6 +21,36 @@ export class ClaimsService {
     } catch (error) {
       console.error('Claim creation error:', error);
       throw new Error('Failed to create claim');
+    }
+  }
+
+  async updateClaim(claimId: string, claimUpdate: any, userId?: string): Promise<any> {
+    try {
+      // Track who made the update
+      const updates = {
+        ...claimUpdate,
+        updatedAt: new Date()
+      };
+
+      if (userId) {
+        // Add to audit trail
+        const auditEntry = {
+          timestamp: new Date(),
+          userId,
+          action: 'claim_updated',
+          changes: Object.keys(claimUpdate)
+        };
+        
+        const currentClaim = await storage.getClaim(claimId);
+        const existingAudit = currentClaim?.auditTrail || [];
+        updates.auditTrail = [...existingAudit, auditEntry];
+      }
+
+      const claim = await storage.updateClaim(claimId, updates);
+      return claim;
+    } catch (error) {
+      console.error('Claim update error:', error);
+      throw new Error('Failed to update claim');
     }
   }
 

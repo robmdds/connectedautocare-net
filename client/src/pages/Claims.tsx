@@ -1,19 +1,91 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { AlertTriangle, Search, Plus, Shield } from "lucide-react";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+
+// Form schema for new claims
+const claimFormSchema = z.object({
+  policyId: z.string().optional(),
+  claimantName: z.string().min(1, "Claimant name is required"),
+  claimantEmail: z.string().email("Valid email is required"),
+  claimantPhone: z.string().optional(),
+  type: z.enum(["collision", "comprehensive", "liability", "theft", "vandalism", "weather", "fire", "other"]),
+  dateOfLoss: z.string().min(1, "Date of loss is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  estimatedAmount: z.string().optional(),
+});
 
 export default function Claims() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewClaimModal, setShowNewClaimModal] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: claims, isLoading } = useQuery({
     queryKey: ["/api/claims"],
     retry: false,
   });
+
+  const form = useForm<z.infer<typeof claimFormSchema>>({
+    resolver: zodResolver(claimFormSchema),
+    defaultValues: {
+      claimantName: "",
+      claimantEmail: "",
+      claimantPhone: "",
+      type: "other",
+      dateOfLoss: "",
+      description: "",
+      estimatedAmount: "",
+    },
+  });
+
+  const createClaimMutation = useMutation({
+    mutationFn: async (claimData: z.infer<typeof claimFormSchema>) => {
+      // Convert form data to API format
+      const apiData = {
+        ...claimData,
+        dateOfLoss: new Date(claimData.dateOfLoss),
+        estimatedAmount: claimData.estimatedAmount ? parseFloat(claimData.estimatedAmount) : undefined,
+      };
+      return apiRequest("/api/claims", {
+        method: "POST",
+        body: JSON.stringify(apiData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
+      setShowNewClaimModal(false);
+      form.reset();
+      toast({
+        title: "Claim Created",
+        description: "New claim has been successfully filed",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create claim",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof claimFormSchema>) => {
+    createClaimMutation.mutate(data);
+  };
 
   const filteredClaims = claims?.filter((claim: any) =>
     claim.claimNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,7 +116,7 @@ export default function Claims() {
               </Link>
               <h1 className="text-2xl font-bold text-gray-900">Claims Management</h1>
             </div>
-            <Button>
+            <Button onClick={() => setShowNewClaimModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               File New Claim
             </Button>
@@ -163,7 +235,7 @@ export default function Claims() {
                       : 'Claims will appear here when customers file them'
                     }
                   </p>
-                  <Button>
+                  <Button onClick={() => setShowNewClaimModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     File New Claim
                   </Button>
@@ -173,6 +245,146 @@ export default function Claims() {
           )}
         </div>
       </main>
+
+      {/* New Claim Modal */}
+      <Dialog open={showNewClaimModal} onOpenChange={setShowNewClaimModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>File New Claim</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="claimantName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Claimant Name *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter claimant's full name" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="claimantEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="Enter email address" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="claimantPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="(555) 123-4567" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Claim Type *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select claim type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="collision">Collision</SelectItem>
+                          <SelectItem value="comprehensive">Comprehensive</SelectItem>
+                          <SelectItem value="liability">Liability</SelectItem>
+                          <SelectItem value="theft">Theft</SelectItem>
+                          <SelectItem value="vandalism">Vandalism</SelectItem>
+                          <SelectItem value="weather">Weather Damage</SelectItem>
+                          <SelectItem value="fire">Fire</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="dateOfLoss"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Loss *</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="estimatedAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated Amount</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" step="0.01" placeholder="0.00" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description *</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Provide a detailed description of the incident"
+                        className="min-h-[100px]"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowNewClaimModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createClaimMutation.isPending}
+                >
+                  {createClaimMutation.isPending ? "Creating..." : "Create Claim"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
