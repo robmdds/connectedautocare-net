@@ -869,6 +869,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin AI Models endpoints
+  app.get('/api/admin/ai-models', isAuthenticated, async (req: any, res) => {
+    try {
+      // Return mock AI model configuration data
+      const modelConfig = {
+        currentModel: 'gpt-4o',
+        temperature: 0.7,
+        maxTokens: 2048,
+        enableFunctionCalling: true
+      };
+      
+      res.json(modelConfig);
+    } catch (error) {
+      console.error('Error fetching AI models:', error);
+      res.status(500).json({ error: 'Failed to fetch AI models' });
+    }
+  });
+
+  app.put('/api/admin/ai-models', isAuthenticated, async (req: any, res) => {
+    try {
+      const { model, temperature, maxTokens, enableFunctionCalling } = req.body;
+      
+      // In a real app, this would update the AI configuration
+      console.log('Updating AI model configuration:', { model, temperature, maxTokens, enableFunctionCalling });
+      
+      res.json({ 
+        success: true, 
+        message: 'AI model configuration updated successfully' 
+      });
+    } catch (error) {
+      console.error('Error updating AI models:', error);
+      res.status(500).json({ error: 'Failed to update AI models' });
+    }
+  });
+
+  // Admin Training Data endpoints
+  app.get('/api/admin/training-data', isAuthenticated, async (req: any, res) => {
+    try {
+      // Return mock training data
+      const trainingData = {
+        datasets: [
+          {
+            id: 'insurance-faq',
+            name: 'Insurance FAQ Dataset',
+            recordCount: 1847,
+            status: 'active'
+          }
+        ]
+      };
+      
+      res.json(trainingData);
+    } catch (error) {
+      console.error('Error fetching training data:', error);
+      res.status(500).json({ error: 'Failed to fetch training data' });
+    }
+  });
+
+  app.post('/api/admin/training-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const { name, description } = req.body;
+      
+      // In a real app, this would create a new training dataset
+      console.log('Creating training dataset:', { name, description });
+      
+      const newDataset = {
+        id: Math.random().toString(36).substr(2, 9),
+        name,
+        description,
+        status: 'active',
+        recordCount: 0,
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json(newDataset);
+    } catch (error) {
+      console.error('Error creating training data:', error);
+      res.status(500).json({ error: 'Failed to create training data' });
+    }
+  });
+
+  // Admin Response Templates endpoints
+  app.get('/api/admin/response-templates', isAuthenticated, async (req: any, res) => {
+    try {
+      // Return mock response templates data
+      const templates = [
+        {
+          id: 'welcome-message',
+          name: 'Welcome Message',
+          category: 'customer-service',
+          content: 'Hello! Welcome to our insurance platform.',
+          status: 'active'
+        }
+      ];
+      
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching response templates:', error);
+      res.status(500).json({ error: 'Failed to fetch response templates' });
+    }
+  });
+
+  app.post('/api/admin/response-templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const { name, category, content } = req.body;
+      
+      // In a real app, this would create a new response template
+      console.log('Creating response template:', { name, category, content });
+      
+      const newTemplate = {
+        id: Math.random().toString(36).substr(2, 9),
+        name,
+        category,
+        content,
+        status: 'active',
+        usageCount: 0,
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json(newTemplate);
+    } catch (error) {
+      console.error('Error creating response template:', error);
+      res.status(500).json({ error: 'Failed to create response template' });
+    }
+  });
+
+  app.put('/api/admin/response-templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { name, category, content } = req.body;
+      
+      // In a real app, this would update the response template
+      console.log('Updating response template:', { id, name, category, content });
+      
+      const updatedTemplate = {
+        id,
+        name,
+        category,
+        content,
+        status: 'active',
+        updatedAt: new Date().toISOString()
+      };
+      
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error('Error updating response template:', error);
+      res.status(500).json({ error: 'Failed to update response template' });
+    }
+  });
+
+  // Admin Tenants endpoint
+  app.get('/api/admin/tenants', isAuthenticated, async (req: any, res) => {
+    try {
+      // Return mock tenant data
+      const tenants = [
+        {
+          id: 'hero-vsc',
+          name: 'Hero VSC',
+          status: 'active',
+          productCount: 3,
+          policyCount: 1247,
+          createdAt: '2024-01-15'
+        },
+        {
+          id: 'connected-auto-care',
+          name: 'Connected Auto Care',
+          status: 'active',
+          productCount: 3,
+          policyCount: 892,
+          createdAt: '2024-02-20'
+        },
+        {
+          id: 'sample-insurance',
+          name: 'Sample Insurance',
+          status: 'inactive',
+          productCount: 5,
+          policyCount: 423,
+          createdAt: '2023-12-01'
+        }
+      ];
+      
+      res.json(tenants);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      res.status(500).json({ error: 'Failed to fetch tenants' });
+    }
+  });
+
+  // Admin Resellers endpoint
+  app.get('/api/admin/resellers', isAuthenticated, async (req: any, res) => {
+    try {
+      // Return mock reseller data
+      const resellers = [
+        {
+          id: 'premier-auto',
+          name: 'Premier Auto Group',
+          contactEmail: 'contact@premierauto.com',
+          contactPhone: '(555) 123-4567',
+          tier: 'Platinum',
+          commissionRate: 15,
+          totalSales: 245000,
+          activePolicies: 487,
+          status: 'active'
+        },
+        {
+          id: 'metro-dealers',
+          name: 'Metro Dealers Alliance',
+          contactEmail: 'sales@metrodealers.com',
+          contactPhone: '(555) 234-5678',
+          tier: 'Gold',
+          commissionRate: 12,
+          totalSales: 156000,
+          activePolicies: 312,
+          status: 'active'
+        },
+        {
+          id: 'coastal-automotive',
+          name: 'Coastal Automotive',
+          contactEmail: 'info@coastalauto.com',
+          contactPhone: '(555) 345-6789',
+          tier: 'Silver',
+          commissionRate: 10,
+          totalSales: 98000,
+          activePolicies: 196,
+          status: 'active'
+        },
+        {
+          id: 'hometown-motors',
+          name: 'Hometown Motors',
+          contactEmail: 'team@hometownmotors.com',
+          contactPhone: '(555) 456-7890',
+          tier: 'Bronze',
+          commissionRate: 8,
+          totalSales: 53000,
+          activePolicies: 106,
+          status: 'pending'
+        }
+      ];
+      
+      res.json(resellers);
+    } catch (error) {
+      console.error('Error fetching resellers:', error);
+      res.status(500).json({ error: 'Failed to fetch resellers' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
