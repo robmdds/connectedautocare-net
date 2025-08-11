@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CheckCircle, Shield, Clock, Car, Zap, Info, MessageSquare, BarChart3 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { CheckCircle, Shield, Clock, Car, Zap, Info, MessageSquare, BarChart3, ShoppingCart, FileText, Share2, Mail, Link, Bookmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface QuoteData {
   id: string;
+  quoteNumber: string;
   productId: string;
   productName: string;
   totalPremium: number;
@@ -415,16 +416,198 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                     ))}
                   </div>
 
-                  {/* Select Button */}
-                  <Button
-                    onClick={() => onQuoteSelect?.(quote)}
-                    disabled={quote.totalPremium <= 0}
-                    className={`w-full ${quote.totalPremium > 0 ? config.color + ' hover:opacity-90' : 'bg-gray-400'}`}
-                    size="lg"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    {quote.totalPremium > 0 ? 'Select Coverage' : 'Not Available'}
-                  </Button>
+                  {/* Action Buttons */}
+                  {quote.totalPremium > 0 ? (
+                    <div className="space-y-2">
+                      {/* Purchase Button */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            className={`w-full ${config.color} hover:opacity-90`}
+                            size="lg"
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Purchase Coverage
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Purchase {config.name}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                              <p className="font-semibold text-lg">${quote.totalPremium.toLocaleString()}</p>
+                              <p className="text-sm text-gray-600">{quote.termLength} • {quote.coverageMiles} miles</p>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              You'll be redirected to secure payment processing to complete your purchase.
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  // TODO: Implement purchase flow with Helcim
+                                  console.log('Initiating purchase for quote:', quote.id);
+                                }}
+                                className="flex-1"
+                              >
+                                Continue to Payment
+                              </Button>
+                              <DialogClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </DialogClose>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Secondary Actions */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* Contract Preview */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs">
+                              <FileText className="h-3 w-3 mr-1" />
+                              Preview
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Contract Preview - {config.name}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6 text-sm">
+                              {/* Contract Header */}
+                              <div className="border-b pb-4">
+                                <h2 className="text-xl font-bold">Vehicle Service Contract</h2>
+                                <p className="text-gray-600">Quote #{quote.quoteNumber}</p>
+                              </div>
+
+                              {/* Vehicle & Coverage Details */}
+                              <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                  <h3 className="font-semibold mb-2">Vehicle Information</h3>
+                                  <div className="space-y-1 text-sm">
+                                    <p><strong>VIN:</strong> {vehicleInfo?.vin}</p>
+                                    <p><strong>Vehicle:</strong> {vehicleInfo?.year} {vehicleInfo?.make} {vehicleInfo?.model}</p>
+                                    <p><strong>Body Style:</strong> {vehicleInfo?.bodyStyle}</p>
+                                    <p><strong>Current Mileage:</strong> {mileage?.toLocaleString()}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold mb-2">Coverage Details</h3>
+                                  <div className="space-y-1 text-sm">
+                                    <p><strong>Plan:</strong> {config.name}</p>
+                                    <p><strong>Term:</strong> {quote.termLength}</p>
+                                    <p><strong>Coverage Miles:</strong> {quote.coverageMiles}</p>
+                                    <p><strong>Deductible:</strong> ${quote.deductible}</p>
+                                    <p><strong>Total Premium:</strong> ${quote.totalPremium.toLocaleString()}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Covered Components */}
+                              <div>
+                                <h3 className="font-semibold mb-2">Covered Components</h3>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {config.detailedFeatures.map((feature, idx) => (
+                                    <div key={idx} className="flex items-start gap-2">
+                                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                      <span className="text-xs">{feature}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Contract Terms */}
+                              <div className="border-t pt-4">
+                                <h3 className="font-semibold mb-2">Important Terms & Conditions</h3>
+                                <div className="text-xs space-y-2 text-gray-600">
+                                  <p>• This contract begins upon purchase and payment completion</p>
+                                  <p>• Coverage is subject to the terms and conditions outlined in the full contract</p>
+                                  <p>• Regular maintenance records may be required for claims</p>
+                                  <p>• Some exclusions and limitations apply - see full contract for details</p>
+                                  <p>• 30-day right of return for full refund if contract is unused</p>
+                                </div>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Share Quote */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs">
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Share
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Share Quote</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="p-3 bg-gray-50 rounded-lg">
+                                <p className="font-semibold">{config.name}</p>
+                                <p className="text-sm text-gray-600">${quote.totalPremium.toLocaleString()} • {quote.termLength}</p>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                {/* Email Share */}
+                                <div className="flex items-center gap-3">
+                                  <Mail className="h-4 w-4 text-gray-500" />
+                                  <div className="flex-1">
+                                    <Input placeholder="Enter email address" className="h-8 text-sm" />
+                                  </div>
+                                  <Button size="sm" variant="outline">Send</Button>
+                                </div>
+
+                                {/* Link Share */}
+                                <div className="flex items-center gap-3">
+                                  <Link className="h-4 w-4 text-gray-500" />
+                                  <div className="flex-1 p-2 bg-gray-50 rounded text-xs font-mono text-gray-600 truncate">
+                                    {window.location.origin}/quote/{quote.id}
+                                  </div>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(`${window.location.origin}/quote/${quote.id}`);
+                                    }}
+                                  >
+                                    Copy
+                                  </Button>
+                                </div>
+
+                                {/* SMS Share */}
+                                <div className="flex items-center gap-3">
+                                  <MessageSquare className="h-4 w-4 text-gray-500" />
+                                  <div className="flex-1">
+                                    <Input placeholder="Enter phone number" className="h-8 text-sm" />
+                                  </div>
+                                  <Button size="sm" variant="outline">Text</Button>
+                                </div>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Save Quote */}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs"
+                          onClick={() => onQuoteSelect?.(quote)}
+                        >
+                          <Bookmark className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button disabled className="w-full bg-gray-400" size="lg">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Not Available
+                    </Button>
+                  )}
 
                   {/* Coverage Details Link */}
                   <Dialog>
@@ -462,7 +645,6 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                               <p><strong>Coverage Miles:</strong> {quote.coverageMiles}</p>
                               <p><strong>Deductible:</strong> ${quote.deductible}</p>
                               <p><strong>Total Premium:</strong> ${quote.totalPremium.toLocaleString()}</p>
-                              <p><strong>Monthly Payment:</strong> ${quote.monthlyPremium}</p>
                             </div>
                           </div>
                         </div>
