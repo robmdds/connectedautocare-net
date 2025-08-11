@@ -221,9 +221,9 @@ export default function Policies() {
                       : 'Start by creating your first quote to generate policies'
                     }
                   </p>
-                  <Button>
+                  <Button onClick={() => setShowNewPolicyModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Quote
+                    Add Policy
                   </Button>
                 </div>
               </CardContent>
