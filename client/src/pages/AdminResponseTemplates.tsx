@@ -17,6 +17,14 @@ export default function AdminResponseTemplates() {
   const [newTemplateCategory, setNewTemplateCategory] = useState('');
   const [newTemplateContent, setNewTemplateContent] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
+  // Edit template state
+  const [editTemplate, setEditTemplate] = useState<any>(null);
+  const [editTemplateName, setEditTemplateName] = useState('');
+  const [editTemplateCategory, setEditTemplateCategory] = useState('');
+  const [editTemplateContent, setEditTemplateContent] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -49,6 +57,34 @@ export default function AdminResponseTemplates() {
     onError: (error: Error) => {
       toast({
         title: "Creation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateTemplateMutation = useMutation({
+    mutationFn: async ({ id, template }: { id: string, template: any }) => {
+      const response = await fetch(`/api/admin/response-templates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(template),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Template Updated",
+        description: "Response template has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/response-templates'] });
+      setIsEditDialogOpen(false);
+      setEditTemplate(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -132,6 +168,34 @@ export default function AdminResponseTemplates() {
       name: newTemplateName,
       category: newTemplateCategory,
       content: newTemplateContent,
+    });
+  };
+
+  const handleEditTemplate = (template: any) => {
+    setEditTemplate(template);
+    setEditTemplateName(template.name);
+    setEditTemplateCategory(template.category);
+    setEditTemplateContent(template.content);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateTemplate = () => {
+    if (!editTemplateName.trim() || !editTemplateContent.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Template name and content are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateTemplateMutation.mutate({
+      id: editTemplate.id,
+      template: {
+        name: editTemplateName,
+        category: editTemplateCategory,
+        content: editTemplateContent,
+      }
     });
   };
 
@@ -241,6 +305,62 @@ export default function AdminResponseTemplates() {
         </div>
       </header>
 
+      {/* Edit Template Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Response Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editTemplateName">Template Name</Label>
+              <Input
+                id="editTemplateName"
+                value={editTemplateName}
+                onChange={(e) => setEditTemplateName(e.target.value)}
+                placeholder="Enter template name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editTemplateCategory">Category</Label>
+              <Select value={editTemplateCategory} onValueChange={setEditTemplateCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="editTemplateContent">Template Content</Label>
+              <Textarea
+                id="editTemplateContent"
+                value={editTemplateContent}
+                onChange={(e) => setEditTemplateContent(e.target.value)}
+                placeholder="Enter template content with variables like {variable_name}"
+                rows={6}
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Use {`{variable_name}`} syntax for dynamic content replacement
+              </p>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateTemplate} disabled={updateTemplateMutation.isPending}>
+                {updateTemplateMutation.isPending ? 'Updating...' : 'Update Template'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Templates Overview */}
@@ -301,7 +421,11 @@ export default function AdminResponseTemplates() {
                           <Button variant="outline" size="sm">
                             <Copy className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleEditTemplate(template)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="sm">
