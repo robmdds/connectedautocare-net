@@ -616,6 +616,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerData
       );
 
+      // Check if vehicle is ineligible - return proper message instead of error
+      if (ratingResult.status === 'ineligible') {
+        return res.json({
+          quote: {
+            id: ratingResult.id,
+            status: 'ineligible',
+            eligibilityReasons: ratingResult.eligibilityReasons,
+            allowSpecialQuote: ratingResult.allowSpecialQuote,
+            productId: productId,
+            vehicleData: vehicleData,
+            coverageSelections: coverageSelections,
+            customerData: customerData,
+            totalPremium: 0,
+            createdAt: ratingResult.createdAt
+          },
+          message: 'This vehicle does not qualify for coverage',
+          eligibilityReasons: ratingResult.eligibilityReasons,
+          allowSpecialQuote: ratingResult.allowSpecialQuote
+        });
+      }
+
       // Get the actual product ID from Connected Auto Care product data
       const cacProduct = cacService.getConnectedAutoCareProduct(productId);
       const actualProductId = cacProduct?.id || productId;
