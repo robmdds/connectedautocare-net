@@ -1246,43 +1246,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 error: 'HELCIM_API_TOKEN not configured. Please add your Helcim API key.'
               };
             } else {
-              // Test with a simple request to verify the API token works
-              const response = await fetch('https://api.helcim.com/v2/customers?limit=1', {
-                method: 'GET',
-                headers: {
-                  'api-token': apiToken,
-                  'Content-Type': 'application/json'
-                }
-              });
+              // Test with different authentication header formats that Helcim might use
+              let response;
+              let authMethod = '';
+              
+              // Try different authentication approaches
+              const authTests = [
+                { headers: { 'api-token': apiToken, 'Content-Type': 'application/json' }, method: 'api-token header' },
+                { headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' }, method: 'Bearer token' },
+                { headers: { 'Authorization': `Token ${apiToken}`, 'Content-Type': 'application/json' }, method: 'Token prefix' },
+                { headers: { 'x-api-token': apiToken, 'Content-Type': 'application/json' }, method: 'x-api-token header' }
+              ];
+              
+              for (const test of authTests) {
+                response = await fetch('https://api.helcim.com/v2/customers', {
+                  method: 'GET',
+                  headers: test.headers
+                });
+                authMethod = test.method;
+                if (response.status !== 401) break;
+              }
+
+              const responseText = response.status === 401 ? await response.text() : 'Connection test';
               
               if (response.status === 401 || response.status === 403) {
                 result = {
                   success: false,
                   status: response.status,
                   responseTime: Date.now() - startTime,
-                  error: 'Invalid API token. Please verify your Helcim API key is correct.'
+                  error: `Authentication failed with all methods tested. API key: ${apiToken.substring(0, 8)}... Please verify the API key is correct and has proper permissions.`
                 };
               } else if (response.status === 404) {
-                // 404 might indicate endpoint issue but token could be valid
+                // 404 could mean endpoint doesn't exist but auth might be working
                 result = {
                   success: true,
                   status: response.status,
                   responseTime: Date.now() - startTime,
-                  data: 'API token appears valid (404 may indicate endpoint variation). Connection authenticated successfully.'
+                  data: 'API authentication appears valid. Endpoint returned 404 which may indicate API version differences.'
                 };
               } else if (response.ok) {
                 result = {
                   success: true,
                   status: response.status,
                   responseTime: Date.now() - startTime,
-                  data: 'Helcim API connection and authentication successful'
+                  data: 'Helcim API connection and authentication successful!'
                 };
               } else {
                 result = {
                   success: false,
                   status: response.status,
                   responseTime: Date.now() - startTime,
-                  error: `API returned ${response.status}. Token configured but may need verification.`
+                  error: `HTTP ${response.status}: Please check if the API key has the correct permissions for this endpoint.`
                 };
               }
             }
