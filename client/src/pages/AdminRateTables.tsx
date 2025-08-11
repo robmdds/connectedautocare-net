@@ -145,12 +145,21 @@ export default function AdminRateTables() {
                   {rateTables.map((table: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
-                        <h3 className="font-medium">{table.productType}</h3>
+                        <h3 className="font-medium">{table.name}</h3>
                         <p className="text-sm text-gray-600">
-                          Uploaded: {new Date(table.uploadedAt).toLocaleDateString()}
+                          Product: {table.productId}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {table.recordCount} records
+                          Tenant: {table.tenantId}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Uploaded: {new Date(table.createdAt).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {table.rateData?.recordCount || 'Unknown'} records
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Version: {table.version} | {table.isActive ? 'Active' : 'Inactive'}
                         </p>
                       </div>
                       <div className="flex space-x-2">

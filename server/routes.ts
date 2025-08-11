@@ -782,6 +782,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API endpoints
+  app.get('/api/admin/system-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // For now, return basic stats
+      const stats = {
+        activeUsers: 1,
+        systemStatus: 'operational',
+        databaseStatus: 'connected',
+        apiStatus: 'healthy'
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching system stats:', error);
+      res.status(500).json({ error: 'Failed to fetch system stats' });
+    }
+  });
+
+  app.get('/api/admin/rate-tables', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Get all rate tables for admin view
+      const rateTables = await storage.getAllRateTables();
+      
+      res.json(rateTables);
+    } catch (error) {
+      console.error('Error fetching admin rate tables:', error);
+      res.status(500).json({ error: 'Failed to fetch rate tables' });
+    }
+  });
+
+  app.post('/api/admin/rate-tables/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // TODO: Implement file upload and processing
+      res.status(501).json({ error: 'Rate table upload not yet implemented' });
+    } catch (error) {
+      console.error('Error uploading rate table:', error);
+      res.status(500).json({ error: 'Failed to upload rate table' });
+    }
+  });
+
+  app.get('/api/admin/coverage-options', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Get coverage options from both product services
+      const heroOptions = Object.keys(HERO_VSC_PRODUCTS).map(productId => ({
+        provider: 'hero-vsc',
+        productId,
+        product: HERO_VSC_PRODUCTS[productId]
+      }));
+      
+      const cacOptions = Object.keys(CONNECTED_AUTO_CARE_PRODUCTS).map(productId => ({
+        provider: 'connected-auto-care', 
+        productId,
+        product: CONNECTED_AUTO_CARE_PRODUCTS[productId]
+      }));
+      
+      res.json({
+        providers: [
+          {
+            id: 'hero-vsc',
+            name: 'Hero VSC',
+            products: heroOptions
+          },
+          {
+            id: 'connected-auto-care',
+            name: 'Connected Auto Care',
+            products: cacOptions
+          }
+        ]
+      });
+    } catch (error) {
+      console.error('Error fetching coverage options:', error);
+      res.status(500).json({ error: 'Failed to fetch coverage options' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -197,6 +197,10 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(rateTables).where(and(...conditions)).orderBy(desc(rateTables.createdAt));
   }
 
+  async getAllRateTables(): Promise<RateTable[]> {
+    return db.select().from(rateTables).orderBy(desc(rateTables.createdAt));
+  }
+
   async getActiveRateTable(productId: string): Promise<RateTable | undefined> {
     const now = new Date();
     const [rateTable] = await db
