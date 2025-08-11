@@ -242,7 +242,7 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
           <CardTitle className="text-lg">Vehicle Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label htmlFor="vin" className="text-sm">VIN</Label>
               <Input
@@ -274,6 +274,25 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                   <SelectItem value="24 months">24 months</SelectItem>
                   <SelectItem value="36 months">36 months</SelectItem>
                   <SelectItem value="48 months">48 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="coverage" className="text-sm">Coverage Miles</Label>
+              <Select value={coverageMiles} onValueChange={setCoverageMiles}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15,000">15,000 miles</SelectItem>
+                  <SelectItem value="25,000">25,000 miles</SelectItem>
+                  <SelectItem value="30,000">30,000 miles</SelectItem>
+                  <SelectItem value="45,000">45,000 miles</SelectItem>
+                  <SelectItem value="60,000">60,000 miles</SelectItem>
+                  <SelectItem value="75,000">75,000 miles</SelectItem>
+                  <SelectItem value="100,000">100,000 miles</SelectItem>
+                  <SelectItem value="125,000">125,000 miles</SelectItem>
+                  <SelectItem value="unlimited">Unlimited miles</SelectItem>
                 </SelectContent>
               </Select>
             </div>
