@@ -10,6 +10,9 @@ interface VSCQuoteWidgetProps {
 }
 
 export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
+  // Debug log to verify this is the new simplified component
+  console.log("VSCQuoteWidget SIMPLIFIED FORM LOADED - v3.0", new Date().toISOString());
+  
   const [vin, setVin] = useState('');
   const [mileage, setMileage] = useState('');
   const [fullName, setFullName] = useState('');
@@ -62,8 +65,8 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
       {/* Simplified All-in-One Quote Form */}
       <Card className="border-2 border-blue-500">
         <CardHeader className="pb-3 bg-blue-50">
-          <CardTitle className="text-3xl font-bold mb-3 text-blue-600">🎯 Get Your Free Quote (ALL-IN-ONE FORM)</CardTitle>
-          <p className="text-lg text-gray-700 font-semibold">Enter all information below for instant VSC pricing - no back and forth!</p>
+          <CardTitle className="text-3xl font-bold mb-3 text-blue-600">🎯 Get Your Free Quote (ALL-IN-ONE FORM) - v3.0</CardTitle>
+          <p className="text-lg text-gray-700 font-semibold">Enter all information below for instant VSC pricing - no back and forth! Updated: {new Date().toLocaleTimeString()}</p>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-4">
