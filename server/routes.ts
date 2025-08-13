@@ -3016,6 +3016,386 @@ How can I help you today?`;
     }
   });
 
+  // System Integration Hub API Routes
+  app.get('/api/system/status', async (req, res) => {
+    try {
+      // Mock comprehensive system status data
+      const systemStatuses = [
+        {
+          id: "sys-001",
+          name: "TPA Core Platform",
+          type: "service",
+          status: "online",
+          uptime: 99.8,
+          responseTime: 145,
+          lastCheck: "2025-01-13T15:30:00Z",
+          healthScore: 98,
+          dependencies: ["Database", "Redis Cache", "File Storage"],
+          version: "2.1.4",
+          endpoint: "https://api.tpaplatform.com/core"
+        },
+        {
+          id: "sys-002",
+          name: "PostgreSQL Database",
+          type: "database",
+          status: "online",
+          uptime: 99.9,
+          responseTime: 12,
+          lastCheck: "2025-01-13T15:30:00Z",
+          healthScore: 99,
+          dependencies: ["Storage Volume", "Network"],
+          version: "15.4",
+          endpoint: "internal:5432"
+        },
+        {
+          id: "sys-003",
+          name: "Helcim Payment API",
+          type: "external",
+          status: "online",
+          uptime: 99.5,
+          responseTime: 890,
+          lastCheck: "2025-01-13T15:29:45Z",
+          healthScore: 95,
+          dependencies: ["Internet Connection"],
+          version: "v2",
+          endpoint: "https://api.helcim.com/v2"
+        },
+        {
+          id: "sys-004",
+          name: "VIN Decoding Service",
+          type: "api",
+          status: "warning",
+          uptime: 97.2,
+          responseTime: 2400,
+          lastCheck: "2025-01-13T15:29:30Z",
+          healthScore: 78,
+          dependencies: ["ChromeData API", "NHTSA Fallback"],
+          version: "v1.2",
+          endpoint: "https://api.chromedata.com/v1"
+        },
+        {
+          id: "sys-005",
+          name: "OpenAI Integration",
+          type: "external",
+          status: "online",
+          uptime: 99.1,
+          responseTime: 1850,
+          lastCheck: "2025-01-13T15:30:00Z",
+          healthScore: 92,
+          dependencies: ["OpenAI API"],
+          version: "v1",
+          endpoint: "https://api.openai.com/v1"
+        },
+        {
+          id: "sys-006",
+          name: "Document Storage",
+          type: "service",
+          status: "maintenance",
+          uptime: 98.5,
+          responseTime: 0,
+          lastCheck: "2025-01-13T15:15:00Z",
+          healthScore: 85,
+          dependencies: ["Google Cloud Storage"],
+          version: "1.0.8",
+          endpoint: "https://storage.googleapis.com"
+        }
+      ];
+
+      res.json(systemStatuses);
+    } catch (error) {
+      console.error('Error fetching system status:', error);
+      res.status(500).json({ error: 'Failed to fetch system status' });
+    }
+  });
+
+  app.get('/api/system/integrations', async (req, res) => {
+    try {
+      // Mock integration data
+      const integrations = [
+        {
+          id: "int-001",
+          name: "Helcim Payment Gateway",
+          type: "api",
+          status: "active",
+          provider: "Helcim Commerce",
+          lastSync: "2025-01-13T15:25:00Z",
+          syncFrequency: "Real-time",
+          recordsProcessed: 1247,
+          errorCount: 3,
+          successRate: 99.8,
+          configuration: {
+            apiKey: "configured",
+            webhookUrl: "https://platform.replit.dev/api/webhooks/helcim",
+            environment: "production"
+          }
+        },
+        {
+          id: "int-002",
+          name: "ChromeData VIN Service",
+          type: "api",
+          status: "active",
+          provider: "ChromeData Solutions",
+          lastSync: "2025-01-13T15:28:00Z",
+          syncFrequency: "On-demand",
+          recordsProcessed: 892,
+          errorCount: 12,
+          successRate: 98.7,
+          configuration: {
+            apiKey: "configured",
+            timeout: "30s",
+            retries: 3
+          }
+        },
+        {
+          id: "int-003",
+          name: "SendGrid Email Service",
+          type: "email",
+          status: "active",
+          provider: "Twilio SendGrid",
+          lastSync: "2025-01-13T15:20:00Z",
+          syncFrequency: "Real-time",
+          recordsProcessed: 2156,
+          errorCount: 8,
+          successRate: 99.6,
+          configuration: {
+            apiKey: "configured",
+            fromEmail: "noreply@tpaplatform.com",
+            templates: "configured"
+          }
+        },
+        {
+          id: "int-004",
+          name: "Rate Table Import",
+          type: "file_transfer",
+          status: "pending",
+          provider: "Google Cloud Storage",
+          lastSync: "2025-01-13T14:45:00Z",
+          syncFrequency: "Daily at 6 AM",
+          recordsProcessed: 156789,
+          errorCount: 0,
+          successRate: 100.0,
+          configuration: {
+            bucket: "tpa-rate-tables",
+            schedule: "0 6 * * *",
+            format: "CSV/XLSX"
+          }
+        },
+        {
+          id: "int-005",
+          name: "Claims Data Export",
+          type: "database",
+          status: "error",
+          provider: "External Reporting System",
+          lastSync: "2025-01-13T12:30:00Z",
+          syncFrequency: "Every 4 hours",
+          recordsProcessed: 45623,
+          errorCount: 156,
+          successRate: 89.2,
+          configuration: {
+            connectionString: "configured",
+            tables: ["claims", "policies", "payments"],
+            compression: "gzip"
+          }
+        }
+      ];
+
+      res.json(integrations);
+    } catch (error) {
+      console.error('Error fetching integrations:', error);
+      res.status(500).json({ error: 'Failed to fetch integrations' });
+    }
+  });
+
+  app.get('/api/system/workflows', async (req, res) => {
+    try {
+      // Mock workflow automation data
+      const workflows = [
+        {
+          id: "wf-001",
+          name: "Policy Issuance Automation",
+          type: "policy_issuance",
+          status: "running",
+          trigger: "Payment Confirmed",
+          actions: ["Generate Policy", "Send Welcome Email", "Update CRM"],
+          lastRun: "2025-01-13T15:22:00Z",
+          successCount: 234,
+          errorCount: 2,
+          avgExecutionTime: 12.5,
+          schedule: null
+        },
+        {
+          id: "wf-002",
+          name: "Claims Processing Workflow",
+          type: "claim_processing",
+          status: "running",
+          trigger: "New Claim Submitted",
+          actions: ["Fraud Check", "Assign Adjuster", "Send Acknowledgment"],
+          lastRun: "2025-01-13T15:18:00Z",
+          successCount: 89,
+          errorCount: 5,
+          avgExecutionTime: 45.2
+        },
+        {
+          id: "wf-003",
+          name: "Renewal Notification System",
+          type: "renewal",
+          status: "running",
+          trigger: "60 Days Before Expiry",
+          actions: ["Generate Renewal Quote", "Send Email", "Schedule Follow-up"],
+          lastRun: "2025-01-13T14:00:00Z",
+          successCount: 156,
+          errorCount: 1,
+          avgExecutionTime: 8.7,
+          schedule: "Daily at 2 PM"
+        },
+        {
+          id: "wf-004",
+          name: "Fraud Alert Notifications",
+          type: "notification",
+          status: "running",
+          trigger: "High Risk Score Detected",
+          actions: ["Send Urgent Alert", "Flag Claim", "Assign Senior Adjuster"],
+          lastRun: "2025-01-13T11:45:00Z",
+          successCount: 12,
+          errorCount: 0,
+          avgExecutionTime: 3.2
+        },
+        {
+          id: "wf-005",
+          name: "Weekly Analytics Report",
+          type: "reporting",
+          status: "paused",
+          trigger: "Weekly Schedule",
+          actions: ["Generate Report", "Email to Management", "Archive Data"],
+          lastRun: "2025-01-06T09:00:00Z",
+          successCount: 52,
+          errorCount: 3,
+          avgExecutionTime: 125.8,
+          schedule: "Sundays at 9 AM"
+        }
+      ];
+
+      res.json(workflows);
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+      res.status(500).json({ error: 'Failed to fetch workflows' });
+    }
+  });
+
+  app.get('/api/system/metrics', async (req, res) => {
+    try {
+      // Mock performance metrics
+      const metrics = [
+        {
+          name: "CPU Usage",
+          value: 34.5,
+          unit: "%",
+          status: "good",
+          trend: "stable",
+          threshold: { warning: 70, critical: 90 }
+        },
+        {
+          name: "Memory Usage",
+          value: 68.2,
+          unit: "%",
+          status: "warning",
+          trend: "up",
+          threshold: { warning: 70, critical: 85 }
+        },
+        {
+          name: "Database Connections",
+          value: 45,
+          unit: "",
+          status: "good",
+          trend: "stable",
+          threshold: { warning: 80, critical: 100 }
+        },
+        {
+          name: "API Response Time",
+          value: 145,
+          unit: "ms",
+          status: "good",
+          trend: "down",
+          threshold: { warning: 500, critical: 1000 }
+        },
+        {
+          name: "Storage Usage",
+          value: 2.4,
+          unit: "GB",
+          status: "good",
+          trend: "up",
+          threshold: { warning: 8, critical: 10 }
+        },
+        {
+          name: "Error Rate",
+          value: 0.12,
+          unit: "%",
+          status: "good",
+          trend: "down",
+          threshold: { warning: 1, critical: 5 }
+        }
+      ];
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch metrics' });
+    }
+  });
+
+  // System control endpoints
+  app.post('/api/system/:systemId/restart', async (req, res) => {
+    try {
+      const { systemId } = req.params;
+      
+      // Mock system restart
+      res.json({
+        success: true,
+        systemId,
+        action: 'restart',
+        timestamp: new Date().toISOString(),
+        message: 'System restart initiated successfully'
+      });
+    } catch (error) {
+      console.error('Error restarting system:', error);
+      res.status(500).json({ error: 'Failed to restart system' });
+    }
+  });
+
+  app.post('/api/system/integrations/:integrationId/:action', async (req, res) => {
+    try {
+      const { integrationId, action } = req.params;
+      
+      res.json({
+        success: true,
+        integrationId,
+        action,
+        timestamp: new Date().toISOString(),
+        message: `Integration ${action} completed successfully`
+      });
+    } catch (error) {
+      console.error('Error controlling integration:', error);
+      res.status(500).json({ error: 'Failed to control integration' });
+    }
+  });
+
+  app.post('/api/system/workflows/:workflowId/:action', async (req, res) => {
+    try {
+      const { workflowId, action } = req.params;
+      
+      res.json({
+        success: true,
+        workflowId,
+        action,
+        timestamp: new Date().toISOString(),
+        message: `Workflow ${action} completed successfully`
+      });
+    } catch (error) {
+      console.error('Error controlling workflow:', error);
+      res.status(500).json({ error: 'Failed to control workflow' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

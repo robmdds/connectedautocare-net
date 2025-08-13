@@ -47,6 +47,7 @@ const menuItems = [
     items: [
       { name: "Tenants", icon: "fas fa-building", href: "/admin" },
       { name: "Settings", icon: "fas fa-cog", href: "/settings" },
+      { name: "System Integration", icon: "fas fa-server", href: "/system-integration" },
     ],
   },
 ];

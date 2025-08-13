@@ -35,6 +35,7 @@ import AdvancedClaims from "@/pages/AdvancedClaims";
 import PolicyManagement from "@/pages/PolicyManagement";
 import AdvancedAnalytics from "@/pages/AdvancedAnalytics";
 import Communications from "@/pages/Communications";
+import SystemIntegration from "@/pages/SystemIntegration";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -76,6 +77,7 @@ function Router() {
           <Route path="/policy-management" component={PolicyManagement} />
           <Route path="/advanced-analytics" component={AdvancedAnalytics} />
           <Route path="/communications" component={Communications} />
+          <Route path="/system-integration" component={SystemIntegration} />
         </>
       )}
       <Route component={NotFound} />
