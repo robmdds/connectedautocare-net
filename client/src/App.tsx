@@ -27,6 +27,9 @@ import ConnectedAutoCarePage from "@/pages/ConnectedAutoCarePage";
 import Products from "@/pages/Products";
 import FAQ from "@/pages/FAQ";
 import PublicClaims from "@/pages/PublicClaims";
+import WholesaleLogin from "@/pages/WholesaleLogin";
+import WholesalePortal from "@/pages/WholesalePortal";
+import WholesaleBulkPricing from "@/pages/WholesaleBulkPricing";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -37,6 +40,9 @@ function Router() {
       <Route path="/products" component={Products} />
       <Route path="/faq" component={FAQ} />
       <Route path="/claims" component={PublicClaims} />
+      <Route path="/wholesale" component={WholesaleLogin} />
+      <Route path="/wholesale/portal" component={WholesalePortal} />
+      <Route path="/wholesale/bulk-pricing" component={WholesaleBulkPricing} />
       <Route path="/hero-vsc" component={HeroVscProducts} />
       <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
       <Route path="/admin/coverage-options" component={AdminCoverageOptions} />

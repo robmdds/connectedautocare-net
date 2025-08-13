@@ -56,8 +56,8 @@ export default function Landing() {
               <Link href="/products" className="text-gray-600 hover:text-blue-600">Products</Link>
               <Link href="/claims" className="text-gray-600 hover:text-blue-600">Claims</Link>
               <Link href="/faq" className="text-gray-600 hover:text-blue-600">FAQ</Link>
-              <Button onClick={handleLogin} variant="outline" size="sm">
-                Partner Login
+              <Button asChild variant="outline" size="sm">
+                <Link href="/wholesale">Partner Login</Link>
               </Button>
             </div>
           </div>
@@ -385,7 +385,7 @@ export default function Landing() {
                 <li><a href="#" className="hover:text-white">About Us</a></li>
                 <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-                <li><Link href="/api/login" className="hover:text-white">Partner Login</Link></li>
+                <li><Link href="/wholesale" className="hover:text-white">Partner Login</Link></li>
               </ul>
             </div>
           </div>

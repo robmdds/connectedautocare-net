@@ -1472,6 +1472,231 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Wholesale Portal API Routes
+  app.get('/api/wholesale/stats', async (req, res) => {
+    try {
+      // In production, this would fetch real partner statistics
+      const stats = {
+        totalSales: 247500,
+        monthlyCommission: 18560,
+        activePolicies: 1243,
+        conversionRate: 24.5
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching wholesale stats:', error);
+      res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+  });
+
+  app.get('/api/wholesale/products', async (req, res) => {
+    try {
+      // In production, this would fetch products with partner-specific pricing
+      const products = [
+        {
+          id: 'auto-advantage-wholesale',
+          name: 'Auto Advantage Program',
+          category: 'Vehicle Protection',
+          basePrice: 1200,
+          partnerMarkup: 15,
+          commission: 12,
+          status: 'active',
+          description: 'Comprehensive auto protection with deductible reimbursement'
+        },
+        {
+          id: 'home-protection-wholesale',
+          name: 'Home Protection Plan',
+          category: 'Home Protection',
+          basePrice: 800,
+          partnerMarkup: 20,
+          commission: 15,
+          status: 'active',
+          description: 'Complete home protection with emergency services'
+        },
+        {
+          id: 'all-vehicle-wholesale',
+          name: 'All-Vehicle Protection',
+          category: 'Multi-Vehicle',
+          basePrice: 1500,
+          partnerMarkup: 18,
+          commission: 10,
+          status: 'active',
+          description: 'Protection for cars, motorcycles, ATVs, boats, and RVs'
+        }
+      ];
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching wholesale products:', error);
+      res.status(500).json({ error: 'Failed to fetch products' });
+    }
+  });
+
+  app.get('/api/wholesale/quotes', async (req, res) => {
+    try {
+      // In production, this would fetch partner's quotes from database
+      const quotes = [
+        {
+          id: 'wq-001',
+          productName: 'Auto Advantage Program',
+          customerEmail: 'customer@example.com',
+          totalPremium: 1380,
+          commission: 165.6,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'wq-002',
+          productName: 'Home Protection Plan',
+          customerEmail: 'homeowner@example.com',
+          totalPremium: 960,
+          commission: 144,
+          status: 'sold',
+          createdAt: new Date(Date.now() - 86400000).toISOString()
+        }
+      ];
+      res.json(quotes);
+    } catch (error) {
+      console.error('Error fetching wholesale quotes:', error);
+      res.status(500).json({ error: 'Failed to fetch quotes' });
+    }
+  });
+
+  app.post('/api/wholesale/quotes', async (req, res) => {
+    try {
+      const { productId, vin, zip, term, mileage } = req.body;
+      
+      // Validate input
+      if (!productId || !vin) {
+        return res.status(400).json({ error: 'Product ID and VIN are required' });
+      }
+
+      // In production, this would:
+      // 1. Decode VIN using existing service
+      // 2. Calculate quote using rating engine
+      // 3. Apply partner markup and commission
+      // 4. Store quote in database
+      
+      const quote = {
+        id: `wq-${Date.now()}`,
+        productId,
+        vin,
+        zip,
+        term,
+        mileage,
+        productName: 'Auto Advantage Program', // Would be looked up from productId
+        basePremium: 1200,
+        partnerMarkup: 180, // 15% markup
+        totalPremium: 1380,
+        commission: 165.6, // 12% commission
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+      };
+
+      res.json({ 
+        success: true, 
+        quote,
+        message: 'Wholesale quote generated successfully'
+      });
+    } catch (error) {
+      console.error('Error generating wholesale quote:', error);
+      res.status(500).json({ error: 'Failed to generate quote' });
+    }
+  });
+
+  // Bulk quote processing endpoint
+  app.post('/api/wholesale/bulk-quotes', async (req, res) => {
+    try {
+      const { items } = req.body;
+      
+      if (!items || !Array.isArray(items)) {
+        return res.status(400).json({ error: 'Items array is required' });
+      }
+
+      // Process each item
+      const results = items.map((item: any) => {
+        try {
+          // Validate required fields
+          if (!item.vin || !item.productId || !item.term) {
+            return {
+              ...item,
+              status: 'error',
+              errorMessage: 'Missing required fields: VIN, Product, or Term'
+            };
+          }
+
+          // Simulate quote calculation (in production, would use actual rating engine)
+          const basePremium = Math.floor(Math.random() * 1000) + 800; // $800-1800
+          const markupRate = 0.15; // 15% markup
+          const commissionRate = 0.12; // 12% commission
+          
+          const markup = basePremium * markupRate;
+          const totalPremium = basePremium + markup;
+          const commission = totalPremium * commissionRate;
+
+          return {
+            ...item,
+            basePremium,
+            totalPremium: Math.round(totalPremium),
+            commission: Math.round(commission),
+            status: 'processed'
+          };
+        } catch (error) {
+          return {
+            ...item,
+            status: 'error',
+            errorMessage: 'Processing error occurred'
+          };
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        results,
+        summary: {
+          total: items.length,
+          processed: results.filter(r => r.status === 'processed').length,
+          errors: results.filter(r => r.status === 'error').length
+        }
+      });
+    } catch (error) {
+      console.error('Error processing bulk quotes:', error);
+      res.status(500).json({ error: 'Failed to process bulk quotes' });
+    }
+  });
+
+  // Partner authentication endpoint
+  app.post('/api/wholesale/auth', async (req, res) => {
+    try {
+      const { partnerCode, username, password } = req.body;
+      
+      // In production, this would authenticate against partner database
+      if (partnerCode && username && password) {
+        const partnerData = {
+          id: 'partner-001',
+          partnerCode,
+          companyName: 'Premium Insurance Agency',
+          contactName: username,
+          tier: 'gold',
+          commissionRate: 12,
+          markupRate: 15,
+          isActive: true
+        };
+        
+        res.json({ 
+          success: true, 
+          partner: partnerData,
+          token: 'wholesale-jwt-token' // Would be actual JWT in production
+        });
+      } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
+    } catch (error) {
+      console.error('Error authenticating partner:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
