@@ -2,6 +2,6 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// CACHE BUSTED - v4.0 - SIMPLIFIED FORM WITH ALL 5 FIELDS
-console.log("CACHE BUSTED VSC FORM - v4.0 timestamp:", Date.now());
+// FORCE COMPLETE REFRESH - v5.0 - NEW FORM WITH ALL 5 FIELDS
+console.log("🔥 COMPLETE REFRESH - NEW FORM v5.0 timestamp:", Date.now());
 createRoot(document.getElementById("root")!).render(<App />);

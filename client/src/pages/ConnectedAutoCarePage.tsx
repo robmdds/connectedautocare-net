@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { VSCQuoteWidgetSimplified } from '@/components/VSCQuoteWidgetSimplified';
+import { VSCQuoteWidget } from '@/components/VSCQuoteWidget';
 
 export default function ConnectedAutoCarePage() {
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
@@ -41,8 +41,8 @@ export default function ConnectedAutoCarePage() {
         </div>
       </div>
 
-      {/* Cache-Busted Simplified Quote Widget */}
-      <VSCQuoteWidgetSimplified onQuoteSelect={handleQuoteSelect} />
+      {/* COMPLETELY REPLACED WIDGET - CACHE BUSTED */}
+      <VSCQuoteWidget onQuoteSelect={handleQuoteSelect} />
 
       {/* Selected Quote Details */}
       {selectedQuote && (

@@ -10,8 +10,8 @@ interface VSCQuoteWidgetProps {
 }
 
 export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
-  // Debug log to verify this is the new simplified component
-  console.log("VSCQuoteWidget SIMPLIFIED FORM LOADED - v3.0", new Date().toISOString());
+  // FORCE CACHE CLEAR - THIS IS THE NEW SIMPLIFIED FORM
+  console.log("🔥 CACHE CLEARED - NEW VSC FORM LOADED v5.0", new Date().toISOString());
   
   const [vin, setVin] = useState('');
   const [mileage, setMileage] = useState('');
@@ -62,34 +62,34 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
 
   return (
     <div className="space-y-6">
-      {/* Simplified All-in-One Quote Form */}
-      <Card className="border-2 border-blue-500">
-        <CardHeader className="pb-3 bg-blue-50">
-          <CardTitle className="text-3xl font-bold mb-3 text-blue-600">🎯 Get Your Free Quote (ALL-IN-ONE FORM) - v3.0</CardTitle>
-          <p className="text-lg text-gray-700 font-semibold">Enter all information below for instant VSC pricing - no back and forth! Updated: {new Date().toLocaleTimeString()}</p>
+      {/* COMPLETELY NEW CACHE-BUSTED FORM */}
+      <Card className="border-4 border-red-500 bg-red-50">
+        <CardHeader className="pb-3 bg-red-100">
+          <CardTitle className="text-3xl font-bold mb-3 text-red-800">🔥 CACHE BUSTED - ALL 5 FIELDS FORM v5.0</CardTitle>
+          <p className="text-lg text-gray-800 font-semibold">This is the NEW form with ALL 5 REQUIRED FIELDS including Email & ZIP Code! Time: {new Date().toLocaleTimeString()}</p>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* VIN Input */}
             <div>
               <Label htmlFor="vin" className="text-lg font-semibold text-gray-900 mb-2 block">
-                Vehicle Identification Number (VIN) <span className="text-red-500">*</span>
+                1. Vehicle Identification Number (VIN) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="vin"
                 value={vin}
                 onChange={(e) => setVin(e.target.value.toUpperCase())}
                 placeholder="Enter 17-character VIN (e.g., JF1GJAC66DH033129)"
-                className="h-12 text-lg font-mono border-2 border-blue-300 focus:border-blue-500"
+                className="h-14 text-lg font-mono border-2 border-red-400 focus:border-red-600"
                 maxLength={17}
                 data-testid="input-vin"
               />
             </div>
 
-            {/* Current Mileage */}
+            {/* SINGLE Mileage Field - NO DUPLICATES */}
             <div>
               <Label htmlFor="mileage" className="text-lg font-semibold text-gray-900 mb-2 block">
-                Current Mileage <span className="text-red-500">*</span>
+                2. Current Mileage <span className="text-red-500">*</span> (SINGLE FIELD ONLY)
               </Label>
               <Input
                 id="mileage"
@@ -97,7 +97,7 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
                 placeholder="Enter current mileage (e.g., 45000)"
-                className="h-12 text-lg border-2 border-blue-300 focus:border-blue-500"
+                className="h-14 text-lg border-2 border-red-400 focus:border-red-600"
                 data-testid="input-mileage"
               />
             </div>
@@ -105,22 +105,22 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
             {/* Full Name */}
             <div>
               <Label htmlFor="fullName" className="text-lg font-semibold text-gray-900 mb-2 block">
-                Full Name <span className="text-red-500">*</span>
+                3. Full Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter your full name"
-                className="h-12 text-lg border-2 border-blue-300 focus:border-blue-500"
+                className="h-14 text-lg border-2 border-red-400 focus:border-red-600"
                 data-testid="input-fullname"
               />
             </div>
 
-            {/* Email Address */}
+            {/* Email Address - REQUIRED FOR QUOTE SAVING */}
             <div>
               <Label htmlFor="email" className="text-lg font-semibold text-gray-900 mb-2 block">
-                Email Address <span className="text-red-500">*</span>
+                4. Email Address <span className="text-red-500">*</span> <span className="text-sm bg-yellow-200 px-2 py-1 rounded">(Required for quote delivery)</span>
               </Label>
               <Input
                 id="email"
@@ -128,22 +128,22 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
-                className="h-12 text-lg border-2 border-blue-300 focus:border-blue-500"
+                className="h-14 text-lg border-2 border-red-400 focus:border-red-600"
                 data-testid="input-email"
               />
             </div>
 
-            {/* ZIP Code */}
+            {/* ZIP Code - REQUIRED FOR TAX CALCULATION */}
             <div>
               <Label htmlFor="zipCode" className="text-lg font-semibold text-gray-900 mb-2 block">
-                ZIP Code <span className="text-red-500">*</span>
+                5. ZIP Code <span className="text-red-500">*</span> <span className="text-sm bg-yellow-200 px-2 py-1 rounded">(Required for tax calculation)</span>
               </Label>
               <Input
                 id="zipCode"
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
                 placeholder="Enter your ZIP code"
-                className="h-12 text-lg border-2 border-blue-300 focus:border-blue-500"
+                className="h-14 text-lg border-2 border-red-400 focus:border-red-600"
                 maxLength={10}
                 data-testid="input-zipcode"
               />
@@ -153,10 +153,10 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
             <Button 
               onClick={handleGenerateQuote}
               disabled={isProcessing}
-              className="w-full h-16 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+              className="w-full h-16 text-xl font-bold bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white shadow-lg"
               data-testid="button-generate-quote"
             >
-              {isProcessing ? "Processing..." : "🚀 Get My VSC Quote (All-in-One)"}
+              {isProcessing ? "Processing..." : "🔥 Get Complete VSC Quote (All 5 Fields Required)"}
             </Button>
           </div>
         </CardContent>
