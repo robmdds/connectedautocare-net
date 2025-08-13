@@ -129,29 +129,29 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* VIN Quote Form - UPDATED VERSION */}
-            <div className="bg-white rounded-lg shadow-lg p-6 text-gray-900 border-4 border-red-500">
+            {/* VIN Quote Form - PROMINENT ENTRY */}
+            <div className="bg-white rounded-lg shadow-xl p-8 text-gray-900 border-4 border-blue-600">
               <div className="text-center mb-6">
-                <Car className="mx-auto h-12 w-12 text-red-600 mb-3" />
-                <h3 className="text-2xl font-bold mb-2 text-red-600">UPDATED: Get Your Free VSC Quote</h3>
-                <p className="text-gray-600 font-bold">NEW VIN ENTRY: Enter your VIN for instant pricing and eligibility verification</p>
+                <Car className="mx-auto h-16 w-16 text-blue-600 mb-4" />
+                <h3 className="text-3xl font-bold mb-3 text-blue-600">🚗 Get Your Free Quote</h3>
+                <p className="text-lg text-gray-700 font-semibold">Enter your VIN for instant vehicle pricing and eligibility</p>
               </div>
               
               <form onSubmit={handleVinSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="vin-input" className="block text-sm font-medium text-gray-700">
-                    Vehicle Identification Number (VIN)
+                <div className="space-y-3 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+                  <label htmlFor="vin-input" className="block text-lg font-bold text-gray-900">
+                    🔍 Vehicle Identification Number (VIN) <span className="text-red-500">*</span>
                   </label>
                   <Input 
                     id="vin-input"
                     type="text"
-                    placeholder="Enter 17-character VIN (e.g., 1HGBH41JXMN109186)"
+                    placeholder="Enter 17-character VIN (e.g., JF1GJAC66DH033129)"
                     value={vinInput}
                     onChange={(e) => {
                       setVinInput(e.target.value);
                       setVinError("");
                     }}
-                    className={`text-lg font-mono tracking-wider ${vinError ? 'border-red-500' : ''}`}
+                    className={`text-xl font-mono tracking-wider h-14 border-2 border-blue-300 focus:border-blue-600 ${vinError ? 'border-red-500' : ''}`}
                     maxLength={17}
                     data-testid="input-vin"
                   />
