@@ -2693,6 +2693,329 @@ How can I help you today?`;
     }
   });
 
+  // Real-Time Communications API Routes
+  app.get('/api/communications/conversations', async (req, res) => {
+    try {
+      const { type, search } = req.query;
+      
+      // Mock conversations data
+      const mockConversations = [
+        {
+          id: "conv-001",
+          type: "direct",
+          name: "Sarah Wilson (Claims Adjuster)",
+          participants: [
+            {
+              id: "user-001",
+              name: "Sarah Wilson",
+              status: "online",
+              role: "Claims Adjuster"
+            }
+          ],
+          lastMessage: {
+            id: "msg-001",
+            content: "The claim has been approved and payment is being processed.",
+            senderId: "user-001",
+            senderName: "Sarah Wilson",
+            timestamp: "2025-01-13T14:30:00Z",
+            type: "text"
+          },
+          unreadCount: 2,
+          pinned: true,
+          muted: false,
+          createdAt: "2025-01-10T09:00:00Z"
+        },
+        {
+          id: "conv-002",
+          type: "group",
+          name: "Claims Review Team",
+          participants: [
+            {
+              id: "user-002",
+              name: "Mike Thompson",
+              status: "online",
+              role: "Senior Adjuster"
+            },
+            {
+              id: "user-003",
+              name: "Lisa Rodriguez",
+              status: "away",
+              role: "Claims Supervisor"
+            },
+            {
+              id: "user-004",
+              name: "Tom Wilson",
+              status: "busy",
+              role: "Claims Analyst"
+            }
+          ],
+          lastMessage: {
+            id: "msg-002",
+            content: "Weekly review meeting scheduled for Friday at 2 PM",
+            senderId: "user-003",
+            senderName: "Lisa Rodriguez",
+            timestamp: "2025-01-13T13:45:00Z",
+            type: "text"
+          },
+          unreadCount: 0,
+          pinned: false,
+          muted: false,
+          createdAt: "2025-01-08T10:00:00Z"
+        },
+        {
+          id: "conv-003",
+          type: "support",
+          name: "Customer Support - Ticket #12345",
+          participants: [
+            {
+              id: "user-005",
+              name: "Jennifer Davis",
+              status: "offline",
+              role: "Customer"
+            },
+            {
+              id: "user-006",
+              name: "Support Agent",
+              status: "online",
+              role: "Support"
+            }
+          ],
+          lastMessage: {
+            id: "msg-003",
+            content: "Thank you for your patience. We've resolved the billing issue.",
+            senderId: "user-006",
+            senderName: "Support Agent",
+            timestamp: "2025-01-13T12:20:00Z",
+            type: "text"
+          },
+          unreadCount: 1,
+          pinned: false,
+          muted: false,
+          createdAt: "2025-01-12T16:30:00Z"
+        },
+        {
+          id: "conv-004",
+          type: "direct",
+          name: "Robert Martinez (Policy Holder)",
+          participants: [
+            {
+              id: "user-007",
+              name: "Robert Martinez",
+              status: "away",
+              role: "Customer"
+            }
+          ],
+          lastMessage: {
+            id: "msg-004",
+            content: "When will my policy documents be ready?",
+            senderId: "user-007",
+            senderName: "Robert Martinez",
+            timestamp: "2025-01-13T11:15:00Z",
+            type: "text"
+          },
+          unreadCount: 3,
+          pinned: false,
+          muted: false,
+          createdAt: "2025-01-11T14:00:00Z"
+        }
+      ];
+
+      let filteredConversations = mockConversations;
+
+      // Apply filters
+      if (type && type !== 'all') {
+        filteredConversations = filteredConversations.filter(conv => conv.type === type);
+      }
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        filteredConversations = filteredConversations.filter(conv => 
+          conv.name.toLowerCase().includes(searchLower) ||
+          conv.participants.some(p => p.name.toLowerCase().includes(searchLower))
+        );
+      }
+
+      res.json(filteredConversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ error: 'Failed to fetch conversations' });
+    }
+  });
+
+  app.get('/api/communications/messages/:conversationId', async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      // Mock messages data
+      const mockMessages = [
+        {
+          id: "msg-001",
+          content: "Hello, I wanted to follow up on the claim we discussed yesterday.",
+          senderId: "user-001",
+          senderName: "Sarah Wilson",
+          timestamp: "2025-01-13T14:25:00Z",
+          type: "text"
+        },
+        {
+          id: "msg-002",
+          content: "I've reviewed all the documentation and everything looks good.",
+          senderId: "user-001",
+          senderName: "Sarah Wilson",
+          timestamp: "2025-01-13T14:27:00Z",
+          type: "text"
+        },
+        {
+          id: "msg-003",
+          content: "The claim has been approved and payment is being processed.",
+          senderId: "user-001",
+          senderName: "Sarah Wilson",
+          timestamp: "2025-01-13T14:30:00Z",
+          type: "text",
+          reactions: [
+            { emoji: "👍", count: 2, users: ["user-002", "user-003"] },
+            { emoji: "🎉", count: 1, users: ["user-002"] }
+          ]
+        },
+        {
+          id: "msg-004",
+          content: "Thank you so much for the quick processing! This is exactly what our customers need.",
+          senderId: "user-current",
+          senderName: "You",
+          timestamp: "2025-01-13T14:32:00Z",
+          type: "text"
+        },
+        {
+          id: "msg-005",
+          content: "System notification: Payment of $2,500 has been authorized and will be processed within 1-2 business days.",
+          senderId: "system",
+          senderName: "System",
+          timestamp: "2025-01-13T14:33:00Z",
+          type: "system"
+        }
+      ];
+
+      res.json(mockMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+  });
+
+  app.get('/api/communications/notifications', async (req, res) => {
+    try {
+      // Mock notifications data
+      const mockNotifications = [
+        {
+          id: "notif-001",
+          title: "New Claim Submitted",
+          message: "Claim #CLM-2025-001237 has been submitted and requires review",
+          type: "info",
+          timestamp: "2025-01-13T15:00:00Z",
+          read: false,
+          actionUrl: "/advanced-claims",
+          priority: "high"
+        },
+        {
+          id: "notif-002",
+          title: "Payment Processed",
+          message: "Payment of $2,500 for claim #CLM-2025-001234 has been successfully processed",
+          type: "success",
+          timestamp: "2025-01-13T14:45:00Z",
+          read: false,
+          actionUrl: "/claims",
+          priority: "medium"
+        },
+        {
+          id: "notif-003",
+          title: "Policy Renewal Due",
+          message: "Policy POL-VSC-2025-001 expires in 30 days and requires renewal",
+          type: "warning",
+          timestamp: "2025-01-13T14:30:00Z",
+          read: true,
+          actionUrl: "/policy-management",
+          priority: "medium"
+        },
+        {
+          id: "notif-004",
+          title: "System Maintenance",
+          message: "Scheduled maintenance will occur tonight from 11 PM to 1 AM EST",
+          type: "info",
+          timestamp: "2025-01-13T14:00:00Z",
+          read: true,
+          priority: "low"
+        },
+        {
+          id: "notif-005",
+          title: "Fraud Alert",
+          message: "High-risk claim detected: CLM-2025-001235 requires immediate investigation",
+          type: "error",
+          timestamp: "2025-01-13T13:30:00Z",
+          read: false,
+          actionUrl: "/advanced-claims",
+          priority: "urgent"
+        }
+      ];
+
+      res.json(mockNotifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+
+  app.post('/api/communications/messages', async (req, res) => {
+    try {
+      const { conversationId, content, type = 'text' } = req.body;
+      
+      // Mock message creation
+      const newMessage = {
+        id: `msg-${Date.now()}`,
+        content,
+        senderId: "user-current",
+        senderName: "You",
+        timestamp: new Date().toISOString(),
+        type
+      };
+
+      res.json({
+        success: true,
+        message: newMessage
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ error: 'Failed to send message' });
+    }
+  });
+
+  app.put('/api/communications/conversations/:conversationId/read', async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      
+      res.json({
+        success: true,
+        conversationId,
+        markedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error marking conversation as read:', error);
+      res.status(500).json({ error: 'Failed to mark as read' });
+    }
+  });
+
+  app.put('/api/communications/notifications/:notificationId/read', async (req, res) => {
+    try {
+      const { notificationId } = req.params;
+      
+      res.json({
+        success: true,
+        notificationId,
+        markedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ error: 'Failed to mark notification as read' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

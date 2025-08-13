@@ -34,6 +34,7 @@ import AIAssistant from "@/pages/AIAssistant";
 import AdvancedClaims from "@/pages/AdvancedClaims";
 import PolicyManagement from "@/pages/PolicyManagement";
 import AdvancedAnalytics from "@/pages/AdvancedAnalytics";
+import Communications from "@/pages/Communications";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -74,6 +75,7 @@ function Router() {
           <Route path="/advanced-claims" component={AdvancedClaims} />
           <Route path="/policy-management" component={PolicyManagement} />
           <Route path="/advanced-analytics" component={AdvancedAnalytics} />
+          <Route path="/communications" component={Communications} />
         </>
       )}
       <Route component={NotFound} />
