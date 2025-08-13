@@ -16,6 +16,44 @@ import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyti
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for uptime monitoring
+  app.get('/healthz', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Sitemap endpoint
+  app.get('/sitemap.xml', (req, res) => {
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const lastmod = new Date().toISOString().split('T')[0];
+    
+    const urls = [
+      { loc: '/', priority: '1.0', changefreq: 'daily' },
+      { loc: '/products', priority: '0.9', changefreq: 'weekly' },
+      { loc: '/faq', priority: '0.8', changefreq: 'weekly' },
+      { loc: '/claims', priority: '0.8', changefreq: 'monthly' },
+      { loc: '/hero-vsc', priority: '0.7', changefreq: 'monthly' },
+      { loc: '/connected-auto-care', priority: '0.7', changefreq: 'monthly' },
+    ];
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(url => `  <url>
+    <loc>${baseUrl}${url.loc}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+    
+    res.set('Content-Type', 'application/xml');
+    res.send(sitemap);
+  });
+
   // Auth middleware
   await setupAuth(app);
 

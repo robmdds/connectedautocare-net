@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /products/*
+Allow: /faq
+Allow: /claims
+Allow: /contact
+Allow: /about
+
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /analytics/*
+Disallow: /policies/*
+
+Sitemap: https://your-domain.com/sitemap.xml

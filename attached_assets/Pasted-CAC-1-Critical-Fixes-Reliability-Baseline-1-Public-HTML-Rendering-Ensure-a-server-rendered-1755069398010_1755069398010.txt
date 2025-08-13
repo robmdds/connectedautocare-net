@@ -1,0 +1,159 @@
+CAC 
+
+1) Critical Fixes & Reliability Baseline
+	1.	Public HTML Rendering
+	•	Ensure a server‑rendered HTML shell (SSR/SSG) so non‑JS agents (search, link unfurlers, email scanners) get content.
+	•	Add fallback <noscript> with core CTAs (Quote / Become a Reseller / Contact).
+	2.	Robots + Sitemap
+	•	/robots.txt with Sitemap: https://…/sitemap.xml.
+	•	Autogenerate sitemap.xml for products, plan pages, FAQs, blog.
+	3.	Canonical & Indexing Hygiene
+	•	<link rel="canonical"> per route; prevent duplicate params from indexing.
+	4.	Status Pages & Uptime
+	•	Health endpoint /healthz; attach free uptime monitor + Slack/Email alert.
+	5.	Security Headers
+	•	HSTS, CSP (script-src with hashes), X‑Frame‑Options SAMEORIGIN, Referrer-Policy strict-origin-when-cross-origin.
+
+⸻
+
+2) Information Architecture (IA) — Dual Channel
+
+Top Nav
+	•	Wholesale: Products → VSC, Deductible Reimbursement, Ancillary → Each with provider subpages.
+	•	Pricing & Rate Cards (gated), Reseller Login, Partner Onboarding.
+	•	DTC: Protect My Vehicle, Home Protection, How It Works, Claims, FAQs, Get a Quote (primary CTA).
+
+Footer
+	•	Compliance links, state availability, provider list, contact, privacy, terms, disclaimers.
+
+⸻
+
+3) Product Pages — Must-Haves (mapped to your brochures)
+
+For each product page include: What it covers, Who it’s for, Term options, Benefit limits, How to claim, Download PDF.
+	•	Auto Advantage Program / ADR: call out deductible reimbursement, ID theft restoration, warranty vault; 1–7 year terms; target insurance agents, financial institutions, auto customers. Include “Who is this for?” block.  
+	•	Home Protection Plan / HPP: list deductible reimbursement, glass breakage, lockout help, appliance/electronics repair, emergency lodging; show claim limits ($200 glass, $100 lockout, $500 per repair occurrence, $1,000 annual cap examples), and 1–5 year term; recommended retail ranges. Include clear claim frequency limits.  
+	•	All‑Vehicle Protection / APS: multi‑vehicle (cars, motorcycles, ATVs, boats, RVs), 1–5 year terms; includes ADR, 20% mechanical repair reimbursement, emergency travel assist, ID theft/warranty vault. Highlight multi‑VIN suitability.  
+
+Include “Download Brochure” buttons that link to the PDFs you provided so agents and consumers can self‑serve collateral.   
+
+⸻
+
+4) Wholesale (Reseller) Portal — Required Features
+	1.	Onboarding Flow
+	•	KYC/Business intake → E‑contract → State/Line authorities upload → Approval.
+	2.	Rate Cards & Eligibility
+	•	Secure library by provider/product/state; changelog; email diff alerts on updates.
+	3.	Quote Builder
+	•	VIN decode, mileage, usage type; show eligible plans + MSRP + reseller margin; export PDF to customer.
+	4.	Enrollment & E‑Signature
+	•	Pre‑filled agreements; Payment capture or billing instructions; API webhook to provider.
+	5.	Deal Tracking
+	•	Pipeline, commissions, chargebacks, clawback timers, SPIFF tracking.
+	6.	Collateral Generator
+	•	White‑label PDFs: co‑brand logo + contact; auto‑populate benefits from product data (from your brochures).   
+	7.	Support Center
+	•	SLA chat/email, searchable knowledge base, claim routing cheat‑sheets per product.
+
+⸻
+
+5) DTC Funnel — Required Pages & Mechanics
+	1.	Hero + Proof
+	•	Value prop: “Protect against surprise repairs + deductible hits”; logos of partner networks; star ratings.
+	2.	Instant Quote
+	•	Short form (Year/Make/Model/Trim, miles, ZIP, email/phone).
+	•	Return 3 plan tiers with monthly & pay‑in‑full, “What’s covered” bullets pulled from brochures.  
+	3.	Checkout
+	•	PCI vendor embed or offsite session; order summary; T&Cs acceptance.
+	4.	Post‑Purchase
+	•	Account portal (policy docs, claims, billing, add vehicle/home plan).
+	5.	Claims Page
+	•	Step list, phone/email, hours, required docs; per‑product nuances (e.g., ADR receipt rules, repair reimbursement windows aligned to your HPP/APS terms).  
+
+⸻
+
+6) Content & Conversion Assets (Zero‑Cost)
+	•	FAQ Hub (expanders + schema.org FAQPage) for ADR, HPP, All‑Vehicle, VSC specifics. Pull limits/terms from brochures.   
+	•	Resource Center: “How deductible reimbursement works”, “20% mechanical repair reimbursement—example scenarios” with dollar figures from brochure caps where applicable.  
+	•	Case Studies: Before/After bills; savings from ADR/HPP examples.
+
+⸻
+
+7) Search/SEO Technical
+	•	Title (≤60 chars), meta description (≤155).
+	•	JSON‑LD: Organization, Product, FAQPage, BreadcrumbList.
+	•	Clean URLs: /products/auto-advantage, /products/home-protection-plan, /products/all-vehicle.
+	•	Image alt text; WebP/AVIF; responsive sizes.
+
+⸻
+
+8) Performance Targets
+	•	FCP < 1.8s, LCP < 2.5s, CLS < 0.1 on 4G.
+	•	Ship critical CSS; lazy‑load below‑the‑fold; defer non‑critical JS; cache headers; CDN.
+	•	Compress PDFs and serve as static downloads with caching.
+
+⸻
+
+9) Accessibility (A11y) & UX
+	•	Contrast ratio ≥ 4.5:1; visible focus states; skip‑to‑content link.
+	•	Form labels/ARIA; keyboard‑only nav; error messages with field‑level hints.
+	•	Mobile: test 360px–430px; sticky CTA; tap targets ≥ 44px.
+
+⸻
+
+10) Analytics, Attribution, and Ops
+	•	GA4 with server‑side events for QuoteStarted, QuoteViewed, PlanSelected, CheckoutStarted, PurchaseCompleted, LeadSubmitted.
+	•	UTM enforcement + auto‑tagging for each social placement.
+	•	Consent banner with GTM dataLayer events.
+	•	Session replay (open‑source e.g., OpenReplay) for funnel debug.
+
+⸻
+
+11) Competitive & Compliance Readiness
+	•	Plan Comparison Tables: side‑by‑side bullets from your brochures; show term ranges and caps.   
+	•	Disclosures: plain‑English coverage examples and limits (e.g., HPP glass $200/claim; lockout $100; repair $500 per occurrence, $1,000/yr).  
+	•	Provider Attribution: “Powered by Hero Protects / AssurancePlus” where applicable with brochure links.   
+
+⸻
+
+12) Admin Utilities
+	•	CMS for product specs/limits (single source of truth powering pages, rate cards, PDFs).
+	•	Brochure Library: versioned, with publish dates matching filenames you uploaded.
+	•	Announcement bar for rate/term changes.
+
+⸻
+
+13) QA Test Matrix (execute after deploy)
+	•	Routes: All public pages 200/OK; no 404s in nav/footer.
+	•	Forms: Validations, error states, spam protection; email deliverability to support@.
+	•	Logins: Reseller auth, password reset, role permissions.
+	•	Downloads: All PDFs (HPP, APS, Auto Advantage) open quickly with cache.   
+	•	Mobile: iOS/Android across Safari/Chrome; keyboard overlays don’t block CTAs.
+	•	Share: Social link unfurls (Open Graph/Twitter cards).
+
+⸻
+
+14) High‑Impact Additions (Next)
+	•	Quote Widget Embed for partner sites (iframe/js snippet).
+	•	Calculator: “Estimate your repair savings” using tiered costs and ADR examples.
+	•	Reseller Academy: 5‑lesson micro‑courses with quizzes; auto‑issue badges.
+	•	Testimonials Intake: Post‑claim NPS → review request → use in ads.
+
+⸻
+
+15) Alignment to Your Available Products (to publish Day‑One)
+	•	Pages to publish now (content taken from your brochures):
+	•	Auto Advantage Program (ADR) — terms 1–7 years; benefits list; audiences.  
+	•	All‑Vehicle Protection Plan — multi‑VIN, ADR + 20% repair reimbursement + travel + ID tools.  
+	•	Home Protection Plan / HPP Plus — benefit list, per‑claim limits, annual caps, term lengths, retail guidance.  
+
+⸻
+
+Summary Action List (priority order)
+	1.	Enable SSR/SSG + robots/sitemap.
+	2.	Publish 3 product pages with accurate benefits/limits from brochures + downloadable PDFs.   
+	3.	Stand up DTC quote form + 3‑tier plan result; add claims page.
+	4.	Launch reseller portal MVP: onboarding, gated rate cards, quote PDF.
+	5.	Wire GA4 events + uptime/health checks.
+	6.	Add FAQ hub (with FAQ schema) for ADR/HPP/APS.   
+	7.	Optimize performance, a11y, and security headers.

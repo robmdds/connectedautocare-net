@@ -24,6 +24,9 @@ import AdminTrainingData from "@/pages/AdminTrainingData";
 import AdminResponseTemplates from "@/pages/AdminResponseTemplates";
 import HeroVscProducts from "@/pages/HeroVscProducts";
 import ConnectedAutoCarePage from "@/pages/ConnectedAutoCarePage";
+import Products from "@/pages/Products";
+import FAQ from "@/pages/FAQ";
+import PublicClaims from "@/pages/PublicClaims";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,6 +34,9 @@ function Router() {
   return (
     <Switch>
       {/* Public Routes - Always Available */}
+      <Route path="/products" component={Products} />
+      <Route path="/faq" component={FAQ} />
+      <Route path="/claims" component={PublicClaims} />
       <Route path="/hero-vsc" component={HeroVscProducts} />
       <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
       <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
@@ -53,7 +59,6 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/policies" component={Policies} />
-          <Route path="/claims" component={Claims} />
           <Route path="/analytics" component={Analytics} />
         </>
       )}
