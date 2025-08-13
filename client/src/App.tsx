@@ -33,6 +33,7 @@ import WholesaleBulkPricing from "@/pages/WholesaleBulkPricing";
 import AIAssistant from "@/pages/AIAssistant";
 import AdvancedClaims from "@/pages/AdvancedClaims";
 import PolicyManagement from "@/pages/PolicyManagement";
+import AdvancedAnalytics from "@/pages/AdvancedAnalytics";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -72,6 +73,7 @@ function Router() {
           <Route path="/ai-assistant" component={AIAssistant} />
           <Route path="/advanced-claims" component={AdvancedClaims} />
           <Route path="/policy-management" component={PolicyManagement} />
+          <Route path="/advanced-analytics" component={AdvancedAnalytics} />
         </>
       )}
       <Route component={NotFound} />

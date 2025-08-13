@@ -2513,6 +2513,186 @@ How can I help you today?`;
     }
   });
 
+  // Advanced Analytics API Routes
+  app.get('/api/analytics/dashboard', async (req, res) => {
+    try {
+      const { dateRange } = req.query;
+      const days = parseInt(dateRange as string) || 30;
+      
+      // Mock comprehensive analytics data
+      const mockAnalytics = {
+        totalRevenue: 4250000,
+        averagePremium: 1850,
+        growthRate: 12.5,
+        avgProcessingTime: 6.8,
+        approvalRate: 87.3,
+        customerSatisfaction: 4.2,
+        lossRatio: 68.5,
+        combinedRatio: 94.2,
+        profitMargin: 15.8,
+        oneYearRetention: 89.2,
+        customerLifetimeValue: 8450,
+        churnRate: 10.8,
+        renewalSuccessRate: 91.5,
+        revenueByProduct: [
+          { name: 'Auto VSC', value: 2125000, fill: '#3B82F6' },
+          { name: 'Home Protection', value: 1275000, fill: '#10B981' },
+          { name: 'RV Coverage', value: 595000, fill: '#F59E0B' },
+          { name: 'Marine', value: 170000, fill: '#EF4444' },
+          { name: 'Powersports', value: 85000, fill: '#8B5CF6' }
+        ],
+        policyTrends: Array.from({ length: 12 }, (_, i) => ({
+          date: format(new Date(2024, i), 'MMM'),
+          new: Math.floor(Math.random() * 200) + 150,
+          renewed: Math.floor(Math.random() * 300) + 200
+        })),
+        claimsTrends: Array.from({ length: 12 }, (_, i) => ({
+          month: format(new Date(2024, i), 'MMM'),
+          count: Math.floor(Math.random() * 100) + 50,
+          payout: Math.floor(Math.random() * 500000) + 200000
+        })),
+        retentionCohorts: Array.from({ length: 12 }, (_, i) => ({
+          month: `Month ${i + 1}`,
+          retention: Math.max(100 - (i * 8) - Math.random() * 10, 60)
+        }))
+      };
+
+      res.json(mockAnalytics);
+    } catch (error) {
+      console.error('Error fetching dashboard analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch analytics data' });
+    }
+  });
+
+  app.get('/api/analytics/kpi-metrics', async (req, res) => {
+    try {
+      const { dateRange } = req.query;
+      
+      // Mock KPI metrics with targets and trends
+      const kpiMetrics = [
+        {
+          id: 'revenue',
+          name: 'Total Revenue',
+          value: 4250000,
+          previousValue: 3890000,
+          format: 'currency',
+          trend: 'up',
+          target: 4500000,
+          description: 'Total premium revenue collected'
+        },
+        {
+          id: 'policies',
+          name: 'Active Policies',
+          value: 2847,
+          previousValue: 2654,
+          format: 'number',
+          trend: 'up',
+          target: 3000,
+          description: 'Currently active insurance policies'
+        },
+        {
+          id: 'claims_ratio',
+          name: 'Loss Ratio',
+          value: 68.5,
+          previousValue: 72.1,
+          format: 'percentage',
+          trend: 'down',
+          target: 65.0,
+          description: 'Claims paid vs premiums collected'
+        },
+        {
+          id: 'retention',
+          name: 'Retention Rate',
+          value: 89.2,
+          previousValue: 87.8,
+          format: 'percentage',
+          trend: 'up',
+          target: 90.0,
+          description: 'Customer retention rate'
+        },
+        {
+          id: 'processing_time',
+          name: 'Avg Processing Time',
+          value: 6.8,
+          previousValue: 8.2,
+          format: 'number',
+          trend: 'down',
+          target: 5.0,
+          description: 'Average claim processing time in days'
+        },
+        {
+          id: 'profit_margin',
+          name: 'Profit Margin',
+          value: 15.8,
+          previousValue: 14.2,
+          format: 'percentage',
+          trend: 'up',
+          target: 18.0,
+          description: 'Net profit margin percentage'
+        }
+      ];
+
+      res.json(kpiMetrics);
+    } catch (error) {
+      console.error('Error fetching KPI metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch KPI metrics' });
+    }
+  });
+
+  app.get('/api/analytics/revenue-trends', async (req, res) => {
+    try {
+      const { dateRange } = req.query;
+      const days = parseInt(dateRange as string) || 30;
+      
+      // Generate revenue trend data
+      const revenueTrends = Array.from({ length: days }, (_, i) => ({
+        date: format(subDays(new Date(), days - i), 'MMM dd'),
+        revenue: Math.floor(Math.random() * 50000) + 100000,
+        policies: Math.floor(Math.random() * 20) + 10,
+        claims: Math.floor(Math.random() * 5) + 2
+      }));
+
+      res.json(revenueTrends);
+    } catch (error) {
+      console.error('Error fetching revenue trends:', error);
+      res.status(500).json({ error: 'Failed to fetch revenue trends' });
+    }
+  });
+
+  app.get('/api/analytics/policy-breakdown', async (req, res) => {
+    try {
+      const policyBreakdown = [
+        { name: 'Auto VSC', count: 1425, fill: '#3B82F6' },
+        { name: 'Home Protection', count: 856, fill: '#10B981' },
+        { name: 'RV Coverage', count: 342, fill: '#F59E0B' },
+        { name: 'Marine', count: 156, fill: '#EF4444' },
+        { name: 'Powersports', count: 68, fill: '#8B5CF6' }
+      ];
+
+      res.json(policyBreakdown);
+    } catch (error) {
+      console.error('Error fetching policy breakdown:', error);
+      res.status(500).json({ error: 'Failed to fetch policy breakdown' });
+    }
+  });
+
+  app.get('/api/analytics/claims-breakdown', async (req, res) => {
+    try {
+      const claimsBreakdown = [
+        { name: 'Engine/Transmission', count: 245, amount: 1250000, fill: '#3B82F6' },
+        { name: 'HVAC Systems', count: 189, amount: 890000, fill: '#10B981' },
+        { name: 'Electrical', count: 156, amount: 650000, fill: '#F59E0B' },
+        { name: 'Suspension', count: 98, amount: 420000, fill: '#EF4444' },
+        { name: 'Other', count: 67, amount: 180000, fill: '#8B5CF6' }
+      ];
+
+      res.json(claimsBreakdown);
+    } catch (error) {
+      console.error('Error fetching claims breakdown:', error);
+      res.status(500).json({ error: 'Failed to fetch claims breakdown' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
