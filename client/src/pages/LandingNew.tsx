@@ -281,9 +281,9 @@ export default function LandingNew() {
                     <p className="text-sm text-gray-600">Required for accurate coverage eligibility and pricing</p>
                   </div>
 
-                  {/* CUSTOMER INFORMATION SECTION */}
+                  {/* CUSTOMER INFORMATION SECTION - SIMPLIFIED QUOTE FORM */}
                   <div className="border-t pt-6">
-                    <h4 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h4>
+                    <h4 className="text-xl font-bold text-gray-900 mb-4">✅ Contact Information (New Simplified Form)</h4>
                     
                     {/* Two column layout for customer info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -395,7 +395,7 @@ export default function LandingNew() {
                     ) : (
                       <>
                         <Search className="h-4 w-4 mr-2" />
-                        Get My VSC Quote
+🚀 Get My VSC Quote (All-in-One)
                       </>
                     )}
                   </Button>
