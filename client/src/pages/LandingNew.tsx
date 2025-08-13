@@ -13,6 +13,9 @@ import {
 import { useLocation } from "wouter";
 
 export default function LandingNew() {
+  // CACHE BUSTED LANDING PAGE - ALL 5 FIELDS
+  console.log("🔥 LANDING PAGE CACHE BUSTED v5.0 - ALL 5 FIELDS WORKING", new Date().toISOString());
+  
   const [, setLocation] = useLocation();
   const [vinInput, setVinInput] = useState("");
   const [vinError, setVinError] = useState("");
@@ -209,23 +212,23 @@ export default function LandingNew() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center text-white mb-12">
               <h1 className="text-5xl md:text-6xl font-bold mb-6">
-                🚀 SIMPLIFIED FORM - Vehicle Service Contract Protection
+                🔥 CACHE BUSTED v5.0 - Vehicle Service Contract Protection
               </h1>
               <p className="text-xl mb-8">
-                Comprehensive coverage for your vehicle with instant quotes and nationwide service
+                Complete 5-field form with Email & ZIP Code - Updated: {new Date().toLocaleTimeString()}
               </p>
             </div>
 
-            {/* VIN Quote Form - PROMINENT ENTRY */}
-            <div className="bg-white rounded-lg shadow-xl p-8 text-gray-900">
+            {/* CACHE BUSTED VIN Quote Form - ALL 5 FIELDS */}
+            <div className="bg-white rounded-lg shadow-xl p-8 text-gray-900 border-4 border-red-500">
               <div className="text-center mb-6">
-                <Car className="mx-auto h-16 w-16 text-blue-600 mb-4" />
-                <h3 className="text-3xl font-bold mb-3 text-blue-600">🎯 Get Your Free Quote (ALL-IN-ONE FORM)</h3>
-                <p className="text-lg text-gray-700 font-semibold">Enter your information below for instant VSC pricing</p>
+                <Car className="mx-auto h-16 w-16 text-red-600 mb-4" />
+                <h3 className="text-3xl font-bold mb-3 text-red-800">🔥 CACHE BUSTED - ALL 5 FIELDS FORM v5.0</h3>
+                <p className="text-lg text-gray-800 font-semibold">Complete form includes Email & ZIP Code for proper quoting! Time: {new Date().toLocaleTimeString()}</p>
               </div>
               
-              {/* Single Border Container */}
-              <div className="bg-gray-50 p-6 rounded-lg border-2 border-blue-400 shadow-sm">
+              {/* Cache-Busted Border Container */}
+              <div className="bg-red-50 p-6 rounded-lg border-2 border-red-400 shadow-sm">
                 <form onSubmit={handleQuoteSubmit} className="space-y-6">
                   {/* VIN Input */}
                   <div className="space-y-3">
@@ -281,9 +284,9 @@ export default function LandingNew() {
                     <p className="text-sm text-gray-600">Required for accurate coverage eligibility and pricing</p>
                   </div>
 
-                  {/* CUSTOMER INFORMATION SECTION - SIMPLIFIED QUOTE FORM */}
+                  {/* CUSTOMER INFORMATION SECTION - CACHE BUSTED FORM */}
                   <div className="border-t pt-6">
-                    <h4 className="text-xl font-bold text-gray-900 mb-4">✅ Contact Information (New Simplified Form)</h4>
+                    <h4 className="text-xl font-bold text-red-800 mb-4">🔥 Contact Information (CACHE BUSTED - v5.0)</h4>
                     
                     {/* Two column layout for customer info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -312,10 +315,10 @@ export default function LandingNew() {
                         )}
                       </div>
 
-                      {/* ZIP Code */}
+                      {/* ZIP Code - REQUIRED FOR TAX CALCULATION */}
                       <div className="space-y-3">
                         <label htmlFor="zipcode-input" className="block text-lg font-bold text-gray-900">
-                          ZIP Code <span className="text-red-500">*</span>
+                          ZIP Code <span className="text-red-500">*</span> <span className="text-sm bg-yellow-200 px-2 py-1 rounded">(For tax calculation)</span>
                         </label>
                         <Input 
                           id="zipcode-input"
@@ -339,10 +342,10 @@ export default function LandingNew() {
                       </div>
                     </div>
 
-                    {/* Email - Full Width */}
+                    {/* Email - REQUIRED FOR QUOTE DELIVERY */}
                     <div className="space-y-3 mt-4">
                       <label htmlFor="email-input" className="block text-lg font-bold text-gray-900">
-                        Email Address <span className="text-red-500">*</span>
+                        Email Address <span className="text-red-500">*</span> <span className="text-sm bg-yellow-200 px-2 py-1 rounded">(For quote delivery)</span>
                       </label>
                       <Input 
                         id="email-input"
@@ -385,7 +388,7 @@ export default function LandingNew() {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700" 
+                    className="w-full bg-red-600 hover:bg-red-700 text-xl font-bold h-16" 
                     size="lg"
                     disabled={isProcessing || vinInput.length < 17 || !mileageInput || !nameInput.trim() || !emailInput.trim() || !zipcodeInput.trim()}
                     data-testid="button-get-quote"
@@ -395,7 +398,7 @@ export default function LandingNew() {
                     ) : (
                       <>
                         <Search className="h-4 w-4 mr-2" />
-🚀 Get My VSC Quote (All-in-One)
+🔥 Get Complete VSC Quote (All 5 Fields Required)
                       </>
                     )}
                   </Button>
