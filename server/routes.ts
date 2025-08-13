@@ -1697,6 +1697,214 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // AI Assistant API Routes (Public - no auth required)
+  app.get('/api/ai/knowledge-topics', async (req, res) => {
+    try {
+      const topics = [
+        { id: 'claims', name: 'Claims Processing', description: 'Help with filing and tracking claims' },
+        { id: 'policies', name: 'Policy Information', description: 'Coverage details and policy terms' },
+        { id: 'quotes', name: 'Quote Questions', description: 'Pricing and coverage options' },
+        { id: 'technical', name: 'Technical Support', description: 'Platform and technical issues' },
+        { id: 'billing', name: 'Billing & Payments', description: 'Payment processing and billing questions' }
+      ];
+      res.json(topics);
+    } catch (error) {
+      console.error('Error fetching knowledge topics:', error);
+      res.status(500).json({ error: 'Failed to fetch topics' });
+    }
+  });
+
+  app.post('/api/ai/chat', async (req, res) => {
+    try {
+      const { message, context, history } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      // Create context-aware system prompt
+      let systemPrompt = `You are a helpful AI assistant for a TPA (Third Party Administrator) insurance platform. 
+      You help customers and staff with questions about policies, claims, quotes, and platform operations.
+      
+      Key information:
+      - The platform offers vehicle protection plans (VSC), home protection, and various warranty products
+      - Connected Auto Care and Hero VSC are key product providers
+      - Claims can be filed through the platform with step-by-step guidance
+      - Quotes are generated using VIN decoding and rating engines
+      - The platform supports both direct customers and wholesale partners
+      
+      Context: ${context.type}
+      
+      Provide accurate, helpful responses based on insurance industry best practices. If you don't know something specific about this platform, be honest about it and suggest contacting support for detailed information.
+      
+      Keep responses concise but comprehensive. Use a professional but friendly tone.`;
+
+      // Add context-specific guidance
+      if (context.type === 'claims') {
+        systemPrompt += '\n\nFocus on claims-related guidance: filing process, required documentation, timelines, and status updates.';
+      } else if (context.type === 'quotes') {
+        systemPrompt += '\n\nFocus on quote-related help: pricing factors, coverage options, eligibility requirements, and terms.';
+      } else if (context.type === 'policy') {
+        systemPrompt += '\n\nFocus on policy information: coverage details, exclusions, terms, and conditions.';
+      } else if (context.type === 'technical') {
+        systemPrompt += '\n\nFocus on technical support: platform navigation, account issues, and troubleshooting.';
+      }
+
+      // In production, this would call OpenAI API
+      // For now, provide contextual responses based on the type
+      let response = '';
+      
+      if (context.type === 'claims') {
+        if (message.toLowerCase().includes('file a claim') || message.toLowerCase().includes('claim process')) {
+          response = `To file a claim, follow these steps:
+
+1. **Gather Information**: Collect your policy number, incident details, and any relevant documentation
+2. **Contact Us**: Call our claims hotline at 1-800-555-0123 or use the online claims portal
+3. **Provide Details**: Describe what happened, when it occurred, and the extent of the issue
+4. **Documentation**: Upload photos, receipts, or repair estimates if available
+5. **Review**: A claims adjuster will review your case within 24-48 hours
+6. **Resolution**: You'll receive updates on the claim status and next steps
+
+For vehicle claims, we may arrange for inspection or direct you to approved repair facilities. Home protection claims typically involve scheduling a service technician.
+
+Is there a specific type of claim you need help with?`;
+        } else {
+          response = `I can help you with claims-related questions. Common topics include:
+
+• Filing a new claim
+• Checking claim status
+• Understanding coverage
+• Required documentation
+• Claim timelines and process
+
+What specific claims question can I help you with?`;
+        }
+      } else if (context.type === 'quotes') {
+        if (message.toLowerCase().includes('price') || message.toLowerCase().includes('cost')) {
+          response = `Quote pricing is based on several factors:
+
+**For Vehicle Protection:**
+• Vehicle age, make, model, and mileage
+• Coverage level selected (Platinum, Gold, Silver)
+• Term length (12-60 months)
+• Geographic location
+• Deductible amount
+
+**For Home Protection:**
+• Home age and square footage
+• Coverage options selected
+• Local service costs
+• Plan duration
+
+**Factors that can reduce cost:**
+• Newer vehicles with lower mileage
+• Shorter coverage terms
+• Higher deductible amounts
+• Bundle discounts
+
+To get an accurate quote, I recommend using our quote generator with your specific details. Would you like help understanding any particular coverage option?`;
+        } else {
+          response = `I can help explain quotes and pricing. Common questions include:
+
+• How pricing is calculated
+• Coverage level differences
+• Available terms and options
+• Eligibility requirements
+• Discount opportunities
+
+What would you like to know about quotes or pricing?`;
+        }
+      } else if (context.type === 'policy') {
+        response = `I can help you understand policy coverage and terms. Our main products include:
+
+**Vehicle Protection Plans:**
+• Comprehensive mechanical breakdown coverage
+• Deductible reimbursement options
+• Emergency services (towing, rental car)
+• Multiple coverage levels available
+
+**Home Protection Plans:**
+• Major appliance coverage
+• HVAC system protection
+• Plumbing and electrical coverage
+• 24/7 emergency service
+
+**Key Policy Features:**
+• Nationwide coverage and service network
+• Professional claims handling
+• Flexible payment options
+• Transferable coverage (vehicle plans)
+
+What specific aspect of your policy would you like me to explain?`;
+      } else if (context.type === 'technical') {
+        response = `I can help with platform and technical issues:
+
+**Common Solutions:**
+• **Login Problems**: Try resetting your password or clearing browser cache
+• **Quote Issues**: Ensure VIN is entered correctly (17 characters)
+• **Payment Problems**: Check card details and billing address
+• **Document Upload**: Use supported formats (PDF, JPG, PNG) under 10MB
+
+**Account Help:**
+• Access your dashboard to view policies and claims
+• Update contact information in account settings
+• Download policy documents and proof of coverage
+
+**Browser Requirements:**
+• Use updated Chrome, Firefox, Safari, or Edge
+• Enable JavaScript and cookies
+• Disable ad blockers for full functionality
+
+What specific technical issue are you experiencing?`;
+      } else {
+        response = `Hello! I'm here to help with any questions about your insurance coverage, claims, quotes, or our platform.
+
+**I can assist with:**
+• Filing and tracking claims
+• Understanding coverage options
+• Quote pricing and eligibility
+• Policy terms and conditions
+• Platform navigation and technical support
+• Billing and payment questions
+
+**Popular topics:**
+• "How do I file a claim?"
+• "What does my policy cover?"
+• "Why is my quote this price?"
+• "How do I update my account?"
+
+How can I help you today?`;
+      }
+
+      res.json({
+        message: response,
+        context: context.type,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      res.status(500).json({ error: 'Failed to process chat message' });
+    }
+  });
+
+  app.post('/api/ai/feedback', async (req, res) => {
+    try {
+      const { messageId, helpful } = req.body;
+      
+      // In production, this would store feedback in database for AI model improvement
+      console.log(`AI Feedback - Message: ${messageId}, Helpful: ${helpful}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Feedback recorded successfully' 
+      });
+    } catch (error) {
+      console.error('Error recording AI feedback:', error);
+      res.status(500).json({ error: 'Failed to record feedback' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

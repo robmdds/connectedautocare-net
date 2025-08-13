@@ -36,7 +36,7 @@ const menuItems = [
     items: [
       { name: "Resellers", icon: "fas fa-handshake", href: "/resellers" },
       { name: "Payments", icon: "fas fa-credit-card", href: "/payments" },
-      { name: "AI Assistant", icon: "fas fa-robot", href: "/ai" },
+      { name: "AI Assistant", icon: "fas fa-robot", href: "/ai-assistant" },
     ],
   },
   {
