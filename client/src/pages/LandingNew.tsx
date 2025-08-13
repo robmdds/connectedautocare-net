@@ -141,12 +141,11 @@ export default function LandingNew() {
                   )}
                 </div>
 
-                {/* MILEAGE INPUT - ULTRA PROMINENT */}
-                <div className="space-y-4 bg-yellow-100 p-8 rounded-lg border-8 border-orange-500 shadow-2xl">
-                  <label htmlFor="mileage-input" className="block text-3xl font-black text-orange-800">
-                    🚗 VEHICLE MILEAGE REQUIRED <span className="text-red-600 text-4xl">*</span>
+                {/* MILEAGE INPUT */}
+                <div className="space-y-3 bg-blue-50 p-4 rounded-lg border-2 border-blue-300">
+                  <label htmlFor="mileage-input" className="block text-lg font-bold text-gray-900">
+                    Current Mileage <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xl font-bold text-orange-700">This field is mandatory for accurate pricing</p>
                   <Input 
                     id="mileage-input"
                     type="number"
@@ -156,7 +155,7 @@ export default function LandingNew() {
                       setMileageInput(e.target.value);
                       setMileageError("");
                     }}
-                    className={`text-2xl h-16 border-4 border-orange-500 focus:border-orange-700 bg-white font-bold ${mileageError ? 'border-red-500' : ''}`}
+                    className={`text-xl h-14 border-2 border-blue-300 focus:border-blue-600 ${mileageError ? 'border-red-500' : ''}`}
                     min="0"
                     max="500000"
                     data-testid="input-mileage"
@@ -167,7 +166,7 @@ export default function LandingNew() {
                       <AlertDescription>{mileageError}</AlertDescription>
                     </Alert>
                   )}
-                  <p className="text-lg text-orange-800 font-black">MUST ENTER MILEAGE TO CONTINUE</p>
+                  <p className="text-sm text-blue-700 font-semibold">Required for accurate coverage eligibility and pricing</p>
                 </div>
 
                 <div className="bg-blue-50 p-4 rounded-lg">
