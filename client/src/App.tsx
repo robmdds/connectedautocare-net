@@ -32,6 +32,7 @@ import WholesalePortal from "@/pages/WholesalePortal";
 import WholesaleBulkPricing from "@/pages/WholesaleBulkPricing";
 import WhitelabelConfig from "@/pages/WhitelabelConfig";
 import BrandedQuotePage from "@/pages/BrandedQuotePage";
+import QuoteGenerator from "@/components/QuoteGenerator";
 import AIAssistant from "@/pages/AIAssistant";
 import AdvancedClaims from "@/pages/AdvancedClaims";
 import PolicyManagement from "@/pages/PolicyManagement";
@@ -45,6 +46,7 @@ function Router() {
   return (
     <Switch>
       {/* Public Routes - Always Available */}
+      <Route path="/quote" component={QuoteGenerator} />
       <Route path="/products" component={Products} />
       <Route path="/faq" component={FAQ} />
       <Route path="/claims" component={PublicClaims} />

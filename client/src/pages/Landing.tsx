@@ -28,6 +28,8 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const [vinInput, setVinInput] = useState("");
   const [vinError, setVinError] = useState("");
+  const [mileageInput, setMileageInput] = useState("");
+  const [mileageError, setMileageError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const validateVIN = (vin: string) => {
@@ -42,22 +44,43 @@ export default function Landing() {
     return "";
   };
 
+  const validateMileage = (mileage: string) => {
+    if (!mileage || mileage.trim() === "") {
+      return "Current mileage is required";
+    }
+    const miles = parseInt(mileage);
+    if (isNaN(miles) || miles < 0) {
+      return "Please enter a valid mileage";
+    }
+    if (miles > 500000) {
+      return "Mileage cannot exceed 500,000 miles";
+    }
+    return "";
+  };
+
   const handleVinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanVin = vinInput.replace(/\s/g, '').toUpperCase();
     
-    const error = validateVIN(cleanVin);
-    if (error) {
-      setVinError(error);
+    const vinError = validateVIN(cleanVin);
+    const mileageValidationError = validateMileage(mileageInput);
+    
+    if (vinError) {
+      setVinError(vinError);
+      return;
+    }
+    if (mileageValidationError) {
+      setMileageError(mileageValidationError);
       return;
     }
 
     setVinError("");
+    setMileageError("");
     setIsProcessing(true);
     
-    // Navigate to quote page with VIN pre-filled
+    // Navigate to quote page with VIN and mileage pre-filled
     setTimeout(() => {
-      setLocation(`/quote?vin=${cleanVin}`);
+      setLocation(`/quote?vin=${cleanVin}&mileage=${mileageInput}`);
     }, 500);
   };
 
@@ -163,6 +186,34 @@ export default function Landing() {
                   )}
                 </div>
 
+                {/* Current Mileage Input */}
+                <div className="space-y-2 bg-green-50 p-4 rounded-lg border-2 border-green-400">
+                  <label htmlFor="mileage-input" className="block text-lg font-bold text-gray-900">
+                    📊 Current Mileage <span className="text-red-500">*</span>
+                  </label>
+                  <Input 
+                    id="mileage-input"
+                    type="number"
+                    placeholder="Enter current mileage (e.g., 85000)"
+                    value={mileageInput}
+                    onChange={(e) => {
+                      setMileageInput(e.target.value);
+                      setMileageError("");
+                    }}
+                    className={`text-xl h-14 border-2 border-green-300 focus:border-green-600 ${mileageError ? 'border-red-500' : ''}`}
+                    min="0"
+                    max="500000"
+                    data-testid="input-mileage"
+                  />
+                  {mileageError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{mileageError}</AlertDescription>
+                    </Alert>
+                  )}
+                  <p className="text-sm text-green-700">Required for accurate coverage eligibility and pricing</p>
+                </div>
+
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-blue-900 mb-2">What you'll get:</h4>
                   <ul className="space-y-1 text-sm text-blue-800">
@@ -185,7 +236,7 @@ export default function Landing() {
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700" 
                   size="lg"
-                  disabled={isProcessing || vinInput.length < 17}
+                  disabled={isProcessing || vinInput.length < 17 || !mileageInput}
                   data-testid="button-get-vin-quote"
                 >
                   {isProcessing ? (
