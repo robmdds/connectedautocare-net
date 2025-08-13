@@ -25,6 +25,10 @@ The platform integrates with external services for VIN decoding, payment process
 - ✅ **BULK PRICING TOOLS**: CSV import/export, mass quote generation, and commission tracking
 - ✅ **PARTNER MANAGEMENT**: Dedicated wholesale login, product catalog, and analytics dashboard
 - ✅ **WHOLESALE API**: Complete backend infrastructure for partner operations and bulk processing
+- ✅ **WHITE-LABEL CAPABILITIES**: Subdomain support, custom branding, branded quote pages, and embeddable widgets
+- ✅ **CUSTOM DOMAIN INTEGRATION**: Full domain management with SSL support and DNS configuration
+- ✅ **BRANDED QUOTE EXPERIENCE**: Reseller-specific landing pages with custom styling and content management
+- ✅ **EMBEDDABLE WIDGETS**: JavaScript widgets for integration into reseller websites with branded quote forms
 - ✅ **AI ASSISTANT SERVICE**: Intelligent customer support with context-aware responses and knowledge base integration
 - ✅ **CONVERSATIONAL INTERFACE**: Professional chat interface with feedback system and contextual help topics
 - ✅ **SMART CONTEXTUAL RESPONSES**: Claims guidance, quote explanations, policy information, and technical support

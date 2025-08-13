@@ -39,13 +39,41 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Multi-tenant support
+// Multi-tenant support with white-label capabilities
 export const tenants = pgTable("tenants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   subdomain: varchar("subdomain").unique(),
+  customDomain: varchar("custom_domain").unique(),
   settings: jsonb("settings").default({}),
   isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reseller/Partner white-label configurations
+export const resellerConfigs = pgTable("reseller_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: varchar("reseller_id").references(() => users.id),
+  tenantId: varchar("tenant_id").references(() => tenants.id),
+  brandingConfig: jsonb("branding_config").default({}), // Logo, colors, fonts, styling
+  domainConfig: jsonb("domain_config").default({}), // Subdomain/custom domain settings
+  productConfig: jsonb("product_config").default({}), // Available products and markup
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).default("10.00"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// White-label portal pages
+export const whitelabelPages = pgTable("whitelabel_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: varchar("reseller_id").references(() => users.id),
+  pageType: varchar("page_type").notNull(), // landing, quote, products, contact
+  pageTitle: varchar("page_title").notNull(),
+  pageContent: jsonb("page_content").notNull(),
+  seoSettings: jsonb("seo_settings").default({}),
+  isPublished: boolean("is_published").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

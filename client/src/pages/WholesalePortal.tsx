@@ -131,9 +131,11 @@ export default function WholesalePortal() {
                   Bulk Pricing
                 </Link>
               </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/wholesale/white-label">
+                  <Settings className="h-4 w-4 mr-2" />
+                  White-label Config
+                </Link>
               </Button>
             </div>
           </div>
@@ -198,11 +200,12 @@ export default function WholesalePortal() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="quote-generator" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="quote-generator">Quote Generator</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="quotes">My Quotes</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="branding">White-label</TabsTrigger>
           </TabsList>
 
           {/* Quote Generator Tab */}
@@ -465,6 +468,102 @@ export default function WholesalePortal() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* White-label Branding Tab */}
+          <TabsContent value="branding" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Settings className="h-5 w-5 mr-2" />
+                  White-label Configuration
+                </CardTitle>
+                <CardDescription>
+                  Set up custom branding, subdomains, and embeddable widgets for your customers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Quick Setup</h3>
+                    <div className="space-y-3">
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium mb-2">🎨 Custom Branding</h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Upload your logo, set brand colors, and customize page content
+                        </p>
+                        <Button size="sm" asChild variant="outline">
+                          <Link href="/wholesale/white-label">Configure Branding</Link>
+                        </Button>
+                      </div>
+
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium mb-2">🌐 Domain Setup</h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Get a custom subdomain like: <code>yourcompany.tpaplatform.com</code>
+                        </p>
+                        <Button size="sm" asChild variant="outline">
+                          <Link href="/wholesale/white-label">Setup Domain</Link>
+                        </Button>
+                      </div>
+
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium mb-2">⚡ Quote Widget</h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Embed branded quote forms directly into your website
+                        </p>
+                        <Button size="sm" asChild variant="outline">
+                          <Link href="/wholesale/white-label">Get Widget Code</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Preview</h3>
+                    <div className="p-4 border rounded-lg bg-muted">
+                      <h4 className="font-medium mb-2">Your Branded Portal</h4>
+                      <div className="space-y-2 text-sm">
+                        <p><strong>Domain:</strong> premiuminsurance.tpaplatform.com</p>
+                        <p><strong>Company:</strong> Premium Insurance Partners</p>
+                        <p><strong>Status:</strong> <Badge variant="default">Active</Badge></p>
+                        <p><strong>Products:</strong> 3 enabled</p>
+                      </div>
+                      <div className="mt-3">
+                        <Button size="sm" variant="outline" asChild>
+                          <Link href="/branded/reseller-001" target="_blank">
+                            <Eye className="h-4 w-4 mr-2" />
+                            Preview Portal
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-lg bg-muted">
+                      <h4 className="font-medium mb-2">Integration Stats</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Widget Installations:</span>
+                          <span className="font-medium">3</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Branded Page Views:</span>
+                          <span className="font-medium">1,247</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Widget Quotes:</span>
+                          <span className="font-medium">89</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Conversion Rate:</span>
+                          <span className="font-medium text-green-600">7.2%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

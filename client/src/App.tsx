@@ -30,6 +30,8 @@ import PublicClaims from "@/pages/PublicClaims";
 import WholesaleLogin from "@/pages/WholesaleLogin";
 import WholesalePortal from "@/pages/WholesalePortal";
 import WholesaleBulkPricing from "@/pages/WholesaleBulkPricing";
+import WhitelabelConfig from "@/pages/WhitelabelConfig";
+import BrandedQuotePage from "@/pages/BrandedQuotePage";
 import AIAssistant from "@/pages/AIAssistant";
 import AdvancedClaims from "@/pages/AdvancedClaims";
 import PolicyManagement from "@/pages/PolicyManagement";
@@ -49,6 +51,8 @@ function Router() {
       <Route path="/wholesale" component={WholesaleLogin} />
       <Route path="/wholesale/portal" component={WholesalePortal} />
       <Route path="/wholesale/bulk-pricing" component={WholesaleBulkPricing} />
+      <Route path="/wholesale/white-label" component={WhitelabelConfig} />
+      <Route path="/branded/:resellerId" component={() => <BrandedQuotePage resellerId="reseller-001" />} />
       <Route path="/hero-vsc" component={HeroVscProducts} />
       <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
       <Route path="/admin/coverage-options" component={AdminCoverageOptions} />

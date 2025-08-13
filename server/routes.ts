@@ -1603,6 +1603,195 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // White-label Configuration API
+  app.get('/api/wholesale/white-label/config/:resellerId', async (req, res) => {
+    try {
+      const { resellerId } = req.params;
+      
+      // Mock white-label configuration data
+      const config = {
+        resellerId,
+        branding: {
+          logoUrl: '/assets/partner-logo.png',
+          primaryColor: '#2563eb',
+          secondaryColor: '#1e40af',
+          accentColor: '#f59e0b',
+          companyName: 'Premium Insurance Partners',
+          tagline: 'Comprehensive Protection Solutions',
+          contactPhone: '1-800-PARTNER',
+          contactEmail: 'info@premiuminsurance.com',
+          address: '123 Business Avenue, Suite 100, Business City, BC 12345'
+        },
+        domain: {
+          subdomain: 'premiuminsurance',
+          customDomain: 'insurance.premiumpartners.com',
+          sslEnabled: true,
+          domainStatus: 'active'
+        },
+        products: {
+          autoAdvantage: { enabled: true, markup: 15, commission: 12 },
+          homeProtection: { enabled: true, markup: 20, commission: 15 },
+          allVehicle: { enabled: true, markup: 18, commission: 10 },
+          rvProtection: { enabled: false, markup: 22, commission: 14 }
+        },
+        pages: {
+          landingPage: {
+            title: 'Comprehensive Vehicle & Home Protection',
+            heroText: 'Protect your most valuable assets with our trusted coverage solutions',
+            ctaText: 'Get Your Free Quote Today',
+            features: [
+              'Comprehensive Auto Protection',
+              'Complete Home Coverage',
+              '24/7 Customer Support',
+              'Fast Claims Processing'
+            ]
+          },
+          aboutPage: {
+            companyStory: 'We have been serving our community for over 15 years with reliable insurance solutions.',
+            mission: 'To provide comprehensive, affordable protection for families and businesses.'
+          }
+        },
+        seo: {
+          metaTitle: 'Vehicle & Home Protection | Premium Insurance Partners',
+          metaDescription: 'Get comprehensive auto and home protection plans from Premium Insurance Partners. Fast quotes, excellent coverage, and 24/7 support.',
+          keywords: 'auto insurance, home protection, vehicle warranty, comprehensive coverage',
+          ogImage: '/assets/partner-og-image.jpg'
+        }
+      };
+
+      res.json(config);
+    } catch (error) {
+      console.error('Error fetching white-label config:', error);
+      res.status(500).json({ error: 'Failed to fetch white-label configuration' });
+    }
+  });
+
+  app.put('/api/wholesale/white-label/config/:resellerId', async (req, res) => {
+    try {
+      const { resellerId } = req.params;
+      const { branding, domain, products, pages, seo } = req.body;
+
+      // In production, this would save to database
+      console.log(`Updating white-label config for reseller ${resellerId}:`, {
+        branding: branding ? 'Updated' : 'No changes',
+        domain: domain ? 'Updated' : 'No changes',
+        products: products ? 'Updated' : 'No changes',
+        pages: pages ? 'Updated' : 'No changes',
+        seo: seo ? 'Updated' : 'No changes'
+      });
+
+      res.json({
+        success: true,
+        message: 'White-label configuration updated successfully',
+        resellerId,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating white-label config:', error);
+      res.status(500).json({ error: 'Failed to update white-label configuration' });
+    }
+  });
+
+  // Subdomain/Domain Management API
+  app.post('/api/wholesale/white-label/domain', async (req, res) => {
+    try {
+      const { resellerId, subdomain, customDomain, sslRequired } = req.body;
+
+      // In production, this would:
+      // 1. Check domain availability
+      // 2. Configure DNS/SSL
+      // 3. Set up routing
+      console.log(`Domain setup request:`, {
+        resellerId,
+        subdomain,
+        customDomain,
+        sslRequired
+      });
+
+      const result = {
+        success: true,
+        subdomain: subdomain ? `${subdomain}.tpaplatform.com` : null,
+        customDomain: customDomain || null,
+        status: 'configuring',
+        dnsCname: customDomain ? 'tpaplatform.com' : null,
+        sslStatus: sslRequired ? 'pending' : 'not_required',
+        estimatedCompletion: '15 minutes'
+      };
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error configuring domain:', error);
+      res.status(500).json({ error: 'Failed to configure domain' });
+    }
+  });
+
+  // White-label Quote Widget API
+  app.get('/api/wholesale/white-label/quote-widget/:resellerId', async (req, res) => {
+    try {
+      const { resellerId } = req.params;
+      
+      // Generate embeddable quote widget code
+      const widgetCode = `
+<!-- TPA Platform Quote Widget -->
+<div id="tpa-quote-widget-${resellerId}"></div>
+<script>
+  (function() {
+    var script = document.createElement('script');
+    script.src = 'https://your-domain.com/widget/quote.js?reseller=${resellerId}';
+    script.async = true;
+    document.head.appendChild(script);
+  })();
+</script>
+<style>
+  #tpa-quote-widget-${resellerId} {
+    max-width: 400px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  #tpa-quote-widget-${resellerId} .widget-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #1f2937;
+  }
+  #tpa-quote-widget-${resellerId} .widget-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #tpa-quote-widget-${resellerId} input, select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  #tpa-quote-widget-${resellerId} button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+  }
+</style>`;
+
+      res.json({
+        resellerId,
+        widgetCode,
+        widgetUrl: `https://your-domain.com/widget/quote.js?reseller=${resellerId}`,
+        previewUrl: `https://your-domain.com/widget/preview/${resellerId}`,
+        documentation: 'https://docs.tpaplatform.com/widgets/quote'
+      });
+    } catch (error) {
+      console.error('Error generating quote widget:', error);
+      res.status(500).json({ error: 'Failed to generate quote widget' });
+    }
+  });
+
   app.get('/api/wholesale/products', async (req, res) => {
     try {
       // In production, this would fetch products with partner-specific pricing
