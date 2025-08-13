@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/Landing";
+import LandingNew from "@/pages/LandingNew";
 import Dashboard from "@/pages/Dashboard";
 import Policies from "@/pages/Policies";
 import Claims from "@/pages/Claims";
@@ -72,7 +72,7 @@ function Router() {
 
       {/* Conditional Routes Based on Auth */}
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <Route path="/" component={LandingNew} />
       ) : (
         <>
           <Route path="/" component={Dashboard} />
