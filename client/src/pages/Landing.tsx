@@ -157,7 +157,12 @@ export default function Landing() {
               <div className="text-center mb-6">
                 <Car className="mx-auto h-16 w-16 text-blue-600 mb-4" />
                 <h3 className="text-3xl font-bold mb-3 text-blue-600">🚗 Get Your Free Quote</h3>
-                <p className="text-lg text-gray-700 font-semibold">Enter your VIN for instant vehicle pricing and eligibility</p>
+                <p className="text-lg text-gray-700 font-semibold">Enter your VIN and current mileage for instant pricing</p>
+              </div>
+
+              {/* TEST ELEMENT - SHOULD BE VISIBLE */}
+              <div className="bg-red-100 border-4 border-red-500 p-4 mb-4 text-center">
+                <h4 className="text-2xl font-bold text-red-600">🔥 MILEAGE INPUT SHOULD APPEAR BELOW 🔥</h4>
               </div>
               
               <form onSubmit={handleVinSubmit} className="space-y-4">
@@ -186,10 +191,10 @@ export default function Landing() {
                   )}
                 </div>
 
-                {/* Current Mileage Input */}
-                <div className="space-y-2 bg-green-50 p-4 rounded-lg border-2 border-green-400">
-                  <label htmlFor="mileage-input" className="block text-lg font-bold text-gray-900">
-                    📊 Current Mileage <span className="text-red-500">*</span>
+                {/* ===== MILEAGE INPUT SECTION ===== */}
+                <div className="space-y-2 bg-green-100 p-6 rounded-lg border-4 border-green-500">
+                  <label htmlFor="mileage-input" className="block text-2xl font-bold text-green-800">
+                    📊 CURRENT MILEAGE REQUIRED <span className="text-red-500">*</span>
                   </label>
                   <Input 
                     id="mileage-input"
