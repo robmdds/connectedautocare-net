@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import LandingNew from "@/pages/LandingNew";
+import NewLanding from "@/pages/NewLanding";
 import Dashboard from "@/pages/Dashboard";
 import Policies from "@/pages/Policies";
 import Claims from "@/pages/Claims";
@@ -74,9 +75,12 @@ function Router() {
       <Route path="/admin/training-data" component={AdminTrainingData} />
       <Route path="/admin/response-templates" component={AdminResponseTemplates} />
 
+      {/* New Fresh Route - No Cache Issues */}
+      <Route path="/fresh" component={NewLanding} />
+      
       {/* Conditional Routes Based on Auth */}
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={LandingNew} />
+        <Route path="/" component={NewLanding} />
       ) : (
         <>
           <Route path="/" component={Dashboard} />
