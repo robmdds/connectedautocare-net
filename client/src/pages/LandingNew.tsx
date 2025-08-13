@@ -65,9 +65,54 @@ export default function LandingNew() {
     setMileageError("");
     setIsProcessing(true);
     
-    setTimeout(() => {
-      setLocation(`/quote?vin=${cleanVin}&mileage=${mileageInput}`);
-    }, 500);
+    try {
+      // Call VIN decode service to get vehicle info
+      const response = await fetch('/api/vehicles/decode-vin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          vin: cleanVin,
+          mileage: parseInt(mileageInput)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to decode VIN');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to decode VIN');
+      }
+      
+      const vehicleData = result.vehicle;
+      
+      // Store quote data for the results page
+      const quoteData = {
+        vehicle: {
+          vin: cleanVin,
+          year: vehicleData.year,
+          make: vehicleData.make,
+          model: vehicleData.model,
+          mileage: parseInt(mileageInput),
+          vehicleClass: vehicleData.vehicleClass || 'Class A'
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      localStorage.setItem('currentQuote', JSON.stringify(quoteData));
+      
+      // Redirect to VSC quote results page
+      setLocation('/vsc-quote');
+    } catch (error) {
+      console.error('Error processing VIN:', error);
+      setVinError('Unable to process VIN. Please check and try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleLogin = () => {
