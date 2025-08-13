@@ -2214,6 +2214,305 @@ How can I help you today?`;
     }
   });
 
+  // Policy Management API Routes
+  app.get('/api/policies/management', async (req, res) => {
+    try {
+      const { status, product, search } = req.query;
+      
+      // Mock comprehensive policy data
+      const mockPolicies = [
+        {
+          id: "policy-001",
+          policyNumber: "POL-VSC-2025-001",
+          customerName: "Michael Johnson",
+          customerEmail: "michael.johnson@email.com", 
+          customerPhone: "(555) 234-5678",
+          productType: "auto",
+          productName: "Connected Auto Care Elevate Platinum",
+          coverageLevel: "Platinum",
+          status: "active",
+          effectiveDate: "2025-01-01T00:00:00Z",
+          expirationDate: "2026-01-01T00:00:00Z",
+          premiumAmount: 1894,
+          deductible: 100,
+          paymentMethod: "Credit Card",
+          paymentFrequency: "annual",
+          nextPaymentDue: "2026-01-01T00:00:00Z",
+          agent: "Sarah Wilson",
+          notes: "Customer opted for platinum coverage with roadside assistance",
+          documents: [
+            {
+              id: "doc-001",
+              name: "Policy Document",
+              type: "policy",
+              url: "/documents/policy-001.pdf",
+              createdAt: "2025-01-01T10:00:00Z"
+            },
+            {
+              id: "doc-002", 
+              name: "Coverage Certificate",
+              type: "certificate",
+              url: "/documents/cert-001.pdf",
+              createdAt: "2025-01-01T10:30:00Z"
+            }
+          ],
+          claims: [
+            {
+              id: "claim-001",
+              claimNumber: "CLM-2025-001234",
+              dateOfLoss: "2025-01-15T00:00:00Z",
+              status: "approved",
+              amount: 2500
+            }
+          ],
+          vehicle: {
+            vin: "1HGBH41JXMN109186",
+            year: 2022,
+            make: "Honda",
+            model: "Civic",
+            mileage: 15000
+          },
+          renewalInfo: {
+            autoRenew: true,
+            renewalDate: "2026-01-01T00:00:00Z",
+            renewalPremium: 1950,
+            renewalNotificationSent: false
+          }
+        },
+        {
+          id: "policy-002",
+          policyNumber: "POL-HOME-2025-002", 
+          customerName: "Jennifer Davis",
+          customerEmail: "jennifer.davis@email.com",
+          customerPhone: "(555) 345-6789",
+          productType: "home",
+          productName: "Hero Home Protection Plan Plus",
+          coverageLevel: "Comprehensive",
+          status: "active",
+          effectiveDate: "2025-01-15T00:00:00Z",
+          expirationDate: "2026-01-15T00:00:00Z",
+          premiumAmount: 899,
+          deductible: 75,
+          paymentMethod: "Bank Transfer",
+          paymentFrequency: "quarterly",
+          nextPaymentDue: "2025-04-15T00:00:00Z",
+          agent: "Tom Rodriguez",
+          notes: "Home protection plan includes HVAC and plumbing coverage",
+          documents: [
+            {
+              id: "doc-003",
+              name: "Home Policy Document",
+              type: "policy", 
+              url: "/documents/policy-002.pdf",
+              createdAt: "2025-01-15T14:00:00Z"
+            }
+          ],
+          claims: [],
+          property: {
+            address: "123 Oak Street, Springfield, IL 62701",
+            propertyType: "Single Family Home",
+            squareFootage: 2400,
+            yearBuilt: 2015
+          },
+          renewalInfo: {
+            autoRenew: false,
+            renewalDate: "2026-01-15T00:00:00Z",
+            renewalPremium: 925,
+            renewalNotificationSent: true
+          }
+        },
+        {
+          id: "policy-003",
+          policyNumber: "POL-RV-2025-003",
+          customerName: "Robert Martinez", 
+          customerEmail: "robert.martinez@email.com",
+          customerPhone: "(555) 456-7890",
+          productType: "rv",
+          productName: "RV Protection Plan Standard",
+          coverageLevel: "Standard",
+          status: "pending",
+          effectiveDate: "2025-02-01T00:00:00Z",
+          expirationDate: "2027-02-01T00:00:00Z",
+          premiumAmount: 1250,
+          deductible: 200,
+          paymentMethod: "Credit Card",
+          paymentFrequency: "semi-annual",
+          nextPaymentDue: "2025-08-01T00:00:00Z",
+          agent: "Lisa Chen",
+          notes: "Pending final vehicle inspection before activation",
+          documents: [],
+          claims: [],
+          vehicle: {
+            vin: "4V4NC9GH5MN123456",
+            year: 2020,
+            make: "Winnebago",
+            model: "Vista",
+            mileage: 25000
+          },
+          renewalInfo: {
+            autoRenew: true,
+            renewalDate: "2027-02-01T00:00:00Z",
+            renewalPremium: 1275,
+            renewalNotificationSent: false
+          }
+        },
+        {
+          id: "policy-004",
+          policyNumber: "POL-AUTO-2025-004",
+          customerName: "Amanda Thompson",
+          customerEmail: "amanda.thompson@email.com",
+          customerPhone: "(555) 567-8901", 
+          productType: "auto",
+          productName: "Hero Auto Advantage Plus",
+          coverageLevel: "Gold",
+          status: "expired",
+          effectiveDate: "2024-03-01T00:00:00Z",
+          expirationDate: "2025-03-01T00:00:00Z",
+          premiumAmount: 1450,
+          deductible: 150,
+          paymentMethod: "Monthly ACH",
+          paymentFrequency: "monthly",
+          nextPaymentDue: "2025-04-01T00:00:00Z",
+          agent: "Mike Wilson",
+          notes: "Policy expired, renewal offer sent but no response",
+          documents: [
+            {
+              id: "doc-004",
+              name: "Expired Policy",
+              type: "policy",
+              url: "/documents/policy-004.pdf", 
+              createdAt: "2024-03-01T09:00:00Z"
+            }
+          ],
+          claims: [
+            {
+              id: "claim-002",
+              claimNumber: "CLM-2024-005678",
+              dateOfLoss: "2024-08-20T00:00:00Z",
+              status: "closed",
+              amount: 1800
+            }
+          ],
+          vehicle: {
+            vin: "WBANE53594CE123456",
+            year: 2019,
+            make: "BMW",
+            model: "X3",
+            mileage: 45000
+          },
+          renewalInfo: {
+            autoRenew: false,
+            renewalDate: "2025-03-01T00:00:00Z",
+            renewalPremium: 1520,
+            renewalNotificationSent: true
+          }
+        }
+      ];
+
+      let filteredPolicies = mockPolicies;
+
+      // Apply filters
+      if (status && status !== 'all') {
+        filteredPolicies = filteredPolicies.filter(policy => policy.status === status);
+      }
+      if (product && product !== 'all') {
+        filteredPolicies = filteredPolicies.filter(policy => policy.productType === product);
+      }
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        filteredPolicies = filteredPolicies.filter(policy => 
+          policy.policyNumber.toLowerCase().includes(searchLower) ||
+          policy.customerName.toLowerCase().includes(searchLower) ||
+          policy.customerEmail.toLowerCase().includes(searchLower)
+        );
+      }
+
+      res.json(filteredPolicies);
+    } catch (error) {
+      console.error('Error fetching policies:', error);
+      res.status(500).json({ error: 'Failed to fetch policies' });
+    }
+  });
+
+  app.get('/api/policies/statistics', async (req, res) => {
+    try {
+      // Mock policy statistics
+      const stats = {
+        activePolicies: 2847,
+        newThisMonth: 156,
+        premiumRevenue: 4250000,
+        renewalsDue: 89,
+        retentionRate: 87.3
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching policy statistics:', error);
+      res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+  });
+
+  app.post('/api/policies/:policyId/generate-document', async (req, res) => {
+    try {
+      const { policyId } = req.params;
+      const { documentType } = req.body;
+      
+      // Mock document generation
+      const document = {
+        id: `doc-${Date.now()}`,
+        name: `${documentType} Document`,
+        type: documentType,
+        url: `/documents/${policyId}-${documentType}.pdf`,
+        createdAt: new Date().toISOString()
+      };
+
+      res.json({
+        success: true,
+        document,
+        message: `${documentType} document generated successfully`
+      });
+    } catch (error) {
+      console.error('Error generating document:', error);
+      res.status(500).json({ error: 'Failed to generate document' });
+    }
+  });
+
+  app.put('/api/policies/:policyId/status', async (req, res) => {
+    try {
+      const { policyId } = req.params;
+      const { status, reason } = req.body;
+
+      // Mock status update
+      res.json({
+        success: true,
+        policyId,
+        status,
+        reason,
+        updatedAt: new Date().toISOString(),
+        message: 'Policy status updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating policy status:', error);
+      res.status(500).json({ error: 'Failed to update policy status' });
+    }
+  });
+
+  app.post('/api/policies/:policyId/renewal-notice', async (req, res) => {
+    try {
+      const { policyId } = req.params;
+      
+      // Mock renewal notice
+      res.json({
+        success: true,
+        policyId,
+        sentAt: new Date().toISOString(),
+        message: 'Renewal notice sent successfully'
+      });
+    } catch (error) {
+      console.error('Error sending renewal notice:', error);
+      res.status(500).json({ error: 'Failed to send renewal notice' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -12,6 +12,7 @@ const menuItems = [
     title: "Policy Management",
     items: [
       { name: "Policies", icon: "fas fa-file-contract", href: "/policies" },
+      { name: "Advanced Policies", icon: "fas fa-shield-alt", href: "/policy-management" },
       { name: "Quotes", icon: "fas fa-calculator", href: "/quotes" },
       { name: "Products", icon: "fas fa-tags", href: "/products" },
       { name: "Rate Tables", icon: "fas fa-table", href: "/rate-tables" },
