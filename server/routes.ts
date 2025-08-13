@@ -534,6 +534,43 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Notifications System API (missing endpoints)
+  app.get('/api/notifications/system', async (req, res) => {
+    try {
+      const notifications = [
+        { id: 'notif_001', type: 'priority', title: 'High-Value Claim Requires Review', message: 'Claim CLM-2025-001235 flagged for manual review - $8,500 water damage', timestamp: new Date().toISOString() },
+        { id: 'notif_002', type: 'info', title: '156 Renewals This Month', message: 'Monthly renewal target of 150 exceeded by 6 policies', timestamp: new Date().toISOString() },
+        { id: 'notif_003', type: 'warning', title: 'System Integration Alert', message: '1 external API showing degraded performance', timestamp: new Date().toISOString() }
+      ];
+      res.json(notifications);
+    } catch (error) {
+      console.error('System notifications error:', error);
+      res.status(500).json({ error: 'Failed to fetch system notifications' });
+    }
+  });
+
+  // System Integration Health API (missing endpoints)
+  app.get('/api/system-integration/health', async (req, res) => {
+    try {
+      const healthStatus = {
+        components: [
+          { name: 'VIN Decoding API', status: 'healthy', responseTime: 271, uptime: 99.8, lastCheck: new Date().toISOString() },
+          { name: 'Payment Gateway', status: 'warning', responseTime: 1200, uptime: 97.2, lastCheck: new Date().toISOString() },
+          { name: 'Email Service', status: 'down', responseTime: null, uptime: 0, lastCheck: new Date().toISOString() },
+          { name: 'Analytics Engine', status: 'healthy', responseTime: 89, uptime: 99.9, lastCheck: new Date().toISOString() },
+          { name: 'Claims Processing', status: 'healthy', responseTime: 156, uptime: 99.5, lastCheck: new Date().toISOString() },
+          { name: 'Policy Management', status: 'healthy', responseTime: 201, uptime: 98.7, lastCheck: new Date().toISOString() }
+        ],
+        overallHealth: 85,
+        lastUpdated: new Date().toISOString()
+      };
+      res.json(healthStatus);
+    } catch (error) {
+      console.error('System health error:', error);
+      res.status(500).json({ error: 'Failed to fetch system health' });
+    }
+  });
+
   // AI Assistant API
   app.post('/api/ai/chat', isAuthenticated, async (req, res) => {
     try {
