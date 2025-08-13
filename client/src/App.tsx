@@ -31,6 +31,7 @@ import WholesaleLogin from "@/pages/WholesaleLogin";
 import WholesalePortal from "@/pages/WholesalePortal";
 import WholesaleBulkPricing from "@/pages/WholesaleBulkPricing";
 import AIAssistant from "@/pages/AIAssistant";
+import AdvancedClaims from "@/pages/AdvancedClaims";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -68,6 +69,7 @@ function Router() {
           <Route path="/policies" component={Policies} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/ai-assistant" component={AIAssistant} />
+          <Route path="/advanced-claims" component={AdvancedClaims} />
         </>
       )}
       <Route component={NotFound} />

@@ -1905,6 +1905,315 @@ How can I help you today?`;
     }
   });
 
+  // Advanced Claims Management API Routes
+  app.get('/api/claims/advanced', async (req, res) => {
+    try {
+      const { status, type, search } = req.query;
+      
+      // Mock advanced claims data with AI analysis
+      const mockClaims = [
+        {
+          id: "claim-001",
+          claimNumber: "CLM-2025-001234",
+          policyNumber: "POL-VSC-789012",
+          customerName: "Sarah Johnson",
+          customerEmail: "sarah.johnson@email.com",
+          customerPhone: "(555) 123-4567",
+          dateOfLoss: "2025-01-15T00:00:00Z",
+          reportedDate: "2025-01-16T10:30:00Z",
+          claimType: "auto",
+          status: "under_review",
+          priority: "medium",
+          estimatedAmount: 2500,
+          description: "Engine overheating, coolant leak detected, requires radiator replacement",
+          adjusterName: "Mike Thompson",
+          adjusterEmail: "mike.thompson@company.com",
+          lastUpdate: "2025-01-20T14:00:00Z",
+          documents: ["repair_estimate.pdf", "photos.zip", "diagnostic_report.pdf"],
+          aiAnalysis: {
+            riskScore: 25,
+            fraudIndicators: [],
+            recommendations: [
+              "Verify repair facility credentials",
+              "Request additional diagnostic documentation",
+              "Standard processing timeline applies"
+            ],
+            estimatedProcessingTime: 5
+          },
+          timeline: [
+            {
+              date: "2025-01-16T10:30:00Z",
+              action: "Claim submitted",
+              user: "Sarah Johnson",
+              notes: "Initial FNOL submission with photos"
+            },
+            {
+              date: "2025-01-17T09:15:00Z",
+              action: "Assigned to adjuster",
+              user: "System",
+              notes: "Auto-assigned to Mike Thompson based on workload"
+            },
+            {
+              date: "2025-01-18T14:22:00Z",
+              action: "Documentation requested",
+              user: "Mike Thompson",
+              notes: "Requested additional repair estimates"
+            },
+            {
+              date: "2025-01-20T14:00:00Z",
+              action: "AI analysis completed",
+              user: "AI System",
+              notes: "Low risk score, standard processing recommended"
+            }
+          ]
+        },
+        {
+          id: "claim-002", 
+          claimNumber: "CLM-2025-001235",
+          policyNumber: "POL-HOME-456789",
+          customerName: "Robert Chen",
+          customerEmail: "robert.chen@email.com",
+          customerPhone: "(555) 987-6543",
+          dateOfLoss: "2025-01-10T00:00:00Z",
+          reportedDate: "2025-01-11T15:45:00Z",
+          claimType: "home",
+          status: "investigating",
+          priority: "high",
+          estimatedAmount: 8500,
+          approvedAmount: 7200,
+          description: "Water damage to kitchen and living room from burst pipe",
+          adjusterName: "Lisa Rodriguez",
+          adjusterEmail: "lisa.rodriguez@company.com",
+          lastUpdate: "2025-01-19T16:30:00Z",
+          documents: ["water_damage_photos.zip", "plumber_report.pdf", "restoration_estimate.pdf"],
+          aiAnalysis: {
+            riskScore: 75,
+            fraudIndicators: [
+              "Multiple recent claims from same address",
+              "Unusually high estimated repair costs",
+              "Limited photographic evidence"
+            ],
+            recommendations: [
+              "Conduct on-site inspection immediately",
+              "Verify plumbing service records",
+              "Review customer claim history",
+              "Consider third-party investigation"
+            ],
+            estimatedProcessingTime: 15
+          },
+          timeline: [
+            {
+              date: "2025-01-11T15:45:00Z",
+              action: "Claim submitted",
+              user: "Robert Chen",
+              notes: "Reported burst pipe in kitchen"
+            },
+            {
+              date: "2025-01-12T08:00:00Z",
+              action: "Assigned to adjuster",
+              user: "System",
+              notes: "Priority assignment due to water damage severity"
+            },
+            {
+              date: "2025-01-14T10:30:00Z",
+              action: "Site inspection scheduled",
+              user: "Lisa Rodriguez",
+              notes: "Scheduled for January 16th"
+            },
+            {
+              date: "2025-01-16T13:00:00Z",
+              action: "Site inspection completed",
+              user: "Lisa Rodriguez",
+              notes: "Extensive water damage confirmed, restoration required"
+            },
+            {
+              date: "2025-01-19T16:30:00Z",
+              action: "AI fraud analysis flagged",
+              user: "AI System",
+              notes: "High risk score requires additional investigation"
+            }
+          ]
+        },
+        {
+          id: "claim-003",
+          claimNumber: "CLM-2025-001236", 
+          policyNumber: "POL-RV-321098",
+          customerName: "Jennifer Martinez",
+          customerEmail: "jennifer.martinez@email.com",
+          customerPhone: "(555) 456-7890",
+          dateOfLoss: "2025-01-08T00:00:00Z",
+          reportedDate: "2025-01-09T09:20:00Z",
+          claimType: "rv",
+          status: "approved",
+          priority: "low",
+          estimatedAmount: 1850,
+          approvedAmount: 1650,
+          description: "Awning motor malfunction, requires replacement and labor",
+          adjusterName: "Tom Wilson",
+          adjusterEmail: "tom.wilson@company.com",
+          lastUpdate: "2025-01-18T11:15:00Z",
+          documents: ["awning_photos.jpg", "repair_quote.pdf"],
+          aiAnalysis: {
+            riskScore: 15,
+            fraudIndicators: [],
+            recommendations: [
+              "Standard claim processing",
+              "Approved within policy limits",
+              "Schedule payment processing"
+            ],
+            estimatedProcessingTime: 3
+          },
+          timeline: [
+            {
+              date: "2025-01-09T09:20:00Z",
+              action: "Claim submitted",
+              user: "Jennifer Martinez",
+              notes: "RV awning stopped working during camping trip"
+            },
+            {
+              date: "2025-01-10T14:00:00Z",
+              action: "Assigned to adjuster",
+              user: "System",
+              notes: "Routine assignment to Tom Wilson"
+            },
+            {
+              date: "2025-01-12T16:45:00Z",
+              action: "Estimate reviewed",
+              user: "Tom Wilson",
+              notes: "Repair estimate within reasonable range"
+            },
+            {
+              date: "2025-01-15T10:30:00Z",
+              action: "Claim approved",
+              user: "Tom Wilson",
+              notes: "Approved for $1,650 - deductible applied"
+            },
+            {
+              date: "2025-01-18T11:15:00Z",
+              action: "Payment authorized",
+              user: "Finance System",
+              notes: "Payment scheduled for processing"
+            }
+          ]
+        }
+      ];
+
+      let filteredClaims = mockClaims;
+
+      // Apply filters
+      if (status && status !== 'all') {
+        filteredClaims = filteredClaims.filter(claim => claim.status === status);
+      }
+      if (type && type !== 'all') {
+        filteredClaims = filteredClaims.filter(claim => claim.claimType === type);
+      }
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        filteredClaims = filteredClaims.filter(claim => 
+          claim.claimNumber.toLowerCase().includes(searchLower) ||
+          claim.customerName.toLowerCase().includes(searchLower) ||
+          claim.policyNumber.toLowerCase().includes(searchLower)
+        );
+      }
+
+      res.json(filteredClaims);
+    } catch (error) {
+      console.error('Error fetching advanced claims:', error);
+      res.status(500).json({ error: 'Failed to fetch claims' });
+    }
+  });
+
+  app.get('/api/claims/statistics', async (req, res) => {
+    try {
+      // Mock statistics data
+      const stats = {
+        totalClaims: 1247,
+        newThisMonth: 89,
+        avgProcessingDays: 7,
+        totalPayouts: 2450000,
+        fraudRate: 3.2
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching claim statistics:', error);
+      res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+  });
+
+  app.post('/api/claims/:claimId/ai-analysis', async (req, res) => {
+    try {
+      const { claimId } = req.params;
+      
+      // Mock AI analysis result
+      const analysis = {
+        riskScore: Math.floor(Math.random() * 100),
+        fraudIndicators: [
+          "Claim amount significantly higher than average",
+          "Multiple recent claims from same location"
+        ].filter(() => Math.random() > 0.7),
+        recommendations: [
+          "Request additional documentation",
+          "Schedule site inspection",
+          "Verify repair facility credentials",
+          "Review customer claim history"
+        ].filter(() => Math.random() > 0.5),
+        estimatedProcessingTime: Math.floor(Math.random() * 14) + 3
+      };
+
+      // Simulate AI processing delay
+      setTimeout(() => {
+        res.json({
+          success: true,
+          analysis,
+          message: 'AI analysis completed successfully'
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error running AI analysis:', error);
+      res.status(500).json({ error: 'Failed to run AI analysis' });
+    }
+  });
+
+  app.put('/api/claims/:claimId/status', async (req, res) => {
+    try {
+      const { claimId } = req.params;
+      const { status, notes } = req.body;
+
+      // Mock status update
+      res.json({
+        success: true,
+        claimId,
+        status,
+        notes,
+        updatedAt: new Date().toISOString(),
+        message: 'Claim status updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating claim status:', error);
+      res.status(500).json({ error: 'Failed to update claim status' });
+    }
+  });
+
+  app.put('/api/claims/:claimId/adjuster', async (req, res) => {
+    try {
+      const { claimId } = req.params;
+      const adjusterData = req.body;
+
+      // Mock adjuster assignment
+      res.json({
+        success: true,
+        claimId,
+        adjuster: adjusterData,
+        assignedAt: new Date().toISOString(),
+        message: 'Adjuster assigned successfully'
+      });
+    } catch (error) {
+      console.error('Error assigning adjuster:', error);
+      res.status(500).json({ error: 'Failed to assign adjuster' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

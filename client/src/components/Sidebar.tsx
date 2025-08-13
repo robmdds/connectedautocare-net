@@ -27,6 +27,7 @@ const menuItems = [
     title: "Claims",
     items: [
       { name: "All Claims", icon: "fas fa-clipboard-list", href: "/claims" },
+      { name: "Advanced Claims", icon: "fas fa-brain", href: "/advanced-claims" },
       { name: "FNOL", icon: "fas fa-exclamation-triangle", href: "/fnol" },
       { name: "Adjusters", icon: "fas fa-users", href: "/adjusters" },
     ],
