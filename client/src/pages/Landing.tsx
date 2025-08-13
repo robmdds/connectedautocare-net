@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Shield, 
   Car, 
@@ -17,25 +18,47 @@ import {
   ArrowRight,
   Users,
   Award,
-  Clock
+  Clock,
+  Search,
+  AlertCircle
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function Landing() {
-  const [quoteData, setQuoteData] = useState({
-    year: "",
-    make: "",
-    model: "",
-    miles: "",
-    zip: "",
-    email: "",
-    phone: ""
-  });
+  const [, setLocation] = useLocation();
+  const [vinInput, setVinInput] = useState("");
+  const [vinError, setVinError] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleQuoteSubmit = (e: React.FormEvent) => {
+  const validateVIN = (vin: string) => {
+    // Basic VIN validation
+    const cleanVin = vin.replace(/\s/g, '').toUpperCase();
+    if (cleanVin.length !== 17) {
+      return "VIN must be exactly 17 characters";
+    }
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(cleanVin)) {
+      return "VIN contains invalid characters";
+    }
+    return "";
+  };
+
+  const handleVinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, this would process the quote
-    console.log("Quote submitted:", quoteData);
+    const cleanVin = vinInput.replace(/\s/g, '').toUpperCase();
+    
+    const error = validateVIN(cleanVin);
+    if (error) {
+      setVinError(error);
+      return;
+    }
+
+    setVinError("");
+    setIsProcessing(true);
+    
+    // Navigate to quote page with VIN pre-filled
+    setTimeout(() => {
+      setLocation(`/quote?vin=${cleanVin}`);
+    }, 500);
   };
 
   const handleLogin = () => {
@@ -90,8 +113,14 @@ export default function Landing() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
-                  Get Instant Quote
+                <Button 
+                  size="lg" 
+                  className="bg-white text-blue-600 hover:bg-gray-50"
+                  onClick={() => document.getElementById('vin-input')?.focus()}
+                  data-testid="button-get-quote"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Enter VIN for Instant Quote
                 </Button>
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
                   <Phone className="h-4 w-4 mr-2" />
@@ -100,64 +129,106 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Instant Quote Form */}
+            {/* VIN Quote Form */}
             <div className="bg-white rounded-lg shadow-lg p-6 text-gray-900">
-              <h3 className="text-2xl font-bold mb-4">Get Your Free Quote</h3>
-              <form onSubmit={handleQuoteSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({length: 25}, (_, i) => 2024 - i).map(year => (
-                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="text-center mb-6">
+                <Car className="mx-auto h-12 w-12 text-blue-600 mb-3" />
+                <h3 className="text-2xl font-bold mb-2">Get Your Free VSC Quote</h3>
+                <p className="text-gray-600">Enter your VIN for instant pricing and eligibility</p>
+              </div>
+              
+              <form onSubmit={handleVinSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="vin-input" className="block text-sm font-medium text-gray-700">
+                    Vehicle Identification Number (VIN)
+                  </label>
                   <Input 
-                    placeholder="Make" 
-                    value={quoteData.make}
-                    onChange={(e) => setQuoteData({...quoteData, make: e.target.value})}
+                    id="vin-input"
+                    type="text"
+                    placeholder="Enter 17-character VIN (e.g., 1HGBH41JXMN109186)"
+                    value={vinInput}
+                    onChange={(e) => {
+                      setVinInput(e.target.value);
+                      setVinError("");
+                    }}
+                    className={`text-lg font-mono tracking-wider ${vinError ? 'border-red-500' : ''}`}
+                    maxLength={17}
+                    data-testid="input-vin"
                   />
+                  {vinError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{vinError}</AlertDescription>
+                    </Alert>
+                  )}
                 </div>
-                <Input 
-                  placeholder="Model" 
-                  value={quoteData.model}
-                  onChange={(e) => setQuoteData({...quoteData, model: e.target.value})}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input 
-                    placeholder="Current Miles" 
-                    value={quoteData.miles}
-                    onChange={(e) => setQuoteData({...quoteData, miles: e.target.value})}
-                  />
-                  <Input 
-                    placeholder="ZIP Code" 
-                    value={quoteData.zip}
-                    onChange={(e) => setQuoteData({...quoteData, zip: e.target.value})}
-                  />
+
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-blue-900 mb-2">What you'll get:</h4>
+                  <ul className="space-y-1 text-sm text-blue-800">
+                    <li className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      Instant vehicle information and eligibility
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      Real-time pricing for all coverage levels
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      Professional quote you can share or save
+                    </li>
+                  </ul>
                 </div>
-                <Input 
-                  type="email" 
-                  placeholder="Email Address" 
-                  value={quoteData.email}
-                  onChange={(e) => setQuoteData({...quoteData, email: e.target.value})}
-                />
-                <Input 
-                  type="tel" 
-                  placeholder="Phone Number" 
-                  value={quoteData.phone}
-                  onChange={(e) => setQuoteData({...quoteData, phone: e.target.value})}
-                />
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
-                  Get My Quote
-                  <ArrowRight className="h-4 w-4 ml-2" />
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700" 
+                  size="lg"
+                  disabled={isProcessing || vinInput.length < 17}
+                  data-testid="button-get-vin-quote"
+                >
+                  {isProcessing ? (
+                    <>Processing VIN...</>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2" />
+                      Get Instant Quote
+                    </>
+                  )}
                 </Button>
               </form>
-              <p className="text-xs text-gray-500 mt-4 text-center">
-                Free quotes • No obligation • Instant results
-              </p>
+
+              <div className="mt-6 text-center">
+                <p className="text-xs text-gray-500 mb-3">
+                  Free quotes • No obligation • Instant results
+                </p>
+                <div className="flex items-center justify-center space-x-4 text-xs text-gray-400">
+                  <span className="flex items-center">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Secure & Encrypted
+                  </span>
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Results in Seconds
+                  </span>
+                </div>
+              </div>
+
+              {/* Alternative for non-VIN users */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-600 text-center mb-3">
+                  Don't have your VIN handy?
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  asChild
+                  data-testid="button-manual-quote"
+                >
+                  <Link href="/quote">Enter Vehicle Details Manually</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -334,7 +405,13 @@ export default function Landing() {
             Get your free quote in less than 2 minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+            <Button 
+              size="lg" 
+              className="bg-white text-blue-600 hover:bg-gray-50"
+              onClick={() => document.getElementById('vin-input')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-cta-quote"
+            >
+              <Search className="h-4 w-4 mr-2" />
               Get Free Quote Now
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
