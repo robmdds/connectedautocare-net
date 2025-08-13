@@ -185,7 +185,7 @@ export default function LandingNew() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800" style={{background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)'}}>
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4">
