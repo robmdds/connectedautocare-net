@@ -237,20 +237,48 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
 
   return (
     <div className="space-y-6">
-      {/* Vehicle Input Section - Compact */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Vehicle Information</CardTitle>
+      {/* Vehicle Input Section - PROMINENT VIN */}
+      <Card className="border-2 border-blue-500">
+        <CardHeader className="pb-3 bg-blue-50">
+          <CardTitle className="text-xl text-blue-900">🚗 Enter Your Vehicle Information</CardTitle>
+          <p className="text-blue-700 text-sm">Start with your VIN for instant vehicle details and accurate quotes</p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <CardContent className="pt-4">
+          {/* VIN Input - Prominent */}
+          <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+            <Label htmlFor="vin" className="text-lg font-semibold text-gray-900 mb-2 block">
+              Vehicle Identification Number (VIN) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="vin"
+              value={vin}
+              onChange={(e) => setVin(e.target.value.toUpperCase())}
+              placeholder="Enter 17-character VIN (e.g., JF1GJAC66DH033129)"
+              className="h-12 text-lg font-mono border-2 border-blue-300 focus:border-blue-500"
+              maxLength={17}
+            />
+            {isLoadingVin && (
+              <p className="text-blue-600 text-sm mt-2">🔍 Decoding VIN...</p>
+            )}
+            {vehicleInfo && (
+              <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded">
+                <p className="text-green-800 font-semibold">
+                  ✅ {vehicleInfo.year} {vehicleInfo.make} {vehicleInfo.model}
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Other Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="vin" className="text-sm">VIN</Label>
+              <Label htmlFor="mileage" className="text-sm font-medium">Current Mileage</Label>
               <Input
-                id="vin"
-                value={vin}
-                onChange={(e) => setVin(e.target.value.toUpperCase())}
-                placeholder="Enter VIN"
+                id="mileage"
+                type="number"
+                value={mileage}
+                onChange={(e) => setMileage(e.target.value)}
+                placeholder="Enter mileage"
                 className="h-9"
               />
             </div>
@@ -300,8 +328,9 @@ export function VSCQuoteWidget({ onQuoteSelect }: VSCQuoteWidgetProps) {
             <div className="flex items-end">
               <Button 
                 onClick={() => generateQuotesMutation.mutate()}
-                disabled={generateQuotesMutation.isPending}
-                className="h-9 w-full"
+                disabled={generateQuotesMutation.isPending || !vin || vin.length !== 17}
+                className="h-9 w-full bg-blue-600 hover:bg-blue-700"
+                size="lg"
               >
                 {generateQuotesMutation.isPending ? 'Quoting...' : 'Get Quotes'}
               </Button>
