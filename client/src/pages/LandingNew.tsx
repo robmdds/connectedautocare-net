@@ -209,7 +209,7 @@ export default function LandingNew() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center text-white mb-12">
               <h1 className="text-5xl md:text-6xl font-bold mb-6">
-                Vehicle Service Contract Protection
+                🚀 SIMPLIFIED FORM - Vehicle Service Contract Protection
               </h1>
               <p className="text-xl mb-8">
                 Comprehensive coverage for your vehicle with instant quotes and nationwide service
@@ -220,7 +220,7 @@ export default function LandingNew() {
             <div className="bg-white rounded-lg shadow-xl p-8 text-gray-900">
               <div className="text-center mb-6">
                 <Car className="mx-auto h-16 w-16 text-blue-600 mb-4" />
-                <h3 className="text-3xl font-bold mb-3 text-blue-600">Get Your Free Quote</h3>
+                <h3 className="text-3xl font-bold mb-3 text-blue-600">🎯 Get Your Free Quote (ALL-IN-ONE FORM)</h3>
                 <p className="text-lg text-gray-700 font-semibold">Enter your information below for instant VSC pricing</p>
               </div>
               
