@@ -18,6 +18,12 @@ export default function LandingNew() {
   const [vinError, setVinError] = useState("");
   const [mileageInput, setMileageInput] = useState("");
   const [mileageError, setMileageError] = useState("");
+  const [nameInput, setNameInput] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [zipcodeInput, setZipcodeInput] = useState("");
+  const [zipcodeError, setZipcodeError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const validateVIN = (vin: string) => {
@@ -45,24 +51,78 @@ export default function LandingNew() {
     return "";
   };
 
-  const handleVinSubmit = async (e: React.FormEvent) => {
+  const validateName = (name: string) => {
+    if (!name || name.trim() === "") {
+      return "Full name is required";
+    }
+    if (name.trim().length < 2) {
+      return "Please enter a valid name";
+    }
+    return "";
+  };
+
+  const validateEmail = (email: string) => {
+    if (!email || email.trim() === "") {
+      return "Email address is required";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
+  const validateZipcode = (zipcode: string) => {
+    if (!zipcode || zipcode.trim() === "") {
+      return "ZIP code is required";
+    }
+    const zipRegex = /^\d{5}(-\d{4})?$/;
+    if (!zipRegex.test(zipcode)) {
+      return "Please enter a valid ZIP code (12345 or 12345-6789)";
+    }
+    return "";
+  };
+
+  const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanVin = vinInput.replace(/\s/g, '').toUpperCase();
     
-    const vinError = validateVIN(cleanVin);
+    // Validate all fields
+    const vinValidationError = validateVIN(cleanVin);
     const mileageValidationError = validateMileage(mileageInput);
+    const nameValidationError = validateName(nameInput);
+    const emailValidationError = validateEmail(emailInput);
+    const zipcodeValidationError = validateZipcode(zipcodeInput);
     
-    if (vinError) {
-      setVinError(vinError);
+    // Clear all errors first
+    setVinError("");
+    setMileageError("");
+    setNameError("");
+    setEmailError("");
+    setZipcodeError("");
+    
+    // Check for any validation errors
+    if (vinValidationError) {
+      setVinError(vinValidationError);
       return;
     }
     if (mileageValidationError) {
       setMileageError(mileageValidationError);
       return;
     }
+    if (nameValidationError) {
+      setNameError(nameValidationError);
+      return;
+    }
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      return;
+    }
+    if (zipcodeValidationError) {
+      setZipcodeError(zipcodeValidationError);
+      return;
+    }
 
-    setVinError("");
-    setMileageError("");
     setIsProcessing(true);
     
     try {
@@ -90,7 +150,7 @@ export default function LandingNew() {
       
       const vehicleData = result.vehicle;
       
-      // Store quote data for the results page
+      // Store quote data for the results page including customer info
       const quoteData = {
         vehicle: {
           vin: cleanVin,
@@ -99,6 +159,11 @@ export default function LandingNew() {
           model: vehicleData.model,
           mileage: parseInt(mileageInput),
           vehicleClass: vehicleData.vehicleClass || 'Class A'
+        },
+        customer: {
+          name: nameInput.trim(),
+          email: emailInput.trim(),
+          zipcode: zipcodeInput.trim()
         },
         timestamp: new Date().toISOString()
       };
@@ -156,12 +221,12 @@ export default function LandingNew() {
               <div className="text-center mb-6">
                 <Car className="mx-auto h-16 w-16 text-blue-600 mb-4" />
                 <h3 className="text-3xl font-bold mb-3 text-blue-600">Get Your Free Quote</h3>
-                <p className="text-lg text-gray-700 font-semibold">Enter your VIN and current mileage for instant pricing</p>
+                <p className="text-lg text-gray-700 font-semibold">Enter your information below for instant VSC pricing</p>
               </div>
               
               {/* Single Border Container */}
               <div className="bg-gray-50 p-6 rounded-lg border-2 border-blue-400 shadow-sm">
-                <form onSubmit={handleVinSubmit} className="space-y-6">
+                <form onSubmit={handleQuoteSubmit} className="space-y-6">
                   {/* VIN Input */}
                   <div className="space-y-3">
                     <label htmlFor="vin-input" className="block text-lg font-bold text-gray-900">
@@ -216,6 +281,90 @@ export default function LandingNew() {
                     <p className="text-sm text-gray-600">Required for accurate coverage eligibility and pricing</p>
                   </div>
 
+                  {/* CUSTOMER INFORMATION SECTION */}
+                  <div className="border-t pt-6">
+                    <h4 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h4>
+                    
+                    {/* Two column layout for customer info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Full Name */}
+                      <div className="space-y-3">
+                        <label htmlFor="name-input" className="block text-lg font-bold text-gray-900">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                          id="name-input"
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={nameInput}
+                          onChange={(e) => {
+                            setNameInput(e.target.value);
+                            setNameError("");
+                          }}
+                          className={`text-lg h-12 ${nameError ? 'border-red-500' : ''}`}
+                          data-testid="input-name"
+                        />
+                        {nameError && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{nameError}</AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+
+                      {/* ZIP Code */}
+                      <div className="space-y-3">
+                        <label htmlFor="zipcode-input" className="block text-lg font-bold text-gray-900">
+                          ZIP Code <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                          id="zipcode-input"
+                          type="text"
+                          placeholder="Enter ZIP code (e.g., 12345)"
+                          value={zipcodeInput}
+                          onChange={(e) => {
+                            setZipcodeInput(e.target.value);
+                            setZipcodeError("");
+                          }}
+                          className={`text-lg h-12 ${zipcodeError ? 'border-red-500' : ''}`}
+                          maxLength={10}
+                          data-testid="input-zipcode"
+                        />
+                        {zipcodeError && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{zipcodeError}</AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Email - Full Width */}
+                    <div className="space-y-3 mt-4">
+                      <label htmlFor="email-input" className="block text-lg font-bold text-gray-900">
+                        Email Address <span className="text-red-500">*</span>
+                      </label>
+                      <Input 
+                        id="email-input"
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={emailInput}
+                        onChange={(e) => {
+                          setEmailInput(e.target.value);
+                          setEmailError("");
+                        }}
+                        className={`text-lg h-12 ${emailError ? 'border-red-500' : ''}`}
+                        data-testid="input-email"
+                      />
+                      {emailError && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>{emailError}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="bg-blue-50 p-4 rounded-lg mt-6">
                     <h4 className="font-semibold text-blue-900 mb-2">What you'll get:</h4>
                     <ul className="space-y-1 text-sm text-blue-800">
@@ -238,15 +387,15 @@ export default function LandingNew() {
                     type="submit" 
                     className="w-full bg-blue-600 hover:bg-blue-700" 
                     size="lg"
-                    disabled={isProcessing || vinInput.length < 17 || !mileageInput}
-                    data-testid="button-get-vin-quote"
+                    disabled={isProcessing || vinInput.length < 17 || !mileageInput || !nameInput.trim() || !emailInput.trim() || !zipcodeInput.trim()}
+                    data-testid="button-get-quote"
                   >
                     {isProcessing ? (
-                      <>Processing VIN...</>
+                      <>Processing...</>
                     ) : (
                       <>
                         <Search className="h-4 w-4 mr-2" />
-                        Get Instant Quote
+                        Get My VSC Quote
                       </>
                     )}
                   </Button>

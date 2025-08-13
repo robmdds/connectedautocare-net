@@ -15,6 +15,12 @@ interface VehicleInfo {
   vehicleClass: string;
 }
 
+interface CustomerInfo {
+  name: string;
+  email: string;
+  zipcode: string;
+}
+
 interface CoverageLevel {
   name: string;
   tier: "Platinum" | "Gold" | "Silver";
@@ -31,6 +37,7 @@ interface CoverageLevel {
 export default function VSCQuoteResults() {
   const [, setLocation] = useLocation();
   const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo | null>(null);
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [coverageLevels, setCoverageLevels] = useState<CoverageLevel[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +49,7 @@ export default function VSCQuoteResults() {
     if (savedQuote) {
       const quoteData = JSON.parse(savedQuote);
       setVehicleInfo(quoteData.vehicle);
+      setCustomerInfo(quoteData.customer);
       
       // Create VSC coverage levels with real pricing
       const levels: CoverageLevel[] = [
@@ -113,13 +121,14 @@ export default function VSCQuoteResults() {
   }, []);
 
   const handleSelectCoverage = (coverage: CoverageLevel) => {
-    const quoteData = {
+    const purchaseData = {
       vehicle: vehicleInfo,
+      customer: customerInfo,
       coverage: coverage,
       timestamp: new Date().toISOString()
     };
     
-    localStorage.setItem('selectedCoverage', JSON.stringify(quoteData));
+    localStorage.setItem('selectedCoverage', JSON.stringify(purchaseData));
     setLocation('/purchase');
   };
 

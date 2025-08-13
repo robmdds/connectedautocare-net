@@ -31,6 +31,7 @@ export default function Purchase() {
   const [, setLocation] = useLocation();
   const [selectedCoverage, setSelectedCoverage] = useState<any>(null);
   const [vehicleInfo, setVehicleInfo] = useState<any>(null);
+  const [customerInfo, setCustomerInfo] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
 
@@ -42,10 +43,20 @@ export default function Purchase() {
       const data = JSON.parse(savedCoverage);
       setSelectedCoverage(data.coverage);
       setVehicleInfo(data.vehicle);
+      setCustomerInfo(data.customer);
+      
+      // Pre-populate form with customer info
+      if (data.customer) {
+        const nameParts = data.customer.name.split(' ');
+        form.setValue('firstName', nameParts[0] || '');
+        form.setValue('lastName', nameParts.slice(1).join(' ') || '');
+        form.setValue('email', data.customer.email || '');
+        form.setValue('address.zipCode', data.customer.zipcode || '');
+      }
     } else {
       setLocation('/');
     }
-  }, [setLocation]);
+  }, [setLocation, form]);
 
   const handlePurchase = async (data: PurchaseForm) => {
     setIsProcessing(true);
