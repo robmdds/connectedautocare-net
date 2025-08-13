@@ -129,12 +129,12 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* VIN Quote Form */}
-            <div className="bg-white rounded-lg shadow-lg p-6 text-gray-900">
+            {/* VIN Quote Form - UPDATED VERSION */}
+            <div className="bg-white rounded-lg shadow-lg p-6 text-gray-900 border-4 border-red-500">
               <div className="text-center mb-6">
-                <Car className="mx-auto h-12 w-12 text-blue-600 mb-3" />
-                <h3 className="text-2xl font-bold mb-2">Get Your Free VSC Quote</h3>
-                <p className="text-gray-600">Enter your VIN for instant pricing and eligibility verification</p>
+                <Car className="mx-auto h-12 w-12 text-red-600 mb-3" />
+                <h3 className="text-2xl font-bold mb-2 text-red-600">UPDATED: Get Your Free VSC Quote</h3>
+                <p className="text-gray-600 font-bold">NEW VIN ENTRY: Enter your VIN for instant pricing and eligibility verification</p>
               </div>
               
               <form onSubmit={handleVinSubmit} className="space-y-4">
