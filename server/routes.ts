@@ -122,7 +122,7 @@ ${urls.map(url => `  <url>
   });
 
   // VIN Decode API (GET endpoint for frontend VIN widget)
-  app.get('/api/vin/decode/:vin', async (req, res) => {
+  app.get('/api/vin-decode/:vin', async (req, res) => {
     try {
       const { vin } = req.params;
       if (!vin || vin.length !== 17) {
