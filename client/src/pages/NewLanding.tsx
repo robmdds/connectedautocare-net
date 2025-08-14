@@ -71,10 +71,16 @@ export default function NewLanding() {
       zipCode: zipcodeInput.trim()
     };
     
+    console.log("💾 NewLanding: Saving quote data to sessionStorage:", formData);
     sessionStorage.setItem('vscQuoteData', JSON.stringify(formData));
+    
+    // Verify data was saved
+    const verification = sessionStorage.getItem('vscQuoteData');
+    console.log("✅ NewLanding: Verification - data saved:", verification);
     
     // Navigate to results page
     setTimeout(() => {
+      console.log("🚀 NewLanding: Navigating to /vsc-quote");
       setLocation('/vsc-quote');
     }, 500);
   };

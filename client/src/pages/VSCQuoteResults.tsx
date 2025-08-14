@@ -43,10 +43,15 @@ export default function VSCQuoteResults() {
 
   useEffect(() => {
     const loadQuoteData = async () => {
+      // Debug logging
+      console.log("🔍 VSCQuoteResults: Checking for quote data...");
+      
       // Get quote data from sessionStorage (matching NewLanding.tsx)
       const savedQuote = sessionStorage.getItem('vscQuoteData');
+      console.log("🔍 VSCQuoteResults: sessionStorage data:", savedQuote);
       
       if (savedQuote) {
+        console.log("✅ VSCQuoteResults: Found quote data, processing...");
         const formData = JSON.parse(savedQuote);
         
         // Decode VIN to get vehicle information
@@ -153,6 +158,9 @@ export default function VSCQuoteResults() {
         ];
         
         setCoverageLevels(levels);
+        console.log("✅ VSCQuoteResults: Successfully loaded coverage levels");
+      } else {
+        console.log("❌ VSCQuoteResults: No quote data found in sessionStorage");
       }
       
       setLoading(false);
