@@ -142,32 +142,41 @@ export async function setupAuth(app: Express) {
     console.log(`Auth callback for hostname: ${req.hostname}`);
     console.log(`Request URL: ${req.url}`);
     console.log(`Query params:`, req.query);
-    console.log(`Available auth strategies: ${(passport as any)._strategies ? Object.keys((passport as any)._strategies) : 'none'}`);
     
     const authStrategy = `replitauth:${req.hostname}`;
     console.log(`Using auth strategy: ${authStrategy}`);
     
-    passport.authenticate(authStrategy, (err: any, user: any, info: any) => {
-      if (err) {
-        console.error('Auth callback error:', err);
-        return res.status(500).json({ error: 'Authentication failed', details: err.message });
-      }
-      
-      if (!user) {
-        console.log('Auth callback failed - no user:', info);
-        return res.redirect('/api/login');
-      }
-      
-      req.logIn(user, (err) => {
+    // Enhanced error handling for OAuth callback
+    try {
+      passport.authenticate(authStrategy, (err: any, user: any, info: any) => {
         if (err) {
-          console.error('Login error:', err);
-          return res.status(500).json({ error: 'Login failed', details: err.message });
+          console.error('Auth callback error:', err);
+          // Instead of showing error, redirect to Quick Login
+          return res.redirect('/login?oauth_error=1');
         }
         
-        console.log('Auth successful, redirecting to home');
-        return res.redirect('/');
-      });
-    })(req, res, next);
+        if (!user) {
+          console.log('Auth callback failed - no user:', info);
+          // Redirect to Quick Login instead of OAuth login
+          return res.redirect('/login?oauth_failed=1');
+        }
+        
+        req.logIn(user, (err) => {
+          if (err) {
+            console.error('Login error:', err);
+            // Redirect to Quick Login on login error
+            return res.redirect('/login?login_error=1');
+          }
+          
+          console.log('Auth successful, redirecting to home');
+          return res.redirect('/');
+        });
+      })(req, res, next);
+    } catch (error) {
+      console.error('Critical OAuth callback error:', error);
+      // Fallback to Quick Login on any critical error
+      return res.redirect('/login?critical_error=1');
+    }
   });
 
   app.get("/api/logout", (req, res) => {

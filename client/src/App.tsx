@@ -44,6 +44,7 @@ import Communications from "@/pages/Communications";
 import SystemIntegration from "@/pages/SystemIntegration";
 import AdminLogin from "@/pages/AdminLogin";
 import QuickLogin from "@/pages/QuickLogin";
+import LoginTest from "@/pages/LoginTest";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -78,6 +79,7 @@ function Router() {
       <Route path="/admin/response-templates" component={AdminResponseTemplates} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/login" component={QuickLogin} />
+      <Route path="/login-test" component={LoginTest} />
 
       {/* New Fresh Route - No Cache Issues */}
       <Route path="/fresh" component={NewLanding} />

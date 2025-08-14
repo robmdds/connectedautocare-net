@@ -10,6 +10,30 @@ export default function QuickLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Show appropriate error message if redirected from OAuth
+  useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('oauth_error')) {
+      toast({
+        title: "OAuth Error",
+        description: "OAuth login failed. Please use Quick Sign In instead.",
+        variant: "destructive",
+      });
+    } else if (urlParams.get('oauth_failed')) {
+      toast({
+        title: "Login Failed",
+        description: "OAuth authentication failed. Use Quick Sign In for immediate access.",
+        variant: "destructive",
+      });
+    } else if (urlParams.get('critical_error')) {
+      toast({
+        title: "System Error",
+        description: "Authentication system error. Quick Sign In is available as backup.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleQuickLogin = async () => {
     setIsLoading(true);
     try {
