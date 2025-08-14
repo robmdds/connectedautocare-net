@@ -51,6 +51,11 @@ function Router() {
 
   return (
     <Switch>
+      {/* Authentication Routes - Always Available */}
+      <Route path="/login" component={QuickLogin} />
+      <Route path="/login-test" component={LoginTest} />
+      <Route path="/admin/login" component={AdminLogin} />
+      
       {/* Public Routes - Always Available */}
       <Route path="/quote" component={QuoteGenerator} />
       <Route path="/vsc-quote" component={VSCQuoteResults} />
@@ -65,6 +70,9 @@ function Router() {
       <Route path="/branded/:resellerId" component={() => <BrandedQuotePage resellerId="reseller-001" />} />
       <Route path="/hero-vsc" component={HeroVscProducts} />
       <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
+      <Route path="/fresh" component={NewLanding} />
+      
+      {/* Admin Routes - Always Available for Testing */}
       <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/users" component={AdminUsers} />
@@ -77,31 +85,24 @@ function Router() {
       <Route path="/admin/ai-models" component={AdminAiModels} />
       <Route path="/admin/training-data" component={AdminTrainingData} />
       <Route path="/admin/response-templates" component={AdminResponseTemplates} />
-      <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/login" component={QuickLogin} />
-      <Route path="/login-test" component={LoginTest} />
-
-      {/* New Fresh Route - No Cache Issues */}
-      <Route path="/fresh" component={NewLanding} />
       
-      {/* Make policies and analytics accessible without authentication for now */}
+      {/* Core Platform Routes - Always Available for Testing */}
       <Route path="/policies" component={Policies} />
       <Route path="/analytics" component={Analytics} />
+      <Route path="/ai-assistant" component={AIAssistant} />
+      <Route path="/advanced-claims" component={AdvancedClaims} />
+      <Route path="/policy-management" component={PolicyManagement} />
+      <Route path="/advanced-analytics" component={AdvancedAnalytics} />
+      <Route path="/communications" component={Communications} />
+      <Route path="/system-integration" component={SystemIntegration} />
       
-      {/* Conditional Routes Based on Auth */}
+      {/* Home Route - Conditional Based on Auth */}
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={NewLanding} />
       ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/ai-assistant" component={AIAssistant} />
-          <Route path="/advanced-claims" component={AdvancedClaims} />
-          <Route path="/policy-management" component={PolicyManagement} />
-          <Route path="/advanced-analytics" component={AdvancedAnalytics} />
-          <Route path="/communications" component={Communications} />
-          <Route path="/system-integration" component={SystemIntegration} />
-        </>
+        <Route path="/" component={Dashboard} />
       )}
+      
       <Route component={NotFound} />
     </Switch>
   );
