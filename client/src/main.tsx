@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import SimpleTest from "./SimpleTest";
+import App from "./App";
 import "./index.css";
 
 // FORCE COMPLETE REFRESH - v5.0 - NEW FORM WITH ALL 5 FIELDS
@@ -13,7 +13,7 @@ try {
   } else {
     console.log("✅ ROOT ELEMENT FOUND, CREATING REACT APP");
     const root = createRoot(rootElement);
-    root.render(<SimpleTest />);
+    root.render(<App />);
     console.log("✅ REACT APP RENDERED SUCCESSFULLY");
   }
 } catch (error: any) {

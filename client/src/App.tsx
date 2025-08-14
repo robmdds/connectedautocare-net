@@ -47,64 +47,75 @@ import QuickLogin from "@/pages/QuickLogin";
 import LoginTest from "@/pages/LoginTest";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  try {
+    const { isAuthenticated, isLoading } = useAuth();
 
-  return (
-    <Switch>
-      {/* Critical Platform Routes - First Priority */}
-      <Route path="/policies" component={Policies} />
-      <Route path="/claims" component={Claims} />
-      <Route path="/analytics" component={Analytics} />
-      
-      {/* Authentication Routes */}
-      <Route path="/login" component={QuickLogin} />
-      <Route path="/login-test" component={LoginTest} />
-      <Route path="/admin/login" component={AdminLogin} />
-      
-      {/* Core TPA Platform Routes */}
-      <Route path="/ai-assistant" component={AIAssistant} />
-      <Route path="/advanced-claims" component={AdvancedClaims} />
-      <Route path="/policy-management" component={PolicyManagement} />
-      <Route path="/advanced-analytics" component={AdvancedAnalytics} />
-      <Route path="/communications" component={Communications} />
-      <Route path="/system-integration" component={SystemIntegration} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
-      <Route path="/admin/users" component={AdminUsers} />
-      <Route path="/admin/rate-tables" component={AdminRateTables} />
-      <Route path="/admin/tenants" component={AdminTenants} />
-      <Route path="/admin/resellers" component={AdminResellers} />
-      <Route path="/admin/payment-settings" component={AdminPaymentSettings} />
-      <Route path="/admin/api-integrations" component={AdminApiIntegrations} />
-      <Route path="/admin/system-logs" component={AdminSystemLogs} />
-      <Route path="/admin/ai-models" component={AdminAiModels} />
-      <Route path="/admin/training-data" component={AdminTrainingData} />
-      <Route path="/admin/response-templates" component={AdminResponseTemplates} />
-      <Route path="/admin" component={Admin} />
-      
-      {/* Public Routes */}
-      <Route path="/quote" component={QuoteGenerator} />
-      <Route path="/vsc-quote" component={VSCQuoteResults} />
-      <Route path="/purchase" component={Purchase} />
-      <Route path="/products" component={Products} />
-      <Route path="/faq" component={FAQ} />
-      <Route path="/public-claims" component={PublicClaims} />
-      <Route path="/wholesale" component={WholesaleLogin} />
-      <Route path="/wholesale/portal" component={WholesalePortal} />
-      <Route path="/wholesale/bulk-pricing" component={WholesaleBulkPricing} />
-      <Route path="/wholesale/white-label" component={WhitelabelConfig} />
-      <Route path="/branded/:resellerId" component={() => <BrandedQuotePage resellerId="reseller-001" />} />
-      <Route path="/hero-vsc" component={HeroVscProducts} />
-      <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
-      <Route path="/fresh" component={NewLanding} />
-      
-      {/* Home Route - Conditional Based on Auth */}
-      <Route path="/" component={isLoading || !isAuthenticated ? NewLanding : Dashboard} />
-      
-      <Route component={NotFound} />
-    </Switch>
-  );
+    return (
+      <Switch>
+        {/* Critical Platform Routes - First Priority */}
+        <Route path="/policies" component={Policies} />
+        <Route path="/claims" component={Claims} />
+        <Route path="/analytics" component={Analytics} />
+        
+        {/* Authentication Routes */}
+        <Route path="/login" component={QuickLogin} />
+        <Route path="/login-test" component={LoginTest} />
+        <Route path="/admin/login" component={AdminLogin} />
+        
+        {/* Core TPA Platform Routes */}
+        <Route path="/ai-assistant" component={AIAssistant} />
+        <Route path="/advanced-claims" component={AdvancedClaims} />
+        <Route path="/policy-management" component={PolicyManagement} />
+        <Route path="/advanced-analytics" component={AdvancedAnalytics} />
+        <Route path="/communications" component={Communications} />
+        <Route path="/system-integration" component={SystemIntegration} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
+        <Route path="/admin/users" component={AdminUsers} />
+        <Route path="/admin/rate-tables" component={AdminRateTables} />
+        <Route path="/admin/tenants" component={AdminTenants} />
+        <Route path="/admin/resellers" component={AdminResellers} />
+        <Route path="/admin/payment-settings" component={AdminPaymentSettings} />
+        <Route path="/admin/api-integrations" component={AdminApiIntegrations} />
+        <Route path="/admin/system-logs" component={AdminSystemLogs} />
+        <Route path="/admin/ai-models" component={AdminAiModels} />
+        <Route path="/admin/training-data" component={AdminTrainingData} />
+        <Route path="/admin/response-templates" component={AdminResponseTemplates} />
+        <Route path="/admin" component={Admin} />
+        
+        {/* Public Routes */}
+        <Route path="/quote" component={QuoteGenerator} />
+        <Route path="/vsc-quote" component={VSCQuoteResults} />
+        <Route path="/purchase" component={Purchase} />
+        <Route path="/products" component={Products} />
+        <Route path="/faq" component={FAQ} />
+        <Route path="/public-claims" component={PublicClaims} />
+        <Route path="/wholesale" component={WholesaleLogin} />
+        <Route path="/wholesale/portal" component={WholesalePortal} />
+        <Route path="/wholesale/bulk-pricing" component={WholesaleBulkPricing} />
+        <Route path="/wholesale/white-label" component={WhitelabelConfig} />
+        <Route path="/branded/:resellerId" component={() => <BrandedQuotePage resellerId="reseller-001" />} />
+        <Route path="/hero-vsc" component={HeroVscProducts} />
+        <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
+        <Route path="/fresh" component={NewLanding} />
+        
+        {/* Home Route - Conditional Based on Auth */}
+        <Route path="/" component={isLoading || !isAuthenticated ? NewLanding : Dashboard} />
+        
+        <Route component={NotFound} />
+      </Switch>
+    );
+  } catch (error: any) {
+    console.error("Router error:", error);
+    return (
+      <div style={{ padding: '20px', background: '#fee', border: '2px solid #f00' }}>
+        <h1>Router Error</h1>
+        <p>Error: {error.message}</p>
+        <p><a href="/api/login">Login</a> | <a href="/">Home</a></p>
+      </div>
+    );
+  }
 }
 
 function App() {
