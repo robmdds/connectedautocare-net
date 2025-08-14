@@ -76,24 +76,67 @@ export class VinDecodeService {
             });
           }
 
-          // Check if we have useful data including year
-          if ((results.Make || results.Model) && results.ModelYear) {
+          // Enhanced data extraction - use manufacturer info even if Make/Model are missing
+          const manufacturer = results.Manufacturer || '';
+          let extractedMake = results.Make || '';
+          let extractedModel = results.Model || '';
+          
+          // Extract make from manufacturer if Make field is empty
+          if (!extractedMake && manufacturer) {
+            if (manufacturer.includes('NISSAN')) {
+              extractedMake = 'NISSAN';
+            } else if (manufacturer.includes('HONDA')) {
+              extractedMake = 'HONDA';
+            } else if (manufacturer.includes('TOYOTA')) {
+              extractedMake = 'TOYOTA';
+            } else if (manufacturer.includes('FORD')) {
+              extractedMake = 'FORD';
+            } else if (manufacturer.includes('GENERAL MOTORS') || manufacturer.includes('GM')) {
+              extractedMake = 'CHEVROLET';
+            }
+            // Add more manufacturer mappings as needed
+          }
+          
+          // For Nissan/Infiniti VINs, try to extract model from VIN structure if model is missing
+          if (!extractedModel && (extractedMake === 'NISSAN' || extractedMake === 'INFINITI')) {
+            const vinCode = vin.substring(3, 8); // Characters 4-8 often contain model info
+            if (vinCode.startsWith('AZ2')) {
+              // JN8AZ2 pattern can be both Armada (Nissan) and QX80 (Infiniti)
+              if (extractedMake === 'INFINITI') {
+                extractedModel = 'QX80';
+              } else {
+                extractedModel = 'ARMADA';
+              }
+            }
+          }
+
+          // Handle Infiniti/Nissan relationship - they share platforms
+          if (extractedMake === 'INFINITI' && extractedModel === 'QX80') {
+            // QX80 is luxury version of Armada - note this in the data
+            extractedModel = 'QX80 (Armada Platform)';
+          }
+
+          // Check if we have useful data - relaxed criteria to use manufacturer info
+          const hasManufacturer = manufacturer && manufacturer.length > 0;
+          const hasYear = results.ModelYear && parseInt(results.ModelYear) > 1980;
+          
+          if (hasYear && hasManufacturer) {
             const year = parseInt(results.ModelYear);
-            console.log(`NHTSA SUCCESS: Found year ${year} for ${results.Make} ${results.Model}`);
+            console.log(`NHTSA SUCCESS: Found year ${year} for ${extractedMake} ${extractedModel} (from ${manufacturer})`);
             
             return {
               success: true,
               data: {
                 vin,
-                make: results.Make || 'Unknown',
-                model: results.Model || 'Unknown', 
+                make: extractedMake || 'Unknown',
+                model: extractedModel || 'Unknown', 
                 year: year,
-                bodyStyle: results.BodyClass || 'Unknown',
+                bodyStyle: results.BodyClass || results.VehicleType || 'Unknown',
                 engine: results.EngineModel || 'Unknown',
                 fuelType: results.FuelTypePrimary || 'Gasoline',
                 transmission: results.TransmissionStyle || 'Unknown',
                 driveType: results.DriveType || 'Unknown',
-                source: 'NHTSA'
+                source: 'NHTSA Enhanced'
               }
             };
           }
