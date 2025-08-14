@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Router Debug</title>
+</head>
+<body>
+    <h1>Simple Route Test</h1>
+    <div id="debug-info">
+        <p>Current URL: <span id="current-url"></span></p>
+        <p>Hash: <span id="hash"></span></p>
+        <p>Pathname: <span id="pathname"></span></p>
+    </div>
+    
+    <script>
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('hash').textContent = window.location.hash;
+        document.getElementById('pathname').textContent = window.location.pathname;
+        
+        console.log('Debug info:', {
+            href: window.location.href,
+            pathname: window.location.pathname,
+            hash: window.location.hash
+        });
+    </script>
+</body>
+</html>

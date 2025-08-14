@@ -51,12 +51,39 @@ function Router() {
 
   return (
     <Switch>
-      {/* Authentication Routes - Always Available */}
+      {/* Critical Platform Routes - First Priority */}
+      <Route path="/policies" component={Policies} />
+      <Route path="/claims" component={Claims} />
+      <Route path="/analytics" component={Analytics} />
+      
+      {/* Authentication Routes */}
       <Route path="/login" component={QuickLogin} />
       <Route path="/login-test" component={LoginTest} />
       <Route path="/admin/login" component={AdminLogin} />
       
-      {/* Public Routes - Always Available */}
+      {/* Core TPA Platform Routes */}
+      <Route path="/ai-assistant" component={AIAssistant} />
+      <Route path="/advanced-claims" component={AdvancedClaims} />
+      <Route path="/policy-management" component={PolicyManagement} />
+      <Route path="/advanced-analytics" component={AdvancedAnalytics} />
+      <Route path="/communications" component={Communications} />
+      <Route path="/system-integration" component={SystemIntegration} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/rate-tables" component={AdminRateTables} />
+      <Route path="/admin/tenants" component={AdminTenants} />
+      <Route path="/admin/resellers" component={AdminResellers} />
+      <Route path="/admin/payment-settings" component={AdminPaymentSettings} />
+      <Route path="/admin/api-integrations" component={AdminApiIntegrations} />
+      <Route path="/admin/system-logs" component={AdminSystemLogs} />
+      <Route path="/admin/ai-models" component={AdminAiModels} />
+      <Route path="/admin/training-data" component={AdminTrainingData} />
+      <Route path="/admin/response-templates" component={AdminResponseTemplates} />
+      <Route path="/admin" component={Admin} />
+      
+      {/* Public Routes */}
       <Route path="/quote" component={QuoteGenerator} />
       <Route path="/vsc-quote" component={VSCQuoteResults} />
       <Route path="/purchase" component={Purchase} />
@@ -72,37 +99,8 @@ function Router() {
       <Route path="/connected-auto-care" component={ConnectedAutoCarePage} />
       <Route path="/fresh" component={NewLanding} />
       
-      {/* Admin Routes - Always Available for Testing */}
-      <Route path="/admin/coverage-options" component={AdminCoverageOptions} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/admin/users" component={AdminUsers} />
-      <Route path="/admin/rate-tables" component={AdminRateTables} />
-      <Route path="/admin/tenants" component={AdminTenants} />
-      <Route path="/admin/resellers" component={AdminResellers} />
-      <Route path="/admin/payment-settings" component={AdminPaymentSettings} />
-      <Route path="/admin/api-integrations" component={AdminApiIntegrations} />
-      <Route path="/admin/system-logs" component={AdminSystemLogs} />
-      <Route path="/admin/ai-models" component={AdminAiModels} />
-      <Route path="/admin/training-data" component={AdminTrainingData} />
-      <Route path="/admin/response-templates" component={AdminResponseTemplates} />
-      
-      {/* Core Platform Routes - Always Available for Testing */}
-      <Route path="/policies" component={Policies} />
-      <Route path="/claims" component={Claims} />
-      <Route path="/analytics" component={Analytics} />
-      <Route path="/ai-assistant" component={AIAssistant} />
-      <Route path="/advanced-claims" component={AdvancedClaims} />
-      <Route path="/policy-management" component={PolicyManagement} />
-      <Route path="/advanced-analytics" component={AdvancedAnalytics} />
-      <Route path="/communications" component={Communications} />
-      <Route path="/system-integration" component={SystemIntegration} />
-      
       {/* Home Route - Conditional Based on Auth */}
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={NewLanding} />
-      ) : (
-        <Route path="/" component={Dashboard} />
-      )}
+      <Route path="/" component={isLoading || !isAuthenticated ? NewLanding : Dashboard} />
       
       <Route component={NotFound} />
     </Switch>
