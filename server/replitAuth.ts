@@ -84,17 +84,26 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  // Add localhost for development
+  // Add localhost and connectedautocare.net for development and production
   const domains = process.env.REPLIT_DOMAINS!.split(",");
-  const allDomains = [...domains, "localhost"];
+  const allDomains = [...domains, "localhost", "connectedautocare.net"];
   
   for (const domain of allDomains) {
+    let callbackURL;
+    if (domain === "localhost") {
+      callbackURL = `http://${domain}:5000/api/callback`;
+    } else if (domain === "connectedautocare.net") {
+      callbackURL = `https://${domain}/api/callback`;
+    } else {
+      callbackURL = `https://${domain}/api/callback`;
+    }
+    
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
         config,
         scope: "openid email profile offline_access",
-        callbackURL: domain === "localhost" ? `http://${domain}:5000/api/callback` : `https://${domain}/api/callback`,
+        callbackURL,
       },
       verify,
     );

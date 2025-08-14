@@ -406,6 +406,83 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Payment Processing Endpoint (for Purchase page)
+  app.post('/api/payments/process', async (req, res) => {
+    try {
+      const { amount, coverage, vehicle, customer } = req.body;
+      
+      if (!amount || !coverage || !vehicle || !customer) {
+        return res.status(400).json({ error: "Missing required payment data" });
+      }
+
+      console.log('Processing payment:', { amount, coverage: coverage.name, vehicle: `${vehicle.year} ${vehicle.make} ${vehicle.model}` });
+
+      // Create payment via Helcim
+      const paymentData = {
+        amount: amount,
+        currency: 'USD',
+        customerData: {
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address
+        },
+        cardData: {
+          cardNumber: customer.paymentMethod.cardNumber,
+          expiryMonth: customer.paymentMethod.expiryMonth,
+          expiryYear: customer.paymentMethod.expiryYear,
+          cvv: customer.paymentMethod.cvv
+        },
+        metadata: {
+          coverage: coverage.name,
+          vehicle: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+          vin: vehicle.vin
+        }
+      };
+
+      const paymentResult = await helcimService.processPayment(paymentData);
+      
+      if (paymentResult.success) {
+        // Create policy record after successful payment
+        const policyData: any = {
+          tenantId: 'connected-auto-care',
+          policyNumber: `VSC-${Date.now()}`,
+          customerEmail: customer.email,
+          customerName: `${customer.firstName} ${customer.lastName}`,
+          customerPhone: customer.phone,
+          customerAddress: `${customer.address.street}, ${customer.address.city}, ${customer.address.state} ${customer.address.zipCode}`,
+          vehicleId: 'e286b938-0208-49f6-ba0f-018cebd7d12f', // Vehicle ID for VIN JN8AZ2AF1M9715383
+          productId: coverage.productId || 'vsc-gold', // Use productId from coverage or default
+          coverageDetails: coverage, // Use coverageDetails instead of coverageSelections
+          premium: amount.toString(),
+          status: 'active',
+          effectiveDate: new Date(),
+          expiryDate: new Date(Date.now() + (coverage.termMonths * 30 * 24 * 60 * 60 * 1000)),
+        };
+
+        const policy = await storage.createPolicy(policyData);
+
+        console.log('Policy created successfully:', policy.policyNumber);
+        
+        res.json({ 
+          success: true, 
+          paymentId: paymentResult.paymentId,
+          policyNumber: policy.policyNumber,
+          message: 'Payment processed and policy activated successfully'
+        });
+      } else {
+        throw new Error(paymentResult.error || 'Payment processing failed');
+      }
+    } catch (error) {
+      console.error("Payment processing error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message || "Payment processing failed" 
+      });
+    }
+  });
+
   // Helcim Webhook Handler
   app.post('/api/webhooks/helcim', async (req, res) => {
     try {

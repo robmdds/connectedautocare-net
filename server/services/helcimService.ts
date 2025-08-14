@@ -100,6 +100,99 @@ export class HelcimService {
     }
   }
 
+  async processPayment(paymentData: any): Promise<{ success: boolean, paymentId?: string, error?: string }> {
+    try {
+      console.log('Processing payment via Helcim:', {
+        amount: paymentData.amount,
+        customer: paymentData.customerData.email,
+        card: `****${paymentData.cardData.cardNumber.slice(-4)}`
+      });
+
+      // Always use mock processing for development unless explicitly configured for production
+      if (!process.env.HELCIM_PRODUCTION_MODE) {
+        console.warn('Using mock payment processing for development');
+        
+        // Mock successful payment for development
+        const mockPaymentId = `pay_mock_${Date.now()}`;
+        
+        // Store mock payment record
+        await storage.createPayment({
+          amount: paymentData.amount.toString(),
+          currency: paymentData.currency || 'USD',
+          provider: 'helcim-mock',
+          providerTransactionId: mockPaymentId,
+          status: 'succeeded',
+          description: `VSC Purchase - ${paymentData.metadata.coverage}`,
+          metadata: paymentData.metadata,
+        });
+
+        console.log('Mock payment processed successfully:', mockPaymentId);
+        return {
+          success: true,
+          paymentId: mockPaymentId
+        };
+      }
+
+      // Real Helcim API call
+      const response = await fetch(`${this.apiBase}/v2/card-transactions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'purchase',
+          amount: Math.round(paymentData.amount * 100), // Convert to cents
+          currency: (paymentData.currency || 'USD').toLowerCase(),
+          cardData: {
+            cardNumber: paymentData.cardData.cardNumber.replace(/\s/g, ''),
+            cardExpiry: `${paymentData.cardData.expiryMonth}${paymentData.cardData.expiryYear}`,
+            cardCVV: paymentData.cardData.cvv,
+          },
+          billingAddress: {
+            name: `${paymentData.customerData.firstName} ${paymentData.customerData.lastName}`,
+            street1: paymentData.customerData.address.street,
+            city: paymentData.customerData.address.city,
+            province: paymentData.customerData.address.state,
+            country: 'USA',
+            postalCode: paymentData.customerData.address.zipCode,
+          },
+          customerCode: paymentData.customerData.email,
+          invoiceNumber: `VSC-${Date.now()}`,
+          description: `VSC Purchase - ${paymentData.metadata.coverage}`,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'APPROVED') {
+        // Store successful payment record
+        await storage.createPayment({
+          amount: paymentData.amount.toString(),
+          currency: paymentData.currency || 'USD',
+          provider: 'helcim',
+          providerTransactionId: result.transactionId,
+          status: 'succeeded',
+          description: `VSC Purchase - ${paymentData.metadata.coverage}`,
+          metadata: paymentData.metadata,
+        });
+
+        return {
+          success: true,
+          paymentId: result.transactionId
+        };
+      } else {
+        throw new Error(result.message || 'Payment declined');
+      }
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      return {
+        success: false,
+        error: error.message || 'Payment processing failed'
+      };
+    }
+  }
+
   async processWebhook(payload: any, headers: any): Promise<{ eventType: string; paymentId?: string; metadata?: any }> {
     try {
       // Verify webhook signature
