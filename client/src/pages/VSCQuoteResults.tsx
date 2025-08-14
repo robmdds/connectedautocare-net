@@ -42,17 +42,55 @@ export default function VSCQuoteResults() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get quote data from URL params or localStorage
-    const urlParams = new URLSearchParams(window.location.search);
-    const savedQuote = localStorage.getItem('currentQuote');
-    
-    if (savedQuote) {
-      const quoteData = JSON.parse(savedQuote);
-      setVehicleInfo(quoteData.vehicle);
-      setCustomerInfo(quoteData.customer);
+    const loadQuoteData = async () => {
+      // Get quote data from sessionStorage (matching NewLanding.tsx)
+      const savedQuote = sessionStorage.getItem('vscQuoteData');
       
-      // Create VSC coverage levels with real pricing
-      const levels: CoverageLevel[] = [
+      if (savedQuote) {
+        const formData = JSON.parse(savedQuote);
+        
+        // Decode VIN to get vehicle information
+        let vehicleInfo = {
+          vin: formData.vin,
+          year: "2020", // Default fallback
+          make: "Honda", // Default fallback
+          model: "Accord", // Default fallback
+          mileage: formData.mileage,
+          vehicleClass: "Class A"
+        };
+
+        try {
+          // Call VIN decode API
+          const response = await fetch(`/api/vin/decode/${formData.vin}`);
+          if (response.ok) {
+            const vinData = await response.json();
+            if (vinData.success && vinData.data) {
+              vehicleInfo = {
+                vin: formData.vin,
+                year: vinData.data.year || "2020",
+                make: vinData.data.make || "Honda", 
+                model: vinData.data.model || "Accord",
+                mileage: formData.mileage,
+                vehicleClass: "Class A"
+              };
+            }
+          }
+        } catch (error) {
+          console.log("VIN decode failed, using fallback data");
+        }
+        
+        // Create customer info structure  
+        const customerInfo = {
+          name: formData.fullName,
+          email: formData.email,
+          zipcode: formData.zipCode
+        };
+        
+        setVehicleInfo(vehicleInfo);
+        setCustomerInfo(customerInfo);
+        
+        // Create VSC coverage levels with real pricing
+        const levels: CoverageLevel[] = [
         {
           name: "Elevate Platinum",
           tier: "Platinum",
@@ -112,12 +150,15 @@ export default function VSCQuoteResults() {
           coverageMiles: 50000,
           icon: Shield
         }
-      ];
+        ];
+        
+        setCoverageLevels(levels);
+      }
       
-      setCoverageLevels(levels);
-    }
-    
-    setLoading(false);
+      setLoading(false);
+    };
+
+    loadQuoteData();
   }, []);
 
   const handleSelectCoverage = (coverage: CoverageLevel) => {
