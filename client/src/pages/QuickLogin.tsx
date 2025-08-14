@@ -18,6 +18,7 @@ export default function QuickLogin() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for session persistence
         body: JSON.stringify({})
       });
 
@@ -29,9 +30,9 @@ export default function QuickLogin() {
           description: "Welcome to Connected Auto Care",
         });
         
-        // Redirect to dashboard
+        // Force reload to ensure session is recognized
         setTimeout(() => {
-          window.location.href = '/';
+          window.location.href = '/?logged_in=true';
         }, 1000);
       } else {
         toast({

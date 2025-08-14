@@ -69,11 +69,30 @@ ${urls.map(url => `  <url>
   const specialQuoteRequestService = new SpecialQuoteRequestService();
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      // Check if user is authenticated via session
+      if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+        console.log('✅ User is authenticated via session:', req.user.claims?.sub);
+        
+        // For quick admin, return the user data directly from session
+        if (req.user.claims?.sub === 'quick-admin-user') {
+          return res.json({
+            id: req.user.claims.sub,
+            email: req.user.claims.email,
+            firstName: req.user.claims.first_name,
+            lastName: req.user.claims.last_name
+          });
+        }
+        
+        // For other users, try to get from database
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        return res.json(user);
+      }
+      
+      console.log('❌ User not authenticated - session check failed');
+      res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -90,7 +109,7 @@ ${urls.map(url => `  <url>
     });
   });
 
-  // IMMEDIATE LOGIN BYPASS - NO DATABASE REQUIRED
+  // IMMEDIATE LOGIN BYPASS - DIRECT SESSION LOGIN
   app.post('/api/auth/admin-access', async (req, res) => {
     try {
       // Create admin user object for session
@@ -107,16 +126,30 @@ ${urls.map(url => `  <url>
         expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      // Skip database, just create session
-      req.session.passport = { user: adminUser };
-      await new Promise((resolve) => req.session.save(resolve));
-      
-      console.log('✅ Quick admin session created successfully');
-      
-      res.json({ 
-        success: true, 
-        message: 'Quick admin access granted - redirecting...',
-        user: adminUser.claims
+      // Use passport login method for proper session management
+      req.logIn(adminUser, (err) => {
+        if (err) {
+          console.error('❌ Quick admin login error:', err);
+          return res.status(500).json({ error: 'Quick login failed', details: err.message });
+        }
+        
+        // Double-check authentication worked
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('❌ Session save error:', saveErr);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+          
+          console.log('✅ Quick admin session created and logged in successfully');
+          console.log('User authenticated:', req.isAuthenticated());
+          console.log('Session user:', req.user);
+          
+          res.json({ 
+            success: true, 
+            message: 'Quick admin access granted - redirecting...',
+            user: adminUser.claims
+          });
+        });
       });
     } catch (error) {
       console.error('❌ Quick admin access error:', error);
