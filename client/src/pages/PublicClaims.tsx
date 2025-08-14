@@ -157,26 +157,7 @@ export default function PublicClaims() {
 
       <main className="container mx-auto px-4 py-8">
         {/* Emergency Contact */}
-        <div className="mb-8">
-          <Card className="border-red-200 bg-red-50">
-            <CardHeader>
-              <div className="flex items-center">
-                <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
-                <CardTitle className="text-red-900">Emergency Claims</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-red-800 mb-4">
-                For emergency claims requiring immediate assistance (lockouts, glass breakage, emergency repairs), 
-                contact our 24/7 emergency hotline immediately.
-              </p>
-              <Button size="lg" className="bg-red-600 hover:bg-red-700">
-                <Phone className="h-4 w-4 mr-2" />
-                Emergency: 1-800-555-HELP (4357)
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+
 
         {/* Contact Options */}
         <div className="mb-12">
