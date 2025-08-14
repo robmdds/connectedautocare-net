@@ -90,6 +90,48 @@ ${urls.map(url => `  <url>
     });
   });
 
+  // Temporary admin access for testing
+  app.post('/api/auth/admin-access', async (req, res) => {
+    try {
+      // Create a temporary admin user session
+      const adminUser = {
+        claims: {
+          sub: 'admin-temp-user',
+          email: 'admin@connectedautocare.net',
+          first_name: 'Admin',
+          last_name: 'User'
+        },
+        access_token: 'admin-temp-token',
+        expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour
+      };
+
+      // Create user in database if not exists
+      await storage.upsertUser({
+        id: 'admin-temp-user',
+        email: 'admin@connectedautocare.net',
+        firstName: 'Admin',
+        lastName: 'User'
+      });
+
+      // Log in the user
+      req.logIn(adminUser, (err) => {
+        if (err) {
+          console.error('Admin login error:', err);
+          return res.status(500).json({ error: 'Admin login failed' });
+        }
+        
+        res.json({ 
+          success: true, 
+          message: 'Admin access granted',
+          redirectTo: '/admin'
+        });
+      });
+    } catch (error) {
+      console.error('Admin access error:', error);
+      res.status(500).json({ error: 'Failed to grant admin access' });
+    }
+  });
+
   // VIN Decode API
   app.post('/api/vehicles/decode', async (req, res) => {
     try {
