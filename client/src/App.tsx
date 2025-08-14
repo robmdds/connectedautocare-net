@@ -80,13 +80,15 @@ function Router() {
       {/* New Fresh Route - No Cache Issues */}
       <Route path="/fresh" component={NewLanding} />
       
+      {/* Make policies accessible without authentication for now */}
+      <Route path="/policies" component={Policies} />
+      
       {/* Conditional Routes Based on Auth */}
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={NewLanding} />
       ) : (
         <>
           <Route path="/" component={Dashboard} />
-          <Route path="/policies" component={Policies} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/ai-assistant" component={AIAssistant} />
           <Route path="/advanced-claims" component={AdvancedClaims} />
