@@ -1,20 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Debug - Force New Form</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <title>Direct Route Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+    </style>
 </head>
 <body>
-    <h1>Debug Test - Forcing Cache Refresh</h1>
-    <p>This should bypass browser cache completely.</p>
+    <h1>TPA Platform Route Testing</h1>
+    <div id="results"></div>
+    
+    <h2>Direct Navigation Tests</h2>
+    <a href="/policies" target="_blank">Test /policies</a><br>
+    <a href="/claims" target="_blank">Test /claims</a><br>
+    <a href="/login" target="_blank">Test /login</a><br>
+    <a href="/analytics" target="_blank">Test /analytics</a><br>
+    
     <script>
-        // Force redirect to main page with cache-busting parameter
-        setTimeout(() => {
-            window.location.href = 'http://localhost:5000/?v=' + Date.now();
-        }, 2000);
+        const routes = ['/api/policies', '/api/claims', '/policies', '/claims', '/login'];
+        const resultsDiv = document.getElementById('results');
+        
+        async function testRoute(route) {
+            try {
+                const response = await fetch(route);
+                const isAPI = route.startsWith('/api/');
+                
+                if (isAPI) {
+                    const data = await response.json();
+                    return {
+                        route,
+                        status: response.status,
+                        success: response.ok,
+                        data: Array.isArray(data) ? `Array with ${data.length} items` : typeof data
+                    };
+                } else {
+                    const text = await response.text();
+                    return {
+                        route,
+                        status: response.status,
+                        success: response.ok,
+                        hasReact: text.includes('root'),
+                        hasScript: text.includes('main.tsx'),
+                        length: text.length
+                    };
+                }
+            } catch (error) {
+                return {
+                    route,
+                    error: error.message,
+                    success: false
+                };
+            }
+        }
+        
+        async function runTests() {
+            for (const route of routes) {
+                const result = await testRoute(route);
+                const div = document.createElement('div');
+                div.className = `test-result ${result.success ? 'success' : 'error'}`;
+                div.innerHTML = `
+                    <strong>${result.route}</strong><br>
+                    Status: ${result.status || 'ERROR'}<br>
+                    ${result.error || ''}
+                    ${result.data ? `Data: ${result.data}` : ''}
+                    ${result.hasReact ? 'React: ✓' : ''}
+                    ${result.hasScript ? 'Script: ✓' : ''}
+                    ${result.length ? `Size: ${result.length} chars` : ''}
+                `;
+                resultsDiv.appendChild(div);
+            }
+        }
+        
+        runTests();
     </script>
-    <p>Redirecting to main page with cache-busting in 2 seconds...</p>
 </body>
 </html>
