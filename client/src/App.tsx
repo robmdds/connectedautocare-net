@@ -62,7 +62,7 @@ function Router() {
       <Route path="/purchase" component={Purchase} />
       <Route path="/products" component={Products} />
       <Route path="/faq" component={FAQ} />
-      <Route path="/claims" component={PublicClaims} />
+      <Route path="/public-claims" component={PublicClaims} />
       <Route path="/wholesale" component={WholesaleLogin} />
       <Route path="/wholesale/portal" component={WholesalePortal} />
       <Route path="/wholesale/bulk-pricing" component={WholesaleBulkPricing} />
@@ -88,6 +88,7 @@ function Router() {
       
       {/* Core Platform Routes - Always Available for Testing */}
       <Route path="/policies" component={Policies} />
+      <Route path="/claims" component={Claims} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-assistant" component={AIAssistant} />
       <Route path="/advanced-claims" component={AdvancedClaims} />
