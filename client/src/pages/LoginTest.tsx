@@ -53,8 +53,8 @@ export default function LoginTest() {
         results.steps.push("❌ Admin access failed");
         results.authenticationWorking = false;
       }
-    } catch (error) {
-      results.steps.push(`❌ Error: ${error.message}`);
+    } catch (error: any) {
+      results.steps.push(`❌ Error: ${error?.message || 'Unknown error'}`);
       results.authenticationWorking = false;
     }
 
@@ -95,9 +95,9 @@ export default function LoginTest() {
                   </div>
                   {user && (
                     <div className="bg-green-50 p-3 rounded">
-                      <p className="text-sm"><strong>Email:</strong> {user.email}</p>
-                      <p className="text-sm"><strong>Name:</strong> {user.firstName} {user.lastName}</p>
-                      <p className="text-sm"><strong>ID:</strong> {user.id}</p>
+                      <p className="text-sm"><strong>Email:</strong> {(user as any).email}</p>
+                      <p className="text-sm"><strong>Name:</strong> {(user as any).firstName} {(user as any).lastName}</p>
+                      <p className="text-sm"><strong>ID:</strong> {(user as any).id}</p>
                     </div>
                   )}
                 </div>
@@ -136,7 +136,7 @@ export default function LoginTest() {
                 <div className="mt-4 p-4 bg-gray-50 rounded border">
                   <h3 className="font-semibold mb-2">Test Results ({testResults.timestamp})</h3>
                   <div className="space-y-1 text-sm">
-                    {testResults.steps.map((step, index) => (
+                    {testResults.steps.map((step: string, index: number) => (
                       <div key={index} className="font-mono text-xs">
                         {step}
                       </div>
