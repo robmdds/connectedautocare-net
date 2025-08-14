@@ -57,13 +57,20 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
+  try {
+    console.log('Upserting user with claims:', claims);
+    await storage.upsertUser({
+      id: claims["sub"],
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+    });
+    console.log('User upserted successfully');
+  } catch (error) {
+    console.error('Error upserting user:', error);
+    throw error;
+  }
 }
 
 export async function setupAuth(app: Express) {
@@ -78,15 +85,24 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      console.log('Auth verify callback triggered');
+      const user = {};
+      updateUserSession(user, tokens);
+      await upsertUser(tokens.claims());
+      console.log('User verification completed successfully');
+      verified(null, user);
+    } catch (error) {
+      console.error('Auth verify error:', error);
+      verified(error);
+    }
   };
 
   // Add localhost and connectedautocare.net for development and production
   const domains = process.env.REPLIT_DOMAINS!.split(",");
   const allDomains = [...domains, "localhost", "connectedautocare.net"];
+  
+  console.log('Setting up auth strategies for domains:', allDomains);
   
   for (const domain of allDomains) {
     let callbackURL;
@@ -97,6 +113,8 @@ export async function setupAuth(app: Express) {
     } else {
       callbackURL = `https://${domain}/api/callback`;
     }
+    
+    console.log(`Registering auth strategy for domain: ${domain} with callback: ${callbackURL}`);
     
     const strategy = new Strategy(
       {
@@ -121,9 +139,34 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    console.log(`Auth callback for hostname: ${req.hostname}`);
+    console.log(`Request URL: ${req.url}`);
+    console.log(`Query params:`, req.query);
+    console.log(`Available auth strategies: ${(passport as any)._strategies ? Object.keys((passport as any)._strategies) : 'none'}`);
+    
+    const authStrategy = `replitauth:${req.hostname}`;
+    console.log(`Using auth strategy: ${authStrategy}`);
+    
+    passport.authenticate(authStrategy, (err: any, user: any, info: any) => {
+      if (err) {
+        console.error('Auth callback error:', err);
+        return res.status(500).json({ error: 'Authentication failed', details: err.message });
+      }
+      
+      if (!user) {
+        console.log('Auth callback failed - no user:', info);
+        return res.redirect('/api/login');
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error('Login error:', err);
+          return res.status(500).json({ error: 'Login failed', details: err.message });
+        }
+        
+        console.log('Auth successful, redirecting to home');
+        return res.redirect('/');
+      });
     })(req, res, next);
   });
 

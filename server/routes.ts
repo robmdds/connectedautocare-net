@@ -79,6 +79,16 @@ ${urls.map(url => `  <url>
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
+  
+  // Auth debug endpoint
+  app.get('/api/auth/debug', (req, res) => {
+    res.json({
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user ? 'User exists' : 'No user',
+      session: req.session ? 'Session exists' : 'No session',
+      hostname: req.hostname
+    });
+  });
 
   // VIN Decode API
   app.post('/api/vehicles/decode', async (req, res) => {
