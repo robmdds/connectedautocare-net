@@ -13,6 +13,8 @@ interface VehicleInfo {
   model: string;
   mileage: number;
   vehicleClass: string;
+  source?: string;
+  error?: string;
 }
 
 interface CustomerInfo {
@@ -55,33 +57,44 @@ export default function VSCQuoteResults() {
         const formData = JSON.parse(savedQuote);
         
         // Decode VIN to get vehicle information
-        let vehicleInfo = {
-          vin: formData.vin,
-          year: "2020", // Default fallback
-          make: "Honda", // Default fallback
-          model: "Accord", // Default fallback
-          mileage: formData.mileage,
-          vehicleClass: "Class A"
-        };
+        let vehicleInfo = null;
 
         try {
-          // Call VIN decode API
-          const response = await fetch(`/api/vin/decode/${formData.vin}`);
+          console.log("🔍 Calling VIN decode API for:", formData.vin);
+          const response = await fetch(`/api/vin-decode/${formData.vin}`);
+          
           if (response.ok) {
             const vinData = await response.json();
-            if (vinData.success && vinData.data) {
-              vehicleInfo = {
-                vin: formData.vin,
-                year: vinData.data.year || "2020",
-                make: vinData.data.make || "Honda", 
-                model: vinData.data.model || "Accord",
-                mileage: formData.mileage,
-                vehicleClass: "Class A"
-              };
-            }
+            console.log("📋 VIN decode response:", vinData);
+            
+            vehicleInfo = {
+              vin: formData.vin,
+              year: vinData.year?.toString() || "Unknown",
+              make: vinData.make === "Unknown" ? "Unknown" : vinData.make,
+              model: vinData.model === "Unknown" ? "Unknown" : vinData.model,
+              mileage: formData.mileage,
+              vehicleClass: "Class A",
+              source: vinData.source || "Unknown"
+            };
+            
+            console.log("✅ Processed vehicle info:", vehicleInfo);
+          } else {
+            console.error("❌ VIN decode API failed:", response.status, response.statusText);
+            throw new Error(`VIN decode failed: ${response.statusText}`);
           }
         } catch (error) {
-          console.log("VIN decode failed, using fallback data");
+          console.error("❌ VIN decode error:", error);
+          
+          // Show error state instead of fallback data
+          vehicleInfo = {
+            vin: formData.vin,
+            year: "Unknown",
+            make: "Unknown", 
+            model: "Unknown",
+            mileage: formData.mileage,
+            vehicleClass: "Unknown",
+            error: "VIN could not be decoded or is invalid"
+          };
         }
         
         // Create customer info structure  
@@ -255,10 +268,26 @@ export default function VSCQuoteResults() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {vehicleInfo.error && (
+              <Alert className="mb-4 border-yellow-200 bg-yellow-50">
+                <AlertDescription className="text-yellow-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-600">⚠️</span>
+                    <div>
+                      <p className="font-medium">VIN Validation Notice</p>
+                      <p className="text-sm">The VIN provided appears to be invalid or could not be decoded. Vehicle information may be incomplete. Please verify your VIN and try again if needed.</p>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-600">Vehicle:</span>
-                <p className="font-semibold">{vehicleInfo.year} {vehicleInfo.make} {vehicleInfo.model}</p>
+                <p className="font-semibold">
+                  {vehicleInfo.year} {vehicleInfo.make} {vehicleInfo.model}
+                  {vehicleInfo.make === "Unknown" && <span className="text-gray-500 ml-1">(VIN Decode Failed)</span>}
+                </p>
               </div>
               <div>
                 <span className="font-medium text-gray-600">VIN:</span>
@@ -273,6 +302,11 @@ export default function VSCQuoteResults() {
                 <p className="font-semibold">{vehicleInfo.vehicleClass}</p>
               </div>
             </div>
+            {vehicleInfo.source && (
+              <div className="mt-3 text-xs text-gray-500">
+                Data source: {vehicleInfo.source}
+              </div>
+            )}
           </CardContent>
         </Card>
 
