@@ -90,45 +90,37 @@ ${urls.map(url => `  <url>
     });
   });
 
-  // Temporary admin access for testing
+  // IMMEDIATE LOGIN BYPASS - NO DATABASE REQUIRED
   app.post('/api/auth/admin-access', async (req, res) => {
     try {
-      // Create a temporary admin user session
+      // Create admin user object for session
       const adminUser = {
         claims: {
-          sub: 'admin-temp-user',
+          sub: 'quick-admin-user',
           email: 'admin@connectedautocare.net',
-          first_name: 'Admin',
-          last_name: 'User'
+          first_name: 'Quick',
+          last_name: 'Admin',
+          exp: Math.floor(Date.now() / 1000) + 3600
         },
-        access_token: 'admin-temp-token',
-        expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour
+        access_token: 'quick-admin-token',
+        refresh_token: 'quick-refresh-token',
+        expires_at: Math.floor(Date.now() / 1000) + 3600
       };
 
-      // Create user in database if not exists
-      await storage.upsertUser({
-        id: 'admin-temp-user',
-        email: 'admin@connectedautocare.net',
-        firstName: 'Admin',
-        lastName: 'User'
-      });
-
-      // Log in the user
-      req.logIn(adminUser, (err) => {
-        if (err) {
-          console.error('Admin login error:', err);
-          return res.status(500).json({ error: 'Admin login failed' });
-        }
-        
-        res.json({ 
-          success: true, 
-          message: 'Admin access granted',
-          redirectTo: '/admin'
-        });
+      // Skip database, just create session
+      req.session.passport = { user: adminUser };
+      await new Promise((resolve) => req.session.save(resolve));
+      
+      console.log('✅ Quick admin session created successfully');
+      
+      res.json({ 
+        success: true, 
+        message: 'Quick admin access granted - redirecting...',
+        user: adminUser.claims
       });
     } catch (error) {
-      console.error('Admin access error:', error);
-      res.status(500).json({ error: 'Failed to grant admin access' });
+      console.error('❌ Quick admin access error:', error);
+      res.status(500).json({ error: 'Quick login failed', details: error.message });
     }
   });
 

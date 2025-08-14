@@ -86,7 +86,7 @@ export default function NewLanding() {
   };
 
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    setLocation("/login");
   };
 
   return (
