@@ -207,14 +207,22 @@ export default function VSCQuoteResults() {
   if (!vehicleInfo) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Alert>
+        <div className="text-center max-w-md mx-auto p-6">
+          <Alert className="mb-4">
             <AlertDescription>
-              No quote data found. Please start a new quote.
+              <div className="space-y-2">
+                <p className="font-semibold">No quote data found</p>
+                <p className="text-sm text-gray-600">
+                  To get a VSC quote, please fill out the form on our homepage with your vehicle information.
+                </p>
+              </div>
             </AlertDescription>
           </Alert>
-          <Button onClick={() => setLocation('/')} className="mt-4">
-            Start New Quote
+          <Button onClick={() => {
+            console.log("Redirecting to homepage for new quote");
+            window.location.href = '/';
+          }} className="mt-4 bg-blue-600 hover:bg-blue-700">
+            Start New VSC Quote
           </Button>
         </div>
       </div>
