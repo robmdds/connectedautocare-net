@@ -36,7 +36,7 @@ export default function Policies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: policies, isLoading } = useQuery({
+  const { data: policies, isLoading, error } = useQuery({
     queryKey: ["/api/policies"],
     retry: false,
   });
@@ -97,6 +97,64 @@ export default function Policies() {
       default: return 'outline';
     }
   };
+
+  // Show error state if API fails (usually authentication)
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Link href="/">
+                  <Shield className="h-8 w-8 text-blue-600" />
+                </Link>
+                <h1 className="text-2xl font-bold text-gray-900">Policy Management</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-red-600 mb-2">Authentication Required</h2>
+                <p className="text-gray-600 mb-4">Please sign in to view policy data</p>
+                <a href="/api/login" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Sign In</a>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Link href="/">
+                  <Shield className="h-8 w-8 text-blue-600" />
+                </Link>
+                <h1 className="text-2xl font-bold text-gray-900">Policy Management</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-gray-500">Loading policies...</div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
