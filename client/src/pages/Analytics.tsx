@@ -4,10 +4,39 @@ import { BarChart, TrendingUp, Shield } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Analytics() {
-  const { data: analytics, isLoading } = useQuery({
+  const { data: analytics, isLoading, error } = useQuery({
     queryKey: ["/api/analytics/dashboard"],
     retry: false,
   });
+
+  // Show error state if API fails
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center space-x-4">
+              <Link href="/">
+                <Shield className="h-8 w-8 text-blue-600" />
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-red-600 mb-2">Authentication Required</h2>
+                <p className="text-gray-600 mb-4">Please sign in to view analytics data</p>
+                <a href="/api/login" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Sign In</a>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -65,7 +94,7 @@ export default function Analytics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{analytics?.conversionRate || 0}%</div>
+                  <div className="text-3xl font-bold">{((analytics?.retentionRate || 0) * 100).toFixed(1)}%</div>
                   <p className="text-sm text-gray-500">Quote to policy conversion</p>
                 </CardContent>
               </Card>
@@ -78,7 +107,7 @@ export default function Analytics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">${analytics?.monthlyPremium?.toLocaleString() || 0}</div>
+                  <div className="text-3xl font-bold">${analytics?.monthlyRevenue?.toLocaleString() || 0}</div>
                   <p className="text-sm text-gray-500">Monthly premium collected</p>
                 </CardContent>
               </Card>
@@ -91,7 +120,7 @@ export default function Analytics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{analytics?.totalPolicies || 0}</div>
+                  <div className="text-3xl font-bold">{analytics?.activePolicies || 0}</div>
                   <p className="text-sm text-gray-500">Currently active</p>
                 </CardContent>
               </Card>
@@ -119,7 +148,7 @@ export default function Analytics() {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span>Active Claims</span>
-                      <span className="font-semibold">{analytics?.activeClaims || 0}</span>
+                      <span className="font-semibold">{analytics?.pendingClaims || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Average Processing Time</span>
