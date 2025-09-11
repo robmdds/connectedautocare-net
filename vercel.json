@@ -2,10 +2,10 @@
   "version": 2,
   "builds": [
     {
-      "src": "client/src/main.tsx",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "../dist"
+        "distDir": "dist/public"
       }
     },
     {
@@ -20,8 +20,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/client/dist/$1"
+      "dest": "/dist/public/$1"
     }
-  ],
-  "outputDirectory": "client/dist"
+  ]
 }
