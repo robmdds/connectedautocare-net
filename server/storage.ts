@@ -44,6 +44,9 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   
   // Tenant operations
   createTenant(tenant: InsertTenant): Promise<Tenant>;
@@ -142,6 +145,11 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
+
+   async getUserByEmail(email: string): Promise<User | undefined> {
+       const [user] = await db.select().from(users).where(eq(users.email, email));
+       return user;
+   }
 
   // Tenant operations
   async createTenant(tenant: InsertTenant): Promise<Tenant> {
@@ -476,6 +484,18 @@ export class DatabaseStorage implements IStorage {
   async getResellerBySubdomain(subdomain: string): Promise<Reseller | undefined> {
     const [reseller] = await db.select().from(resellers).where(eq(resellers.subdomain, subdomain));
     return reseller;
+  }
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
+      const [updated] = await db
+          .update(users)
+          .set({ ...userData, updatedAt: new Date() })
+          .where(eq(users.id, id))
+          .returning();
+      return updated;
   }
 }
 

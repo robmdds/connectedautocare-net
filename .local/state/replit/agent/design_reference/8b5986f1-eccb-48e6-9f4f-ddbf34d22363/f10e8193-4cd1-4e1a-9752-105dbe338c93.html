@@ -1,0 +1,892 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPA Platform - Insurance Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif']
+                    },
+                    colors: {
+                        primary: '#1976D2',
+                        secondary: '#424242',
+                        accent: '#4CAF50',
+                        warning: '#FF9800',
+                        error: '#FF5722',
+                        neutral: '#F5F5F5'
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="font-inter bg-gray-50">
+    <!-- @COMPONENT: TopNavigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-full px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-white text-sm"></i>
+                        </div>
+                        <span class="text-xl font-semibold text-gray-900">TPA Platform</span>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-1 ml-8">
+                        <button class="px-3 py-2 text-sm font-medium text-primary bg-blue-50 rounded-lg">Dashboard</button>
+                        <button class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">Policies</button>
+                        <button class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">Claims</button>
+                        <button class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">Quotes</button>
+                        <button class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">Analytics</button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -mt-1 ml-2 px-1.5 py-0.5 text-xs bg-error text-white rounded-full">3</span>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <img data-mock="true" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&w=40&h=40&fit=crop&crop=face" alt="User Avatar" class="w-8 h-8 rounded-full object-cover">
+                        <span data-bind="user.name" class="text-sm font-medium text-gray-700">John Smith</span>
+                        <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: TopNavigation -->
+
+    <div class="flex">
+        <!-- @COMPONENT: Sidebar -->
+        <aside class="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen">
+            <div class="p-6">
+                <div class="space-y-6">
+                    <!-- Dashboard Section -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Overview</h3>
+                        <nav class="space-y-1">
+                            <a href="#" class="bg-blue-50 text-primary border-r-2 border-primary flex items-center px-3 py-2 text-sm font-medium rounded-l-lg">
+                                <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
+                                Dashboard
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
+                                Analytics
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Policy Management -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Policy Management</h3>
+                        <nav class="space-y-1">
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-file-contract w-5 h-5 mr-3"></i>
+                                Policies
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-calculator w-5 h-5 mr-3"></i>
+                                Quotes
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-tags w-5 h-5 mr-3"></i>
+                                Products
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-table w-5 h-5 mr-3"></i>
+                                Rate Tables
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Claims Management -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Claims</h3>
+                        <nav class="space-y-1">
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-clipboard-list w-5 h-5 mr-3"></i>
+                                All Claims
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-exclamation-triangle w-5 h-5 mr-3"></i>
+                                FNOL
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-users w-5 h-5 mr-3"></i>
+                                Adjusters
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Business Tools -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Business</h3>
+                        <nav class="space-y-1">
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-handshake w-5 h-5 mr-3"></i>
+                                Resellers
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-credit-card w-5 h-5 mr-3"></i>
+                                Payments
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-robot w-5 h-5 mr-3"></i>
+                                AI Assistant
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Administration -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Admin</h3>
+                        <nav class="space-y-1">
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-building w-5 h-5 mr-3"></i>
+                                Tenants
+                            </a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-lg">
+                                <i class="fas fa-cog w-5 h-5 mr-3"></i>
+                                Settings
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-x-hidden">
+            <!-- @COMPONENT: DashboardHeader -->
+            <div class="bg-white border-b border-gray-200">
+                <div class="px-6 py-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+                            <p class="text-sm text-gray-500 mt-1">Welcome back, <span data-bind="user.name">John</span>. Here's what's happening with your insurance business today.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-download mr-2"></i>
+                                Export
+                            </button>
+                            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700">
+                                <i class="fas fa-plus mr-2"></i>
+                                New Policy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: DashboardHeader -->
+
+            <div class="p-6 space-y-6">
+                <!-- @COMPONENT: MetricsCards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-contract text-accent"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Active Policies</p>
+                                <p class="text-2xl font-semibold text-gray-900" data-bind="metrics.activePolicies">12,847</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-arrow-up text-accent text-sm"></i>
+                                <span class="text-accent text-sm font-medium ml-1">8.2%</span>
+                                <span class="text-gray-500 text-sm ml-1">from last month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-clipboard-list text-primary"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Open Claims</p>
+                                <p class="text-2xl font-semibold text-gray-900" data-bind="metrics.openClaims">342</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-arrow-down text-error text-sm"></i>
+                                <span class="text-error text-sm font-medium ml-1">2.1%</span>
+                                <span class="text-gray-500 text-sm ml-1">from last month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Monthly Premium</p>
+                                <p class="text-2xl font-semibold text-gray-900" data-bind="metrics.monthlyPremium">$2.4M</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-arrow-up text-accent text-sm"></i>
+                                <span class="text-accent text-sm font-medium ml-1">12.5%</span>
+                                <span class="text-gray-500 text-sm ml-1">from last month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-percentage text-purple-600"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Conversion Rate</p>
+                                <p class="text-2xl font-semibold text-gray-900" data-bind="metrics.conversionRate">24.8%</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-arrow-up text-accent text-sm"></i>
+                                <span class="text-accent text-sm font-medium ml-1">1.3%</span>
+                                <span class="text-gray-500 text-sm ml-1">from last month</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MetricsCards -->
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- @COMPONENT: RecentActivity -->
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Recent Activity</h2>
+                        </div>
+                        <div class="p-6">
+                            <!-- Dashboard overview image -->
+                            <div class="mb-6">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=300" alt="Insurance dashboard analytics overview" class="rounded-lg shadow-sm w-full h-48 object-cover" />
+                            </div>
+                            
+                            <!-- @MAP: recentActivities.map(activity => ( -->
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-check text-accent text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            <span class="font-medium" data-mock="true">Policy POL-2024-001234</span> issued for 
+                                            <span class="font-medium" data-mock="true">Sarah Johnson</span>
+                                        </p>
+                                        <p class="text-xs text-gray-500" data-mock="true">2 minutes ago</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-clipboard-list text-primary text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            <span class="font-medium" data-mock="true">Claim CLM-2024-005678</span> assigned to 
+                                            <span class="font-medium" data-mock="true">Mike Rodriguez</span>
+                                        </p>
+                                        <p class="text-xs text-gray-500" data-mock="true">15 minutes ago</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-calculator text-warning text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            New quote generated for <span class="font-medium" data-mock="true">2019 Toyota Camry</span>
+                                        </p>
+                                        <p class="text-xs text-gray-500" data-mock="true">32 minutes ago</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-dollar-sign text-purple-600 text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-900">
+                                            Payment of <span class="font-medium" data-mock="true">$1,299.00</span> processed via Helcim
+                                        </p>
+                                        <p class="text-xs text-gray-500" data-mock="true">1 hour ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: RecentActivity -->
+
+                    <!-- @COMPONENT: QuickActions -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <button class="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create New Policy
+                            </button>
+                            
+                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-calculator mr-2"></i>
+                                Generate Quote
+                            </button>
+
+                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-file-upload mr-2"></i>
+                                Upload Rate Table
+                            </button>
+
+                            <button class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                File New Claim
+                            </button>
+
+                            <hr class="my-4">
+
+                            <div class="space-y-3">
+                                <h3 class="text-sm font-medium text-gray-900">AI Assistant</h3>
+                                <div class="bg-blue-50 rounded-lg p-4">
+                                    <div class="flex items-start space-x-3">
+                                        <i class="fas fa-robot text-primary mt-1"></i>
+                                        <div>
+                                            <p class="text-sm text-gray-700" data-mock="true">
+                                                "How can I help you with policy comparisons or claim guidance today?"
+                                            </p>
+                                            <button class="text-xs text-primary hover:text-blue-700 mt-2">Ask a question →</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: QuickActions -->
+                </div>
+
+                <!-- @COMPONENT: PolicyManagement -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900">Policy Management</h2>
+                            <div class="flex items-center space-x-3">
+                                <div class="flex items-center space-x-2">
+                                    <input type="text" placeholder="Search policies..." class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <button class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                            <!-- Policy documents image -->
+                            <div class="md:col-span-2 lg:col-span-1">
+                                <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" alt="Policy documents and contracts on desk" class="rounded-lg shadow-sm w-full h-48 object-cover" />
+                            </div>
+                            
+                            <div class="md:col-span-2 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-blue-50 rounded-lg p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-600">Pending Renewals</p>
+                                                <p class="text-2xl font-semibold text-gray-900" data-bind="policies.pendingRenewals">247</p>
+                                            </div>
+                                            <i class="fas fa-clock text-warning text-xl"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-green-50 rounded-lg p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-600">New This Month</p>
+                                                <p class="text-2xl font-semibold text-gray-900" data-bind="policies.newThisMonth">1,024</p>
+                                            </div>
+                                            <i class="fas fa-plus-circle text-accent text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Business insurance documents -->
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=200" alt="Business insurance documentation and analysis" class="rounded-lg shadow-sm w-full h-32 object-cover" />
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policy</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policyholder</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Premium</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- @MAP: policies.map(policy => ( -->
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">POL-2024-001234</div>
+                                            <div class="text-sm text-gray-500">Expires: 12/15/2024</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="text-sm font-medium text-gray-900">Sarah Johnson</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Auto</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,299.00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary hover:text-blue-700 mr-3">View</button>
+                                            <button class="text-gray-600 hover:text-gray-900">Edit</button>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">POL-2024-001235</div>
+                                            <div class="text-sm text-gray-500">Expires: 01/22/2025</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">Michael Chen</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">RV</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,847.00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary hover:text-blue-700 mr-3">View</button>
+                                            <button class="text-gray-600 hover:text-gray-900">Edit</button>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">POL-2024-001236</div>
+                                            <div class="text-sm text-gray-500">Expires: 03/08/2025</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">Emma Rodriguez</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Marine</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,654.00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary hover:text-blue-700 mr-3">View</button>
+                                            <button class="text-gray-600 hover:text-gray-900">Edit</button>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: PolicyManagement -->
+
+                <!-- @COMPONENT: ClaimsManagement -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900">Claims Management</h2>
+                            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-error hover:bg-red-700">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                File New Claim
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <!-- Claims processing workflow -->
+                            <div class="space-y-4">
+                                <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=300" alt="Claims processing and documentation workflow" class="rounded-lg shadow-sm w-full h-32 object-cover" />
+                                
+                                <div class="bg-red-50 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">Urgent Claims</p>
+                                            <p class="text-2xl font-semibold text-gray-900" data-bind="claims.urgent">23</p>
+                                        </div>
+                                        <i class="fas fa-exclamation-triangle text-error text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Insurance adjuster inspection -->
+                            <div class="space-y-4">
+                                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=300" alt="Insurance adjuster conducting vehicle damage inspection" class="rounded-lg shadow-sm w-full h-32 object-cover" />
+                                
+                                <div class="bg-yellow-50 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">Under Review</p>
+                                            <p class="text-2xl font-semibold text-gray-900" data-bind="claims.underReview">87</p>
+                                        </div>
+                                        <i class="fas fa-clock text-warning text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vehicle inspection process -->
+                            <div class="space-y-4">
+                                <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=300" alt="Professional vehicle inspection and damage assessment" class="rounded-lg shadow-sm w-full h-32 object-cover" />
+                                
+                                <div class="bg-green-50 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-600">Approved</p>
+                                            <p class="text-2xl font-semibold text-gray-900" data-bind="claims.approved">142</p>
+                                        </div>
+                                        <i class="fas fa-check-circle text-accent text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim #</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claimant</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policy</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjuster</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- @MAP: claims.map(claim => ( -->
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">CLM-2024-005678</div>
+                                            <div class="text-sm text-gray-500">Filed: 01/15/2024</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">Robert Wilson</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">POL-2024-001234</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Collision</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$8,500.00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Under Review</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Mike Rodriguez</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary hover:text-blue-700 mr-3">View</button>
+                                            <button class="text-gray-600 hover:text-gray-900">Update</button>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">CLM-2024-005679</div>
+                                            <div class="text-sm text-gray-500">Filed: 01/14/2024</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">Lisa Thompson</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">POL-2024-001198</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Theft</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$15,200.00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Sarah Davis</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary hover:text-blue-700 mr-3">View</button>
+                                            <button class="text-gray-600 hover:text-gray-900">Process</button>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ClaimsManagement -->
+
+                <!-- @COMPONENT: PaymentIntegration -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900">Helcim Payment Integration</h2>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Connected
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Create Payment Intent</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USD)</label>
+                                        <input data-bind="paymentForm.amount" type="text" value="1299.00" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                                        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <option>USD</option>
+                                            <option>CAD</option>
+                                        </select>
+                                    </div>
+                                    <button data-event="click:createPaymentIntent" class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700">
+                                        <i class="fas fa-credit-card mr-2"></i>
+                                        Create Payment Intent
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Response</h3>
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <pre class="text-sm text-gray-700 whitespace-pre-wrap" data-bind="paymentResponse">
+{
+  "provider": "helcim",
+  "amount": 1299.00,
+  "currency": "USD", 
+  "description": "TPA Purchase",
+  "clientSecret": "mock_client_secret_replace_with_helcim_token"
+}
+                                    </pre>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Webhook Events</h4>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-600">payment.succeeded</span>
+                                            <span class="text-green-600">Policy Issued</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-600">payment.failed</span>
+                                            <span class="text-red-600">Retry Required</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: PaymentIntegration -->
+
+                <!-- @COMPONENT: ResellersAndAnalytics -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Top Resellers</h2>
+                        </div>
+                        <div class="p-6">
+                            <!-- Analytics dashboard visualization -->
+                            <div class="mb-4">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=200" alt="Business analytics dashboard with performance metrics" class="rounded-lg shadow-sm w-full h-32 object-cover" />
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <!-- @MAP: topResellers.map(reseller => ( -->
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <span class="text-sm font-medium text-primary">AC</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">AutoCare Partners</p>
+                                            <p class="text-xs text-gray-500">247 policies this month</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-900">$125,000</p>
+                                        <p class="text-xs text-green-600">+12.5%</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                            <span class="text-sm font-medium text-accent">RM</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">RV Masters</p>
+                                            <p class="text-xs text-gray-500">189 policies this month</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-900">$89,500</p>
+                                        <p class="text-xs text-green-600">+8.2%</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between" data-mock="true">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <span class="text-sm font-medium text-purple-600">MI</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">Marine Insurance Co</p>
+                                            <p class="text-xs text-gray-500">156 policies this month</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-900">$67,800</p>
+                                        <p class="text-xs text-green-600">+15.1%</p>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Analytics Overview</h2>
+                        </div>
+                        <div class="p-6">
+                            <!-- Business performance analytics -->
+                            <div class="mb-4">
+                                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=200" alt="Financial analytics and business performance charts" class="rounded-lg shadow-sm w-full h-32 object-cover" />
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Conversion Rate</span>
+                                    <span class="text-sm font-medium text-gray-900" data-bind="analytics.conversionRate">24.8%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-primary h-2 rounded-full" style="width: 24.8%"></div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Customer Acquisition Cost</span>
+                                    <span class="text-sm font-medium text-gray-900" data-bind="analytics.cac">$127</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-accent h-2 rounded-full" style="width: 73%"></div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Lifetime Value</span>
+                                    <span class="text-sm font-medium text-gray-900" data-bind="analytics.ltv">$3,247</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-purple-600 h-2 rounded-full" style="width: 89%"></div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Claims Ratio</span>
+                                    <span class="text-sm font-medium text-gray-900" data-bind="analytics.claimsRatio">2.7%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-warning h-2 rounded-full" style="width: 12%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ResellersAndAnalytics -->
+            </div>
+        </main>
+    </div>
+
+    <!-- @COMPONENT: FloatingAIAssistant -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button class="w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center">
+            <i class="fas fa-robot text-xl"></i>
+        </button>
+    </div>
+    <!-- @END_COMPONENT: FloatingAIAssistant -->
+
+    <script>
+        (function() {
+            // TODO: Implement real Helcim API integration
+            // TODO: Implement policy management functionality  
+            // TODO: Implement claims processing workflow
+            // TODO: Implement real-time analytics
+            // TODO: Implement AI assistant integration
+            
+            // Mock interaction handlers
+            const mockInteractions = {
+                createPaymentIntent: function() {
+                    console.log('Creating Helcim payment intent...');
+                    // Simulate API call to Helcim
+                },
+                
+                updateMetrics: function() {
+                    console.log('Updating dashboard metrics...');
+                    // Real-time metrics updates
+                },
+                
+                handleClaimsWorkflow: function() {
+                    console.log('Processing claims workflow...');
+                    // Claims management logic
+                }
+            };
+
+            // Initialize dashboard
+            console.log('TPA Platform Dashboard initialized');
+            console.log('Connected to Helcim payment processor');
+            console.log('Multi-tenant system ready');
+        })();
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, attachUser, requireAuth } from "./auth.ts"; // Updated import
 import { HelcimService } from "./services/helcimService";
 import { VinDecodeService } from "./services/vinDecodeService";
 import { RatingEngineService } from "./services/ratingEngineService";
@@ -16,31 +16,31 @@ import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyti
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Health check endpoint for uptime monitoring
-  app.get('/healthz', (req, res) => {
-    res.status(200).json({ 
-      status: 'healthy', 
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development'
+    // Health check endpoint for uptime monitoring
+    app.get('/healthz', (req, res) => {
+        res.status(200).json({
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV || 'development'
+        });
     });
-  });
 
-  // Sitemap endpoint
-  app.get('/sitemap.xml', (req, res) => {
-    const baseUrl = req.protocol + '://' + req.get('host');
-    const lastmod = new Date().toISOString().split('T')[0];
-    
-    const urls = [
-      { loc: '/', priority: '1.0', changefreq: 'daily' },
-      { loc: '/products', priority: '0.9', changefreq: 'weekly' },
-      { loc: '/faq', priority: '0.8', changefreq: 'weekly' },
-      { loc: '/claims', priority: '0.8', changefreq: 'monthly' },
-      { loc: '/hero-vsc', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/connected-auto-care', priority: '0.7', changefreq: 'monthly' },
-    ];
+    // Sitemap endpoint
+    app.get('/sitemap.xml', (req, res) => {
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const lastmod = new Date().toISOString().split('T')[0];
 
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+        const urls = [
+            { loc: '/', priority: '1.0', changefreq: 'daily' },
+            { loc: '/products', priority: '0.9', changefreq: 'weekly' },
+            { loc: '/faq', priority: '0.8', changefreq: 'weekly' },
+            { loc: '/claims', priority: '0.8', changefreq: 'monthly' },
+            { loc: '/hero-vsc', priority: '0.7', changefreq: 'monthly' },
+            { loc: '/connected-auto-care', priority: '0.7', changefreq: 'monthly' },
+        ];
+
+        const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(url => `  <url>
     <loc>${baseUrl}${url.loc}</loc>
@@ -49,113 +49,127 @@ ${urls.map(url => `  <url>
     <priority>${url.priority}</priority>
   </url>`).join('\n')}
 </urlset>`;
-    
-    res.set('Content-Type', 'application/xml');
-    res.send(sitemap);
-  });
 
-  // Auth middleware
-  await setupAuth(app);
-
-  const helcimService = new HelcimService();
-  const vinDecodeService = new VinDecodeService();
-  const ratingEngineService = new RatingEngineService();
-  const policyService = new PolicyService();
-  const claimsService = new ClaimsService();
-  const analyticsService = new AnalyticsService();
-  const aiAssistantService = new AIAssistantService();
-  const heroVscService = new HeroVscRatingService();
-  const cacService = new ConnectedAutoCareRatingService();
-  const specialQuoteRequestService = new SpecialQuoteRequestService();
-
-  // Auth routes
-  app.get('/api/auth/user', async (req: any, res) => {
-    try {
-      // Check if user is authenticated via session
-      if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-        console.log('✅ User is authenticated via session:', req.user.claims?.sub);
-        
-        // For quick admin, return the user data directly from session
-        if (req.user.claims?.sub === 'quick-admin-user') {
-          return res.json({
-            id: req.user.claims.sub,
-            email: req.user.claims.email,
-            firstName: req.user.claims.first_name,
-            lastName: req.user.claims.last_name
-          });
-        }
-        
-        // For other users, try to get from database
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        return res.json(user);
-      }
-      
-      console.log('❌ User not authenticated - session check failed');
-      res.status(401).json({ message: "Unauthorized" });
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
-  
-  // Auth debug endpoint
-  app.get('/api/auth/debug', (req, res) => {
-    res.json({
-      isAuthenticated: req.isAuthenticated(),
-      user: req.user ? 'User exists' : 'No user',
-      session: req.session ? 'Session exists' : 'No session',
-      hostname: req.hostname
+        res.set('Content-Type', 'application/xml');
+        res.send(sitemap);
     });
-  });
 
-  // IMMEDIATE LOGIN BYPASS - DIRECT SESSION LOGIN
-  app.post('/api/auth/admin-access', async (req, res) => {
-    try {
-      // Create admin user object for session
-      const adminUser = {
-        claims: {
-          sub: 'quick-admin-user',
-          email: 'admin@connectedautocare.net',
-          first_name: 'Quick',
-          last_name: 'Admin',
-          exp: Math.floor(Date.now() / 1000) + 3600
-        },
-        access_token: 'quick-admin-token',
-        refresh_token: 'quick-refresh-token',
-        expires_at: Math.floor(Date.now() / 1000) + 3600
-      };
+    // Set up authentication middleware
+    await setupAuth(app);
 
-      // Use passport login method for proper session management
-      req.logIn(adminUser, (err) => {
-        if (err) {
-          console.error('❌ Quick admin login error:', err);
-          return res.status(500).json({ error: 'Quick login failed', details: err.message });
-        }
-        
-        // Double-check authentication worked
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error('❌ Session save error:', saveErr);
-            return res.status(500).json({ error: 'Session save failed' });
-          }
-          
-          console.log('✅ Quick admin session created and logged in successfully');
-          console.log('User authenticated:', req.isAuthenticated());
-          console.log('Session user:', req.user);
-          
-          res.json({ 
-            success: true, 
-            message: 'Quick admin access granted - redirecting...',
-            user: adminUser.claims
-          });
+    const helcimService = new HelcimService();
+    const vinDecodeService = new VinDecodeService();
+    const ratingEngineService = new RatingEngineService();
+    const policyService = new PolicyService();
+    const claimsService = new ClaimsService();
+    const analyticsService = new AnalyticsService();
+    const aiAssistantService = new AIAssistantService();
+    const heroVscService = new HeroVscRatingService();
+    const cacService = new ConnectedAutoCareRatingService();
+    const specialQuoteRequestService = new SpecialQuoteRequestService();
+
+    // Auth debug endpoint
+    app.get('/api/auth/debug', attachUser, (req: any, res) => {
+        res.json({
+            isAuthenticated: req.isAuthenticated(),
+            user: req.user ? {
+                id: req.user.id,
+                email: req.user.claims?.email,
+                source: req.user.id === 'quick-admin-user' ? 'session' : 'stack-auth'
+            } : 'No user',
+            session: req.session?.user ? 'Session exists' : 'No session',
+            hostname: req.hostname
         });
-      });
-    } catch (error) {
-      console.error('❌ Quick admin access error:', error);
-      res.status(500).json({ error: 'Quick login failed', details: error.message });
-    }
-  });
+    });
+
+    // Get all users (admin only) - Updated with better user handling
+    app.get('/api/users', requireAuth, async (req: AuthRequest, res) => {
+        try {
+            // Check if user is admin
+            if (req.user!.role !== 'admin') {
+                return res.status(403).json({ error: "Access denied. Admin role required." });
+            }
+
+            const users = await storage.getAllUsers();
+            res.json(users);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            res.status(500).json({ error: 'Failed to fetch users' });
+        }
+    });
+
+    app.get('/api/users/:id', requireAuth, async (req: AuthRequest, res) => {
+        try {
+            const userId = req.user!.id;
+
+            // Check if user is admin or requesting their own data
+            if (req.user!.role !== 'admin' && userId !== req.params.id) {
+                return res.status(403).json({ error: "Access denied." });
+            }
+
+            const user = await storage.getUser(req.params.id);
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            res.json(user);
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).json({ error: 'Failed to fetch user' });
+        }
+    });
+
+    app.put('/api/users/:id', requireAuth, async (req: AuthRequest, res) => {
+        try {
+            const userId = req.user!.id;
+
+            // Check if user is admin or updating their own data
+            if (req.user!.role !== 'admin' && userId !== req.params.id) {
+                return res.status(403).json({ error: "Access denied." });
+            }
+
+            const updatedUser = await storage.updateUser(req.params.id, req.body);
+            res.json(updatedUser);
+        } catch (error) {
+            console.error('Error updating user:', error);
+            res.status(500).json({ error: 'Failed to update user' });
+        }
+    });
+
+    app.post('/api/users', requireAuth, async (req: AuthRequest, res) => {
+        try {
+            // Check if user is admin
+            if (req.user!.role !== 'admin') {
+                return res.status(403).json({ error: "Access denied. Admin role required." });
+            }
+
+            const { firstName, lastName, email, role } = req.body;
+
+            // Validate required fields
+            if (!email) {
+                return res.status(400).json({ error: "Email is required" });
+            }
+
+            // Check if user already exists
+            const existingUser = await storage.getUserByEmail(email);
+            if (existingUser) {
+                return res.status(400).json({ error: "User with this email already exists" });
+            }
+
+            const newUser = await storage.upsertUser({
+                id: crypto.randomUUID(), // Use crypto.randomUUID() instead
+                email,
+                firstName: firstName || '',
+                lastName: lastName || '',
+                role: role || 'user',
+            });
+
+            res.status(201).json(newUser);
+        } catch (error) {
+            console.error('Error creating user:', error);
+            res.status(500).json({ error: 'Failed to create user' });
+        }
+    });
 
   // VIN Decode API
   app.post('/api/vehicles/decode', async (req, res) => {
@@ -360,9 +374,9 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/quotes', isAuthenticated, async (req: any, res) => {
+  app.get('/api/quotes', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       if (!user?.tenantId) {
         return res.status(400).json({ error: "User not associated with tenant" });
@@ -377,10 +391,10 @@ ${urls.map(url => `  <url>
   });
 
   // Policy Management API
-  app.post('/api/policies', isAuthenticated, async (req: any, res) => {
+  app.post('/api/policies', requireAuth, async (req: AuthRequest, res) => {
     try {
       const policyData = insertPolicySchema.parse(req.body);
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       
       const policy = await policyService.issuePolicy({
         ...policyData,
@@ -394,7 +408,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/policies', async (req: any, res) => {
+  app.get('/api/policies', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return sample policy data for testing (remove isAuthenticated temporarily)
       const samplePolicies = [
@@ -464,7 +478,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/policies/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/policies/:id', async (req, res) => {
     try {
       const policy = await storage.getPolicy(req.params.id);
       if (!policy) {
@@ -478,7 +492,7 @@ ${urls.map(url => `  <url>
   });
 
   // Claims Management API
-  app.post('/api/claims', isAuthenticated, async (req: any, res) => {
+  app.post('/api/claims', requireAuth, async (req: AuthRequest, res) => {
     try {
       const claimData = insertClaimSchema.parse(req.body);
       
@@ -490,7 +504,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/claims', async (req: any, res) => {
+  app.get('/api/claims', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return sample claims data for testing (remove isAuthenticated temporarily)
       const sampleClaims = [
@@ -557,9 +571,9 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.put('/api/claims/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/claims/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const claimUpdate = req.body;
       
       const claim = await claimsService.updateClaim(req.params.id, claimUpdate, userId);
@@ -593,79 +607,50 @@ ${urls.map(url => `  <url>
 
   // Payment Processing Endpoint (for Purchase page)
   app.post('/api/payments/process', async (req, res) => {
-    try {
-      const { amount, coverage, vehicle, customer } = req.body;
-      
-      if (!amount || !coverage || !vehicle || !customer) {
-        return res.status(400).json({ error: "Missing required payment data" });
+      try {
+          const { amount, coverage, vehicle, customer } = req.body;
+
+            // customer now contains helcimTransactionId, helcimApprovalCode, etc.
+            // No need to process payment again - Helcim already did it
+
+            if (!customer.helcimTransactionId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Payment verification failed'
+                });
+            }
+
+            // Create policy since payment already succeeded
+            const policy = await storage.createPolicy({
+                tenantId: 'connected-auto-care',
+                policyNumber: `VSC-${Date.now()}`,
+                customerEmail: customer.email,
+                customerName: `${customer.firstName} ${customer.lastName}`,
+                customerPhone: customer.phone,
+                customerAddress: `${customer.address.street}, ${customer.address.city}, ${customer.address.state} ${customer.address.zipCode}`,
+                vehicleId: vehicle.id,
+                productId: coverage.productId || 'vsc-gold',
+                coverageDetails: coverage,
+                premium: amount.toString(),
+                status: 'active',
+                effectiveDate: new Date(),
+                expiryDate: new Date(Date.now() + (coverage.termMonths * 30 * 24 * 60 * 60 * 1000)),
+                paymentTransactionId: customer.helcimTransactionId,
+                paymentApprovalCode: customer.helcimApprovalCode,
+            });
+
+            res.json({
+                success: true,
+                policyNumber: policy.policyNumber,
+                message: 'Policy activated successfully'
+            });
+      } catch (error) {
+          console.error('Policy creation error:', error);
+           res.status(500).json({
+                success: false,
+                error: error.message || 'Policy creation failed'
+           });
       }
-
-      console.log('Processing payment:', { amount, coverage: coverage.name, vehicle: `${vehicle.year} ${vehicle.make} ${vehicle.model}` });
-
-      // Create payment via Helcim
-      const paymentData = {
-        amount: amount,
-        currency: 'USD',
-        customerData: {
-          firstName: customer.firstName,
-          lastName: customer.lastName,
-          email: customer.email,
-          phone: customer.phone,
-          address: customer.address
-        },
-        cardData: {
-          cardNumber: customer.paymentMethod.cardNumber,
-          expiryMonth: customer.paymentMethod.expiryMonth,
-          expiryYear: customer.paymentMethod.expiryYear,
-          cvv: customer.paymentMethod.cvv
-        },
-        metadata: {
-          coverage: coverage.name,
-          vehicle: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-          vin: vehicle.vin
-        }
-      };
-
-      const paymentResult = await helcimService.processPayment(paymentData);
-      
-      if (paymentResult.success) {
-        // Create policy record after successful payment
-        const policyData: any = {
-          tenantId: 'connected-auto-care',
-          policyNumber: `VSC-${Date.now()}`,
-          customerEmail: customer.email,
-          customerName: `${customer.firstName} ${customer.lastName}`,
-          customerPhone: customer.phone,
-          customerAddress: `${customer.address.street}, ${customer.address.city}, ${customer.address.state} ${customer.address.zipCode}`,
-          vehicleId: 'e286b938-0208-49f6-ba0f-018cebd7d12f', // Vehicle ID for VIN JN8AZ2AF1M9715383
-          productId: coverage.productId || 'vsc-gold', // Use productId from coverage or default
-          coverageDetails: coverage, // Use coverageDetails instead of coverageSelections
-          premium: amount.toString(),
-          status: 'active',
-          effectiveDate: new Date(),
-          expiryDate: new Date(Date.now() + (coverage.termMonths * 30 * 24 * 60 * 60 * 1000)),
-        };
-
-        const policy = await storage.createPolicy(policyData);
-
-        console.log('Policy created successfully:', policy.policyNumber);
-        
-        res.json({ 
-          success: true, 
-          paymentId: paymentResult.paymentId,
-          policyNumber: policy.policyNumber,
-          message: 'Payment processed and policy activated successfully'
-        });
-      } else {
-        throw new Error(paymentResult.error || 'Payment processing failed');
-      }
-    } catch (error) {
-      console.error("Payment processing error:", error);
-      res.status(500).json({ 
-        success: false,
-        error: error.message || "Payment processing failed" 
-      });
-    }
   });
 
   // Helcim Webhook Handler
@@ -692,7 +677,7 @@ ${urls.map(url => `  <url>
   });
 
   // Analytics API
-  app.get('/api/analytics/dashboard', async (req: any, res) => {
+  app.get('/api/analytics/dashboard', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return sample analytics data for testing (remove isAuthenticated temporarily)
       const sampleAnalytics = {
@@ -884,7 +869,7 @@ ${urls.map(url => `  <url>
   });
 
   // AI Assistant API
-  app.post('/api/ai/chat', isAuthenticated, async (req, res) => {
+  app.post('/api/ai/chat', async (req, res) => {
     try {
       const { message, context } = req.body;
       
@@ -901,9 +886,9 @@ ${urls.map(url => `  <url>
   });
 
   // Product Management API
-  app.get('/api/products', isAuthenticated, async (req: any, res) => {
+  app.get('/api/products', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       if (!user?.tenantId) {
         return res.status(400).json({ error: "User not associated with tenant" });
@@ -918,9 +903,9 @@ ${urls.map(url => `  <url>
   });
 
   // Rate Table Management API
-  app.get('/api/rate-tables', isAuthenticated, async (req: any, res) => {
+  app.get('/api/rate-tables', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       if (!user?.tenantId) {
         return res.status(400).json({ error: "User not associated with tenant" });
@@ -935,7 +920,7 @@ ${urls.map(url => `  <url>
   });
 
   // Document API
-  app.get('/api/documents/:entityType/:entityId', isAuthenticated, async (req, res) => {
+  app.get('/api/documents/:entityType/:entityId', async (req, res) => {
     try {
       const { entityType, entityId } = req.params;
       const documents = await storage.getDocuments(entityType, entityId);
@@ -947,9 +932,9 @@ ${urls.map(url => `  <url>
   });
 
   // Reseller API
-  app.get('/api/resellers', isAuthenticated, async (req: any, res) => {
+  app.get('/api/resellers', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       if (!user?.tenantId) {
         return res.status(400).json({ error: "User not associated with tenant" });
@@ -994,13 +979,13 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/special-quote-requests', isAuthenticated, async (req: any, res) => {
+  app.get('/api/special-quote-requests', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       
       // Admin only for now
-      if (user?.role !== 'admin') {
+      if (req.user.role !== 'admin') {
         return res.status(403).json({ error: "Access denied. Admin role required." });
       }
 
@@ -1012,13 +997,13 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/special-quote-requests/summary', isAuthenticated, async (req: any, res) => {
+  app.get('/api/special-quote-requests/summary', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       
       // Admin only for now
-      if (user?.role !== 'admin') {
+      if (req.user.role !== 'admin') {
         return res.status(403).json({ error: "Access denied. Admin role required." });
       }
 
@@ -1030,15 +1015,15 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.put('/api/special-quote-requests/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/special-quote-requests/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const { status, reviewNotes, alternativeQuote, declineReason } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       
       // Admin only for now
-      if (user?.role !== 'admin') {
+      if (req.user.role !== 'admin') {
         return res.status(403).json({ error: "Access denied. Admin role required." });
       }
 
@@ -1268,11 +1253,9 @@ ${urls.map(url => `  <url>
   });
 
   // Admin API endpoints
-  app.get('/api/admin/system-stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/system-stats', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
+
       // For now, return basic stats
       const stats = {
         activeUsers: 1,
@@ -1288,9 +1271,9 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/admin/rate-tables', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/rate-tables', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       
       // Get all rate tables for admin view
@@ -1303,9 +1286,9 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.post('/api/admin/rate-tables/upload', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/rate-tables/upload', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       
       // TODO: Implement file upload and processing
@@ -1316,9 +1299,9 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/admin/coverage-options', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/coverage-options', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       
       // Get coverage options from both product services
@@ -1355,7 +1338,7 @@ ${urls.map(url => `  <url>
   });
 
   // Admin AI Models endpoints
-  app.get('/api/admin/ai-models', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/ai-models', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return mock AI model configuration data
       const modelConfig = {
@@ -1372,7 +1355,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.put('/api/admin/ai-models', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/ai-models', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { model, temperature, maxTokens, enableFunctionCalling } = req.body;
       
@@ -1390,7 +1373,7 @@ ${urls.map(url => `  <url>
   });
 
   // Admin Training Data endpoints
-  app.get('/api/admin/training-data', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/training-data', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return mock training data
       const trainingData = {
@@ -1411,7 +1394,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.post('/api/admin/training-data', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/training-data', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { name, description } = req.body;
       
@@ -1435,7 +1418,7 @@ ${urls.map(url => `  <url>
   });
 
   // Admin Response Templates endpoints
-  app.get('/api/admin/response-templates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/response-templates', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return mock response templates data
       const templates = [
@@ -1455,7 +1438,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.post('/api/admin/response-templates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/response-templates', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { name, category, content } = req.body;
       
@@ -1479,7 +1462,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.put('/api/admin/response-templates/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/response-templates/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const { name, category, content } = req.body;
@@ -1504,7 +1487,7 @@ ${urls.map(url => `  <url>
   });
 
   // Admin Tenants endpoint
-  app.get('/api/admin/tenants', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/tenants', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return mock tenant data
       const tenants = [
@@ -1542,7 +1525,7 @@ ${urls.map(url => `  <url>
   });
 
   // Admin Resellers endpoint
-  app.get('/api/admin/resellers', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/resellers', requireAuth, async (req: AuthRequest, res) => {
     try {
       // Return mock reseller data
       const resellers = [
@@ -1599,7 +1582,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.post('/api/admin/resellers', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/resellers', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { name, email, commissionRate } = req.body;
       
@@ -1625,7 +1608,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.put('/api/admin/resellers/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/resellers/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const { name, email, commissionRate, tier, status } = req.body;

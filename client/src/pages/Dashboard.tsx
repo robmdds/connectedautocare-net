@@ -6,57 +6,80 @@ import { Shield, FileText, DollarSign, TrendingUp, Plus, LogOut } from "lucide-r
 import { Link } from "wouter";
 
 export default function Dashboard() {
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+    const { data: user, isLoading: userLoading } = useQuery({
+        queryKey: ["/api/auth/user"],
+        retry: false,
+    });
 
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["/api/analytics/dashboard"],
-    retry: false,
-  });
+    const { data: analytics, isLoading: analyticsLoading } = useQuery({
+        queryKey: ["/api/analytics/dashboard"],
+        retry: false,
+    });
 
-  const { data: recentActivity, isLoading: activityLoading } = useQuery({
-    queryKey: ["/api/analytics/recent-activity"],
-    retry: false,
-  });
+    const { data: recentActivity, isLoading: activityLoading } = useQuery({
+        queryKey: ["/api/analytics/recent-activity"],
+        retry: false,
+    });
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
-  };
+    const handleLogout = async () => {
+        try {
+            // Call the correct logout endpoint
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
 
-  if (userLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
+            if (response.ok) {
+                // Redirect to homepage after successful logout
+                window.location.href = "/";
+            } else {
+                console.error('Logout failed:', await response.text());
+                // Still redirect even if logout fails to clear the UI
+                window.location.href = "/";
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Redirect anyway to clear the UI
+            window.location.href = "/";
+        }
+    };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">TPA Platform</h1>
+    if (userLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-lg">Loading...</div>
             </div>
-            <div className="flex items-center space-x-4">
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <header className="bg-white shadow-sm border-b">
+                <div className="container mx-auto px-4 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                            <Shield className="h-8 w-8 text-blue-600" />
+                            <h1 className="text-2xl font-bold text-gray-900">TPA Platform</h1>
+                        </div>
+                        <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
                 Welcome, {(user as any)?.firstName || (user as any)?.email || 'User'}
               </span>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+                            <Button variant="outline" size="sm" onClick={handleLogout}>
+                                <LogOut className="h-4 w-4 mr-2" />
+                                Logout
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-      {/* Navigation */}
+
+            {/* Navigation */}
       <nav className="bg-white border-b">
         <div className="container mx-auto px-4">
           <div className="flex space-x-8">

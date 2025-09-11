@@ -27,16 +27,24 @@ export const sessions = pgTable(
 );
 
 // User storage table for Replit Auth
+// In your schema file, update the users table:
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default("user"), // admin, reseller_admin, reseller_agent, consumer, adjuster
-  tenantId: varchar("tenant_id").references(() => tenants.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    email: varchar("email").unique(),
+    firstName: varchar("first_name"),
+    lastName: varchar("last_name"),
+    profileImageUrl: varchar("profile_image_url"),
+    role: varchar("role").default("user"), // admin, reseller_admin, reseller_agent, consumer, adjuster
+    tenantId: varchar("tenant_id").references(() => tenants.id),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+
+    // Add these new authentication fields:
+    passwordHash: text("password_hash"),
+    authProvider: varchar("auth_provider"), // Keep existing field for compatibility
+    provider: varchar("provider").default("local"),
+    googleId: text("google_id"),
+    lastLoginAt: timestamp("last_login_at"),
 });
 
 // Multi-tenant support with white-label capabilities
@@ -466,13 +474,17 @@ export const claimRelations = relations(claims, ({ one, many }) => ({
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
-  id: true,
-  email: true,
-  firstName: true,
-  lastName: true,
-  profileImageUrl: true,
-  role: true,
-  tenantId: true,
+    id: true,
+    email: true,
+    firstName: true,
+    lastName: true,
+    profileImageUrl: true,
+    role: true,
+    tenantId: true,
+    passwordHash: true,  // Add this
+    provider: true,      // Add this
+    googleId: true,      // Add this
+    lastLoginAt: true,   // Add this
 });
 
 export const insertTenantSchema = createInsertSchema(tenants).omit({

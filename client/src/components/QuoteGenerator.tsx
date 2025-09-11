@@ -118,8 +118,9 @@ export default function QuoteGenerator() {
   };
 
   const onSubmit = (data: QuoteFormData) => {
-    const quoteData = {
+      const quoteData = {
       tenantId: "default", // Would be dynamic in real app
+      // @ts-ignore
       productId: products?.[0]?.id || "default",
       customerName: data.customerName,
       customerEmail: data.customerEmail,
