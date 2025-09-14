@@ -1154,63 +1154,6 @@ export class ConnectedAutoCareRatingService {
     return Math.round((adminFee + processingFee) * 100) / 100;
   }
   
-  // Get valid coverage options based on vehicle age and mileage
-  getValidCoverageOptions(productId: string, vehicleData: any): CoverageOptions {
-    const product = CONNECTED_AUTO_CARE_PRODUCTS[productId as keyof typeof CONNECTED_AUTO_CARE_PRODUCTS];
-    if (!product) {
-      return { validTermLengths: [], validCoverageMiles: [], reasons: ['Invalid product'] };
-    }
-
-    const currentYear = new Date().getFullYear();
-    const vehicleAge = currentYear - (vehicleData.year || 0);
-    const currentMileage = parseInt(vehicleData.mileage || '0');
-    
-    // Eligibility rules
-    const reasons: string[] = [];
-    
-    // Age limit: 15 years maximum
-    if (vehicleAge > 15) {
-      reasons.push(`Vehicle too old: ${vehicleAge} years (15 year maximum)`);
-      return { validTermLengths: [], validCoverageMiles: [], reasons };
-    }
-    
-    // Mileage limit: 150,000 maximum
-    if (currentMileage > 150000) {
-      reasons.push(`Vehicle mileage too high: ${currentMileage.toLocaleString()} miles (150,000 maximum)`);
-      return { validTermLengths: [], validCoverageMiles: [], reasons };
-    }
-
-    // Get all term options from product
-    const allTerms = product.coverageOptions.find(opt => opt.name === 'Term Length')?.options || [];
-    const allMiles = product.coverageOptions.find(opt => opt.name === 'Coverage Miles')?.options || [];
-    
-    // Filter terms based on vehicle age (older vehicles get shorter terms)
-    let validTermLengths = [...allTerms];
-    if (vehicleAge >= 12) {
-      validTermLengths = validTermLengths.filter(term => 
-        parseInt(term) <= 24 // Max 24 months for 12+ year old vehicles
-      );
-    } else if (vehicleAge >= 10) {
-      validTermLengths = validTermLengths.filter(term => 
-        parseInt(term) <= 36 // Max 36 months for 10+ year old vehicles
-      );
-    } else if (vehicleAge >= 8) {
-      validTermLengths = validTermLengths.filter(term => 
-        parseInt(term) <= 48 // Max 48 months for 8+ year old vehicles
-      );
-    }
-    
-    // Filter coverage miles based on current mileage
-    let validCoverageMiles = allMiles.filter(miles => {
-      if (miles === 'Unlimited') return currentMileage < 100000; // Unlimited only for low mileage
-      
-      const milesNum = parseInt(miles.replace(',', ''));
-      const projectedMileage = currentMileage + milesNum;
-      return projectedMileage <= 200000; // Don't allow projected mileage over 200k
-    });
-    
-    return { validTermLengths, validCoverageMiles, reasons };
-  }
 
   // Get all Connected Auto Care products
   getConnectedAutoCareProducts(): typeof CONNECTED_AUTO_CARE_PRODUCTS {
