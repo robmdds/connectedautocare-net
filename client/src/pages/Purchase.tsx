@@ -271,17 +271,17 @@ export default function Purchase() {
     };
 
     const handlePurchase = async (formData: PurchaseForm) => {
-        // Prevent any default behavior
         event?.preventDefault();
         event?.stopPropagation();
-        
+
         setIsProcessing(true);
         setPaymentError('');
+        // Store current URL to restore if needed
+        const currentUrl = window.location.pathname;
 
         try {
-            // Store current URL to restore if needed
-            const currentUrl = window.location.pathname;
             
+
             // Check if Helcim is loaded
             if (!helcimLoaded || typeof window.helcimProcess !== 'function') {
                 throw new Error('Payment system is still loading. Please wait a moment and try again.');
@@ -294,25 +294,20 @@ export default function Purchase() {
 
             console.log("💳 Calling Helcim payment processor...");
 
-            // Override any window navigation methods temporarily
+            // Override history methods temporarily
             const originalPushState = window.history.pushState;
             const originalReplaceState = window.history.replaceState;
-            const originalLocation = window.location.assign;
-            
+
             window.history.pushState = () => {};
             window.history.replaceState = () => {};
-            // @ts-ignore
-            window.location.assign = () => {};
 
             try {
                 // Process payment through Helcim.js
                 const helcimResult = await window.helcimProcess();
 
-                // Restore navigation methods
+                // Restore history methods
                 window.history.pushState = originalPushState;
                 window.history.replaceState = originalReplaceState;
-                // @ts-ignore
-                window.location.assign = originalLocation;
 
                 // Ensure URL is clean
                 window.history.replaceState({}, '', currentUrl);
@@ -332,11 +327,10 @@ export default function Purchase() {
                 console.log("💳 Transaction ID:", transactionIdField?.getAttribute('value'));
                 console.log("💳 Response message:", responseMessageField?.getAttribute('value'));
 
-                // Check if payment was approved (Helcim uses '1' for approved)
+                // Check if payment was approved
                 if (!responseField || responseField.getAttribute('value') !== '1') {
-                    const errorMessage = responseMessageField?.getAttribute('value') || 
-                                    'Payment was declined. Please check your payment information and try again.';
-                    
+                    const errorMessage = responseMessageField?.getAttribute('value') ||
+                        'Payment was declined. Please check your payment information and try again.';
                     console.log("❌ Payment declined:", errorMessage);
                     throw new Error(errorMessage);
                 }
@@ -387,25 +381,22 @@ export default function Purchase() {
                     throw new Error(result.error || 'Policy creation failed after payment. Please contact support with your transaction details.');
                 }
             } catch (innerError) {
-                // Restore navigation methods in case of error
+                // Restore history methods
                 window.history.pushState = originalPushState;
                 window.history.replaceState = originalReplaceState;
-                // @ts-ignore
-                window.location.assign = originalLocation;
                 throw innerError;
             }
         } catch (error) {
             console.error('Purchase error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Payment processing failed. Please try again.';
             setPaymentError(errorMessage);
-            
+
             // Ensure the URL remains clean
-            const currentUrl = window.location.pathname;
             window.history.replaceState({}, '', currentUrl);
         } finally {
             cleanupHelcimFields();
             setIsProcessing(false);
-            
+
             // Final URL cleanup
             const currentUrl = window.location.pathname;
             if (window.location.search || window.location.hash) {
