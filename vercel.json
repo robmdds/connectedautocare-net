@@ -9,14 +9,14 @@
       }
     },
     {
-      "src": "api/index.js",
+      "src": "server/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/server/index.ts"
     },
     {
       "src": "/assets/(.*)",
@@ -32,12 +32,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/public/index.html",
-      "headers": {
-        "Cache-Control": "no-cache",
-        "X-Content-Type-Options": "nosniff"
-      },
-      "status": 200
+      "dest": "/dist/public/index.html"
     }
   ]
 }
