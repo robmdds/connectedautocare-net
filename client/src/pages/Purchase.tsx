@@ -49,6 +49,57 @@ export default function Purchase() {
 
     const form = useForm<PurchaseForm>();
 
+    // Prevent any form submissions or URL changes
+    useEffect(() => {
+        const preventFormSubmission = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        };
+
+        const preventNavigation = (e: BeforeUnloadEvent) => {
+            if (isProcessing) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+
+        // Add event listeners to prevent unwanted navigation
+        window.addEventListener('beforeunload', preventNavigation);
+        
+        // Prevent any form submissions
+        document.addEventListener('submit', preventFormSubmission, true);
+
+        return () => {
+            window.removeEventListener('beforeunload', preventNavigation);
+            document.removeEventListener('submit', preventFormSubmission, true);
+        };
+    }, [isProcessing]);
+
+    // Clean URL on mount and during processing
+    useEffect(() => {
+        const cleanUrl = () => {
+            const currentUrl = window.location.pathname;
+            if (window.location.search || window.location.hash) {
+                window.history.replaceState({}, '', currentUrl);
+            }
+        };
+
+        cleanUrl();
+        
+        // Clean URL periodically during processing
+        let urlCleanInterval: NodeJS.Timeout;
+        if (isProcessing) {
+            urlCleanInterval = setInterval(cleanUrl, 100);
+        }
+
+        return () => {
+            if (urlCleanInterval) {
+                clearInterval(urlCleanInterval);
+            }
+        };
+    }, [isProcessing]);
+
     // Check if Helcim is loaded
     useEffect(() => {
         const checkHelcimLoaded = () => {
@@ -104,11 +155,6 @@ export default function Purchase() {
         } else {
             setLocation('/');
         }
-
-        // Clean up any query parameters
-        if (window.location.search) {
-            window.history.pushState({}, '', window.location.pathname);
-        }
     }, [setLocation, form]);
 
     // Auto-redirect countdown effect
@@ -136,6 +182,7 @@ export default function Purchase() {
             { id: 'amount', value: selectedCoverage?.price.toString() || '0' },
             { id: 'currency', value: 'USD' },
             { id: 'orderNumber', value: `VSC-${Date.now()}` },
+            { id: 'dontSubmit', value: '1' }, // Prevent Helcim from submitting forms
 
             // Card information - format for Helcim
             { id: 'cardNumber', value: formData.paymentMethod.cardNumber.replace(/\s/g, '') },
@@ -178,17 +225,36 @@ export default function Purchase() {
         resultsDiv.className = 'helcim-field';
         container.appendChild(resultsDiv);
 
-        // Create form reference and prevent default submission
+        // Create form reference but prevent any submission
         const formRef = document.createElement('form');
         formRef.id = 'helcimForm';
         formRef.name = 'helcimForm';
         formRef.style.display = 'none';
         formRef.className = 'helcim-field';
-        // Prevent form submission from causing navigation
+        formRef.method = 'POST';
+        formRef.action = 'javascript:void(0);'; // Prevent any actual submission
+        
+        // Aggressively prevent form submission
         formRef.addEventListener('submit', (e) => {
             e.preventDefault();
-        });
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('Helcim form submission prevented');
+            return false;
+        }, true);
+        
+        // Override the submit method to prevent Helcim.js from submitting
+        formRef.submit = function() {
+            console.log('Helcim.js tried to submit form - prevented');
+            return false;
+        };
+        
+        // Make the form reference available globally for Helcim.js
         container.appendChild(formRef);
+        
+        // Also set it on document for the Helcim.js check
+        // @ts-ignore
+        document.helcimForm = formRef;
     };
 
     // Clean up Helcim fields
@@ -202,10 +268,17 @@ export default function Purchase() {
     };
 
     const handlePurchase = async (formData: PurchaseForm) => {
+        // Prevent any default behavior
+        event?.preventDefault();
+        event?.stopPropagation();
+        
         setIsProcessing(true);
         setPaymentError('');
 
         try {
+            // Store current URL to restore if needed
+            const currentUrl = window.location.pathname;
+            
             // Check if Helcim is loaded
             if (!helcimLoaded || typeof window.helcimProcess !== 'function') {
                 throw new Error('Payment system is still loading. Please wait a moment and try again.');
@@ -218,87 +291,123 @@ export default function Purchase() {
 
             console.log("💳 Calling Helcim payment processor...");
 
-            // Process payment through Helcim.js
-            const helcimResult = await window.helcimProcess();
+            // Override any window navigation methods temporarily
+            const originalPushState = window.history.pushState;
+            const originalReplaceState = window.history.replaceState;
+            const originalLocation = window.location.assign;
+            
+            window.history.pushState = () => {};
+            window.history.replaceState = () => {};
+            // @ts-ignore
+            window.location.assign = () => {};
 
-            console.log("💳 Helcim response received:", helcimResult);
+            try {
+                // Process payment through Helcim.js
+                const helcimResult = await window.helcimProcess();
 
-            // Parse Helcim response
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = helcimResult;
+                // Restore navigation methods
+                window.history.pushState = originalPushState;
+                window.history.replaceState = originalReplaceState;
+                // @ts-ignore
+                window.location.assign = originalLocation;
 
-            const responseField = tempDiv.querySelector('#response');
-            const transactionIdField = tempDiv.querySelector('#transactionId');
-            const approvalCodeField = tempDiv.querySelector('#approvalCode');
-            const responseMessageField = tempDiv.querySelector('#responseMessage');
+                // Ensure URL is clean
+                window.history.replaceState({}, '', currentUrl);
 
-            console.log("💳 Payment response code:", responseField?.getAttribute('value'));
-            console.log("💳 Transaction ID:", transactionIdField?.getAttribute('value'));
-            console.log("💳 Response message:", responseMessageField?.getAttribute('value'));
+                console.log("💳 Helcim response received:", helcimResult);
 
-            // Check if payment was approved (Helcim uses '1' for approved)
-            if (!responseField || responseField.getAttribute('value') !== '1') {
-                const errorMessage = responseMessageField?.getAttribute('value') || 
-                                'Payment was declined. Please check your payment information and try again.';
-                
-                console.log("❌ Payment declined:", errorMessage);
-                throw new Error(errorMessage);
-            }
+                // Parse Helcim response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = helcimResult;
 
-            console.log("✅ Payment approved, creating policy...");
+                const responseField = tempDiv.querySelector('#response');
+                const transactionIdField = tempDiv.querySelector('#transactionId');
+                const approvalCodeField = tempDiv.querySelector('#approvalCode');
+                const responseMessageField = tempDiv.querySelector('#responseMessage');
 
-            // Prevent any browser navigation
-            window.history.pushState({}, '', window.location.pathname);
+                console.log("💳 Payment response code:", responseField?.getAttribute('value'));
+                console.log("💳 Transaction ID:", transactionIdField?.getAttribute('value'));
+                console.log("💳 Response message:", responseMessageField?.getAttribute('value'));
 
-            // Payment successful - create policy through backend
-            const response = await fetch('/api/payments/process', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    amount: selectedCoverage.price,
-                    coverage: selectedCoverage,
-                    vehicle: vehicleInfo,
-                    customer: {
-                        ...formData,
-                        helcimTransactionId: transactionIdField?.getAttribute('value'),
-                        helcimApprovalCode: approvalCodeField?.getAttribute('value'),
-                        helcimResponse: helcimResult
-                    }
-                }),
-            });
+                // Check if payment was approved (Helcim uses '1' for approved)
+                if (!responseField || responseField.getAttribute('value') !== '1') {
+                    const errorMessage = responseMessageField?.getAttribute('value') || 
+                                    'Payment was declined. Please check your payment information and try again.';
+                    
+                    console.log("❌ Payment declined:", errorMessage);
+                    throw new Error(errorMessage);
+                }
 
-            const result = await response.json();
+                console.log("✅ Payment approved, creating policy...");
 
-            if (response.ok && result.success) {
-                console.log("✅ Policy created successfully");
+                // Ensure URL remains clean
+                window.history.replaceState({}, '', currentUrl);
 
-                // Clear stored data and show success
-                localStorage.removeItem('selectedCoverage');
-                localStorage.removeItem('currentQuote');
-                sessionStorage.removeItem('vscQuoteData');
+                // Payment successful - create policy through backend
+                const response = await fetch('/api/payments/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: selectedCoverage.price,
+                        coverage: selectedCoverage,
+                        vehicle: vehicleInfo,
+                        customer: {
+                            ...formData,
+                            helcimTransactionId: transactionIdField?.getAttribute('value'),
+                            helcimApprovalCode: approvalCodeField?.getAttribute('value'),
+                            helcimResponse: helcimResult
+                        }
+                    }),
+                });
 
-                // Clear form fields
-                form.reset();
+                const result = await response.json();
 
-                // Show success modal and set states
-                setPurchaseComplete(true);
-                setShowSuccessModal(true);
-                setRedirectCountdown(10);
-            } else {
-                console.error("❌ Policy creation failed after successful payment:", result.error);
-                throw new Error(result.error || 'Policy creation failed after payment. Please contact support with your transaction details.');
+                if (response.ok && result.success) {
+                    console.log("✅ Policy created successfully");
+
+                    // Clear stored data and show success
+                    localStorage.removeItem('selectedCoverage');
+                    localStorage.removeItem('currentQuote');
+                    sessionStorage.removeItem('vscQuoteData');
+
+                    // Clear form fields
+                    form.reset();
+
+                    // Show success modal and set states
+                    setPurchaseComplete(true);
+                    setShowSuccessModal(true);
+                    setRedirectCountdown(10);
+                } else {
+                    console.error("❌ Policy creation failed after successful payment:", result.error);
+                    throw new Error(result.error || 'Policy creation failed after payment. Please contact support with your transaction details.');
+                }
+            } catch (innerError) {
+                // Restore navigation methods in case of error
+                window.history.pushState = originalPushState;
+                window.history.replaceState = originalReplaceState;
+                // @ts-ignore
+                window.location.assign = originalLocation;
+                throw innerError;
             }
         } catch (error) {
             console.error('Purchase error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Payment processing failed. Please try again.';
             setPaymentError(errorMessage);
+            
             // Ensure the URL remains clean
-            window.history.pushState({}, '', window.location.pathname);
+            const currentUrl = window.location.pathname;
+            window.history.replaceState({}, '', currentUrl);
         } finally {
             cleanupHelcimFields();
             setIsProcessing(false);
+            
+            // Final URL cleanup
+            const currentUrl = window.location.pathname;
+            if (window.location.search || window.location.hash) {
+                window.history.replaceState({}, '', currentUrl);
+            }
         }
     };
 
