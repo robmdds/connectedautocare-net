@@ -32,7 +32,12 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/public/index.html"
+      "dest": "/dist/public/index.html",
+      "headers": {
+        "Cache-Control": "no-cache",
+        "X-Content-Type-Options": "nosniff"
+      },
+      "status": 200
     }
   ]
 }
