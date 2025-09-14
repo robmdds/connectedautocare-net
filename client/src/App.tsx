@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import LandingNew from "@/pages/LandingNew";
-import NewLanding from "@/pages/NewLanding";
 import Policies from "@/pages/Policies";
 import Claims from "@/pages/Claims";
 import Analytics from "@/pages/Analytics";
