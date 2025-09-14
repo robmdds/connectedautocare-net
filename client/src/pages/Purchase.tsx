@@ -49,6 +49,76 @@ export default function Purchase() {
 
     const form = useForm<PurchaseForm>();
 
+    // Prevent Helcim redirects during payment processing
+    useEffect(() => {
+        if (!isProcessing) return;
+
+        console.log("🔒 Activating redirect prevention during payment...");
+
+        // Block any navigation during payment processing
+        const blockNavigation = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = 'Payment is being processed...';
+            return e.returnValue;
+        };
+
+        // Override location methods to prevent Helcim redirects
+        const originalAssign = window.location.assign;
+        const originalReplace = window.location.replace;
+        const originalHref = window.location.href;
+
+        window.location.assign = (url) => {
+            console.log("🚫 Blocked navigation attempt to:", url);
+            return undefined as any;
+        };
+
+        window.location.replace = (url) => {
+            console.log("🚫 Blocked replace attempt to:", url);
+            return undefined as any;
+        };
+
+        // Block form submissions
+        const preventFormSubmission = (e: Event) => {
+            console.log("🚫 Preventing form submission during payment");
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        };
+
+        document.addEventListener('submit', preventFormSubmission, true);
+        window.addEventListener('beforeunload', blockNavigation);
+
+        return () => {
+            console.log("🔓 Removing redirect prevention...");
+            // Restore original functions
+            window.location.assign = originalAssign;
+            window.location.replace = originalReplace;
+            document.removeEventListener('submit', preventFormSubmission, true);
+            window.removeEventListener('beforeunload', blockNavigation);
+        };
+    }, [isProcessing]);
+
+    // Debug navigation attempts
+    useEffect(() => {
+        const originalPushState = window.history.pushState;
+        const originalReplaceState = window.history.replaceState;
+
+        window.history.pushState = function(...args) {
+            console.log("🔍 Navigation attempt (pushState):", args[2]); // URL is the 3rd argument
+            return originalPushState.apply(this, args);
+        };
+
+        window.history.replaceState = function(...args) {
+            console.log("🔍 Navigation attempt (replaceState):", args[2]);
+            return originalReplaceState.apply(this, args);
+        };
+
+        return () => {
+            window.history.pushState = originalPushState;
+            window.history.replaceState = originalReplaceState;
+        };
+    }, []);
+
     // Check if Helcim is loaded
     useEffect(() => {
         const checkHelcimLoaded = () => {
@@ -60,17 +130,14 @@ export default function Purchase() {
             return false;
         };
 
-        // Check immediately
         if (checkHelcimLoaded()) return;
 
-        // Poll for Helcim to load
         const interval = setInterval(() => {
             if (checkHelcimLoaded()) {
                 clearInterval(interval);
             }
         }, 100);
 
-        // Clean up after 10 seconds
         const timeout = setTimeout(() => {
             clearInterval(interval);
             if (!helcimLoaded) {
@@ -93,7 +160,6 @@ export default function Purchase() {
             setVehicleInfo(data.vehicle);
             setCustomerInfo(data.customer);
 
-            // Pre-populate form with customer info
             if (data.customer) {
                 const nameParts = data.customer.name.split(' ');
                 form.setValue('firstName', nameParts[0] || '');
@@ -121,30 +187,19 @@ export default function Purchase() {
     // Create hidden fields that Helcim.js expects
     const createHelcimFields = (formData: PurchaseForm) => {
         const container = document.body;
-
-        // Remove existing Helcim fields
         cleanupHelcimFields();
 
         const fields = [
-            // Required Helcim fields
             { id: 'token', value: 'de2a5120a337b055a082b5' },
             { id: 'amount', value: selectedCoverage?.price.toString() || '0' },
             { id: 'currency', value: 'USD' },
             { id: 'orderNumber', value: `VSC-${Date.now()}` },
-
-            // Card information - format for Helcim
             { id: 'cardNumber', value: formData.paymentMethod.cardNumber.replace(/\s/g, '') },
             { id: 'cardExpiry', value: formData.paymentMethod.expiryMonth + formData.paymentMethod.expiryYear },
             { id: 'cardCVV', value: formData.paymentMethod.cvv },
-
-            // Customer information
             { id: 'cardHolderName', value: `${formData.firstName} ${formData.lastName}` },
-
-            // AVS fields - these are what Helcim.js specifically looks for
             { id: 'cardHolderAddress', value: formData.address.street },
             { id: 'cardHolderPostalCode', value: formData.address.zipCode },
-
-            // Billing information (still keep these for completeness)
             { id: 'billing_contactName', value: `${formData.firstName} ${formData.lastName}` },
             { id: 'billing_street1', value: formData.address.street },
             { id: 'billing_city', value: formData.address.city },
@@ -155,7 +210,6 @@ export default function Purchase() {
             { id: 'billing_phone', value: formData.phone },
         ];
 
-        // Create hidden input fields
         fields.forEach(field => {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -166,14 +220,12 @@ export default function Purchase() {
             container.appendChild(input);
         });
 
-        // Create results div
         const resultsDiv = document.createElement('div');
         resultsDiv.id = 'helcimResults';
         resultsDiv.style.display = 'none';
         resultsDiv.className = 'helcim-field';
         container.appendChild(resultsDiv);
 
-        // Create form reference
         const formRef = document.createElement('form');
         formRef.id = 'helcimForm';
         formRef.name = 'helcimForm';
@@ -182,7 +234,6 @@ export default function Purchase() {
         container.appendChild(formRef);
     };
 
-    // Clean up Helcim fields
     const cleanupHelcimFields = () => {
         const helcimFields = document.querySelectorAll('.helcim-field');
         helcimFields.forEach(field => {
@@ -193,28 +244,22 @@ export default function Purchase() {
     };
 
     const handlePurchase = async (formData: PurchaseForm) => {
+        console.log("🚀 Starting purchase process...");
         setIsProcessing(true);
         setPaymentError('');
 
         try {
-            // Check if Helcim is loaded
             if (!helcimLoaded || typeof window.helcimProcess !== 'function') {
                 throw new Error('Payment system is still loading. Please wait a moment and try again.');
             }
 
             console.log("💳 Starting payment process with Helcim...");
-
-            // Create the hidden fields Helcim expects
             createHelcimFields(formData);
-
             console.log("💳 Calling Helcim payment processor...");
 
-            // Process payment through Helcim.js
             const helcimResult = await window.helcimProcess();
-
             console.log("💳 Helcim response received:", helcimResult);
 
-            // Parse Helcim response
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = helcimResult;
 
@@ -227,21 +272,16 @@ export default function Purchase() {
             console.log("💳 Transaction ID:", transactionIdField?.getAttribute('value'));
             console.log("💳 Response message:", responseMessageField?.getAttribute('value'));
 
-            // Check if payment was approved (Helcim uses '1' for approved)
             if (!responseField || responseField.getAttribute('value') !== '1') {
                 const errorMessage = responseMessageField?.getAttribute('value') || 
                                 'Payment was declined. Please check your payment information and try again.';
                 
-                // Log the specific error for debugging
                 console.log("❌ Payment declined:", errorMessage);
-                
-                // Set error message and stay on page - DO NOT REDIRECT
                 throw new Error(errorMessage);
             }
 
             console.log("✅ Payment approved, creating policy...");
 
-            // Payment successful - create policy through backend
             const response = await fetch('/api/payments/process', {
                 method: 'POST',
                 headers: {
@@ -265,38 +305,37 @@ export default function Purchase() {
             if (response.ok && result.success) {
                 console.log("✅ Policy created successfully");
 
-                // ONLY NOW clear stored data and show success
                 localStorage.removeItem('selectedCoverage');
                 localStorage.removeItem('currentQuote');
                 sessionStorage.removeItem('vscQuoteData');
 
-                // Clear form fields
                 form.reset();
 
-                // Show success modal and set states - THIS IS THE ONLY SUCCESS PATH
                 setPurchaseComplete(true);
                 setShowSuccessModal(true);
                 setRedirectCountdown(10);
             } else {
-                // Backend error after successful payment - this is critical
                 console.error("❌ Policy creation failed after successful payment:", result.error);
                 throw new Error(result.error || 'Policy creation failed after payment. Please contact support with your transaction details.');
             }
         } catch (error) {
-            // ALL ERRORS: Stay on purchase page with error message
-            console.error('Purchase error:', error);
+            console.error('💥 Purchase error:', error);
+            
             const errorMessage = error instanceof Error ? error.message : 'Payment processing failed. Please try again.';
             
-            // Display error but DO NOT redirect or show success modal
+            console.log("🔍 Current URL after error:", window.location.href);
             setPaymentError(errorMessage);
             
-            // Reset processing state but keep user on purchase page
-            // Do NOT call setLocation() here
-            // Do NOT show success modal
-            // Do NOT clear localStorage
+            // Ensure we stay on the purchase page
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/purchase') {
+                console.log("🔄 Restoring URL to /purchase");
+                window.history.replaceState(null, '', '/purchase');
+            }
         } finally {
             cleanupHelcimFields();
             setIsProcessing(false);
+            console.log("🏁 Purchase process completed");
         }
     };
 
@@ -338,7 +377,6 @@ export default function Purchase() {
         );
     };
 
-    // Success Modal Component
     const SuccessModal = () => (
         <Dialog open={showSuccessModal} onOpenChange={() => {}}>
             <DialogContent className="max-w-md">
@@ -358,7 +396,6 @@ export default function Purchase() {
                         </p>
                     </div>
 
-                    {/* Transaction Summary */}
                     <div className="p-4 bg-green-50 rounded-lg text-left">
                         <h4 className="font-semibold text-green-800 mb-2">Transaction Summary</h4>
                         <div className="text-sm space-y-1">
@@ -379,7 +416,6 @@ export default function Purchase() {
                         </div>
                     </div>
 
-                    {/* Countdown */}
                     <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-700">
                             Redirecting to home in <span className="font-bold">{redirectCountdown}</span> seconds...
@@ -387,11 +423,7 @@ export default function Purchase() {
                     </div>
 
                     <div className="space-y-2">
-                        <Button
-                            onClick={handleGoToHome}
-                            className="w-full"
-                            size="lg"
-                        >
+                        <Button onClick={handleGoToHome} className="w-full" size="lg">
                             Go to Home Now
                         </Button>
                         <Button
@@ -407,7 +439,6 @@ export default function Purchase() {
         </Dialog>
     );
 
-    // Show loading alert if Helcim is not loaded yet
     const HelcimLoadingAlert = () => {
         if (helcimLoaded) return null;
 
@@ -423,7 +454,6 @@ export default function Purchase() {
         );
     };
 
-    // Loading state while no coverage selected
     if (!selectedCoverage || !vehicleInfo) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -443,16 +473,13 @@ export default function Purchase() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Success Modal */}
             <SuccessModal />
 
             <div className="container mx-auto px-4 py-8">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <Button
                         variant="outline"
                         onClick={() => {
-                            // Only allow going back if purchase is not complete
                             if (!purchaseComplete && !isProcessing) {
                                 setLocation('/vsc-quote');
                             } else {
@@ -471,7 +498,6 @@ export default function Purchase() {
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-8">
-                    {/* Order Summary */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -480,7 +506,6 @@ export default function Purchase() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {/* Vehicle Info */}
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <h4 className="font-semibold mb-2">Vehicle</h4>
                                 <p>{vehicleInfo.year} {vehicleInfo.make} {vehicleInfo.model}</p>
@@ -488,7 +513,6 @@ export default function Purchase() {
                                 <p className="text-sm text-gray-600">Mileage: {vehicleInfo.mileage.toLocaleString()} miles</p>
                             </div>
 
-                            {/* Coverage Details */}
                             <div className="p-4 bg-blue-50 rounded-lg">
                                 <h4 className="font-semibold mb-2">{selectedCoverage.name}</h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -499,7 +523,6 @@ export default function Purchase() {
                                 </div>
                             </div>
 
-                            {/* Pricing */}
                             <div className="border-t pt-4">
                                 <div className="flex justify-between items-center text-lg font-bold">
                                     <span>Total Amount:</span>
@@ -510,7 +533,6 @@ export default function Purchase() {
                         </CardContent>
                     </Card>
 
-                    {/* Purchase Form */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -520,18 +542,9 @@ export default function Purchase() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
-                                {/* Helcim Loading Alert */}
                                 <HelcimLoadingAlert />
+                                <PaymentErrorAlert />
 
-                                {paymentError && (
-                                    <Alert className="border-red-200 bg-red-50">
-                                        <AlertDescription className="text-red-800">
-                                            {paymentError}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-
-                                {/* Customer Information */}
                                 <div className="space-y-4">
                                     <h4 className="font-medium">Customer Information</h4>
                                     <div className="grid grid-cols-2 gap-4">
@@ -576,7 +589,6 @@ export default function Purchase() {
                                     </div>
                                 </div>
 
-                                {/* Billing Address */}
                                 <div className="space-y-4">
                                     <h4 className="font-medium">Billing Address</h4>
                                     <div>
@@ -620,7 +632,6 @@ export default function Purchase() {
                                     </div>
                                 </div>
 
-                                {/* Payment Method */}
                                 <div className="space-y-4">
                                     <h4 className="font-medium">Payment Method</h4>
                                     <div>
@@ -630,7 +641,6 @@ export default function Purchase() {
                                             {...form.register("paymentMethod.cardNumber", { required: true })}
                                             placeholder="1234 5678 9012 3456"
                                             onChange={(e) => {
-                                                // Format card number with spaces for display
                                                 const value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
                                                 if (value.replace(/\s/g, '').length <= 16) {
                                                     e.target.value = value;
@@ -677,9 +687,16 @@ export default function Purchase() {
                                     </div>
                                 </div>
 
-                                {/* Submit */}
                                 <Button
-                                    onClick={form.handleSubmit(handlePurchase)}
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        
+                                        if (!isProcessing && !purchaseComplete && helcimLoaded) {
+                                            form.handleSubmit(handlePurchase)(e);
+                                        }
+                                    }}
                                     className="w-full"
                                     size="lg"
                                     disabled={isProcessing || purchaseComplete || !helcimLoaded}
