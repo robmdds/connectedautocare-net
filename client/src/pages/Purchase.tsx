@@ -225,12 +225,17 @@ export default function Purchase() {
 
             console.log("💳 Payment response code:", responseField?.getAttribute('value'));
             console.log("💳 Transaction ID:", transactionIdField?.getAttribute('value'));
+            console.log("💳 Response message:", responseMessageField?.getAttribute('value'));
 
-            // Check if payment was approved
+            // Check if payment was approved (Helcim uses '1' for approved)
             if (!responseField || responseField.getAttribute('value') !== '1') {
-                const errorMessage = responseMessageField ?
-                    responseMessageField.getAttribute('value') :
-                    'Payment was declined. Please check your payment information and try again.';
+                const errorMessage = responseMessageField?.getAttribute('value') || 
+                                'Payment was declined. Please check your payment information and try again.';
+                
+                // Log the specific error for debugging
+                console.log("❌ Payment declined:", errorMessage);
+                
+                // Set error message and stay on page - DO NOT REDIRECT
                 throw new Error(errorMessage);
             }
 
@@ -260,7 +265,7 @@ export default function Purchase() {
             if (response.ok && result.success) {
                 console.log("✅ Policy created successfully");
 
-                // Clear stored data
+                // ONLY NOW clear stored data and show success
                 localStorage.removeItem('selectedCoverage');
                 localStorage.removeItem('currentQuote');
                 sessionStorage.removeItem('vscQuoteData');
@@ -268,16 +273,27 @@ export default function Purchase() {
                 // Clear form fields
                 form.reset();
 
-                // Show success modal and set states
+                // Show success modal and set states - THIS IS THE ONLY SUCCESS PATH
                 setPurchaseComplete(true);
                 setShowSuccessModal(true);
-                setRedirectCountdown(10); // Reset countdown
+                setRedirectCountdown(10);
             } else {
-                throw new Error(result.error || 'Policy creation failed after payment');
+                // Backend error after successful payment - this is critical
+                console.error("❌ Policy creation failed after successful payment:", result.error);
+                throw new Error(result.error || 'Policy creation failed after payment. Please contact support with your transaction details.');
             }
         } catch (error) {
+            // ALL ERRORS: Stay on purchase page with error message
             console.error('Purchase error:', error);
-            setPaymentError(error instanceof Error ? error.message : 'Payment processing failed. Please try again.');
+            const errorMessage = error instanceof Error ? error.message : 'Payment processing failed. Please try again.';
+            
+            // Display error but DO NOT redirect or show success modal
+            setPaymentError(errorMessage);
+            
+            // Reset processing state but keep user on purchase page
+            // Do NOT call setLocation() here
+            // Do NOT show success modal
+            // Do NOT clear localStorage
         } finally {
             cleanupHelcimFields();
             setIsProcessing(false);
@@ -287,6 +303,39 @@ export default function Purchase() {
     const handleGoToHome = () => {
         setShowSuccessModal(false);
         setLocation('/');
+    };
+
+    const PaymentErrorAlert = () => {
+        if (!paymentError) return null;
+
+        return (
+            <Alert className="border-red-200 bg-red-50 mb-4">
+                <AlertDescription className="text-red-800">
+                    <div className="space-y-2">
+                        <div className="font-medium">Payment Failed</div>
+                        <div>{paymentError}</div>
+                        {paymentError.toLowerCase().includes('expired') && (
+                            <div className="text-sm text-red-600 mt-2">
+                                Please check your card expiration date and try again.
+                            </div>
+                        )}
+                        {paymentError.toLowerCase().includes('declined') && (
+                            <div className="text-sm text-red-600 mt-2">
+                                Please verify your card information or try a different payment method.
+                            </div>
+                        )}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setPaymentError('')}
+                            className="mt-2"
+                        >
+                            Try Again
+                        </Button>
+                    </div>
+                </AlertDescription>
+            </Alert>
+        );
     };
 
     // Success Modal Component
@@ -637,9 +686,17 @@ export default function Purchase() {
                                     data-testid="button-complete-purchase"
                                 >
                                     {isProcessing ? (
-                                        <>Processing Payment...</>
+                                        <div className="flex items-center gap-2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Processing Payment...
+                                        </div>
                                     ) : !helcimLoaded ? (
                                         <>Payment System Loading...</>
+                                    ) : paymentError ? (
+                                        <>
+                                            <CreditCard className="h-4 w-4 mr-2" />
+                                            Retry Payment - ${selectedCoverage.price.toLocaleString()}
+                                        </>
                                     ) : (
                                         <>
                                             <Lock className="h-4 w-4 mr-2" />
