@@ -252,9 +252,12 @@ export default function Purchase() {
         // Make the form reference available globally for Helcim.js
         container.appendChild(formRef);
         
-        // Also set it on document for the Helcim.js check
-        // @ts-ignore
-        document.helcimForm = formRef;
+        // Use bracket notation to avoid read-only issues
+        try {
+            (document as any)['helcimForm'] = formRef;
+        } catch (e) {
+            console.log('Could not set document.helcimForm, but form prevention should still work');
+        }
     };
 
     // Clean up Helcim fields
