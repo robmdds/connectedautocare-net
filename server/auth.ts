@@ -277,7 +277,7 @@ export async function setupAuth(app: Express) {
                     email: googleUser.email!,
                     firstName: googleUser.firstName,
                     lastName: googleUser.lastName,
-                    role: 'user',
+                    role: 'user', // Default role for new Google users
                     provider: 'google',
                     googleId: googleUser.googleId,
                 });
@@ -294,7 +294,10 @@ export async function setupAuth(app: Express) {
             };
 
             req.session.user = authUser;
-            res.redirect('/admin'); // Redirect to admin after successful login
+
+            // Redirect based on role
+            const redirectUrl = authUser.role.toLowerCase() === 'admin' ? '/admin' : '/';
+            res.redirect(redirectUrl);
 
         } catch (error) {
             console.error('Google OAuth error:', error);
