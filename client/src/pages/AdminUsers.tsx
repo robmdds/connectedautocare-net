@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, UserPlus, Shield, Settings, Loader2 } from "lucide-react";
+import { Users, UserPlus, Shield, Settings, Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 
