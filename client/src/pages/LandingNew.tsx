@@ -187,7 +187,7 @@ export default function LandingNew() {
 
   const handleDashboard = () => {
     if (user?.role?.toLowerCase() === "admin") {
-      setLocation("/admin");
+      setLocation("/dashboard");
     } else {
       setLocation("/");
     }

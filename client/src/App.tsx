@@ -96,7 +96,7 @@ function getHomeRoute(user: any) {
     // Role-based routing
     switch (user.role?.toLowerCase()) {
         case 'admin':
-            return Dashboard;
+            return LandingNew;
         case 'user':
         default:
             return LandingNew;
