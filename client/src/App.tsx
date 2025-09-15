@@ -141,6 +141,7 @@ function Router() {
                 <Route path="/admin/training-data" component={AdminTrainingData} />
                 <Route path="/admin/response-templates" component={AdminResponseTemplates} />
                 <Route path="/admin" component={Admin} />
+                <Route path="/dashboard" component={Dashboard} />
 
                 {/* Public Routes */}
                 <Route path="/quote" component={QuoteGenerator} />
