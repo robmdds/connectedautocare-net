@@ -183,7 +183,10 @@ export default function AdminUsers() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <Link href="/admin">
-                                <Shield className="h-8 w-8 text-blue-600" />
+                                <Button variant="ghost" size="sm">
+                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                Back to Admin
+                                </Button>
                             </Link>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
@@ -197,29 +200,6 @@ export default function AdminUsers() {
                     </div>
                 </div>
             </header>
-
-            {/* Navigation */}
-            <nav className="bg-white border-b">
-                <div className="container mx-auto px-4">
-                    <div className="flex space-x-8">
-                        <Link href="/" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Dashboard
-                        </Link>
-                        <Link href="/policies" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Policies
-                        </Link>
-                        <Link href="/claims" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Claims
-                        </Link>
-                        <Link href="/analytics" className="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Analytics
-                        </Link>
-                        <Link href="/admin" className="py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium">
-                            Admin
-                        </Link>
-                    </div>
-                </div>
-            </nav>
 
             <main className="container mx-auto px-4 py-8">
                 <div className="space-y-6">
