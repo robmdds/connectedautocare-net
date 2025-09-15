@@ -140,7 +140,7 @@ function Router() {
                 <Route path="/admin/ai-models" component={AdminAiModels} />
                 <Route path="/admin/training-data" component={AdminTrainingData} />
                 <Route path="/admin/response-templates" component={AdminResponseTemplates} />
-                <Route path="/admin" component={Dashboard} />
+                <Route path="/admin" component={Admin} />
 
                 {/* Public Routes */}
                 <Route path="/quote" component={QuoteGenerator} />
