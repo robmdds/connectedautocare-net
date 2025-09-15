@@ -45,6 +45,7 @@ import QuickLogin from "@/pages/QuickLogin";
 import LoginTest from "@/pages/LoginTest";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
+import Dashboard from "./pages/Dashboard";
 
 // Logout Component
 function LogoutHandler() {
@@ -95,7 +96,7 @@ function getHomeRoute(user: any) {
     // Role-based routing
     switch (user.role?.toLowerCase()) {
         case 'admin':
-            return Admin;
+            return Dashboard;
         case 'user':
         default:
             return LandingNew;
@@ -139,7 +140,7 @@ function Router() {
                 <Route path="/admin/ai-models" component={AdminAiModels} />
                 <Route path="/admin/training-data" component={AdminTrainingData} />
                 <Route path="/admin/response-templates" component={AdminResponseTemplates} />
-                <Route path="/admin" component={Admin} />
+                <Route path="/admin" component={Dashboard} />
 
                 {/* Public Routes */}
                 <Route path="/quote" component={QuoteGenerator} />

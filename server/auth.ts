@@ -296,7 +296,7 @@ export async function setupAuth(app: Express) {
             req.session.user = authUser;
 
             // Redirect based on role
-            const redirectUrl = authUser.role.toLowerCase() === 'admin' ? '/admin' : '/';
+            const redirectUrl = authUser.role.toLowerCase() === 'admin' ? '/' : '/';
             res.redirect(redirectUrl);
 
         } catch (error) {
