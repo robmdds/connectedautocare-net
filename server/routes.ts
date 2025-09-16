@@ -971,6 +971,7 @@ ${urls.map(url => `  <url>
         try {
           const user = await storage.getUser(req.user.id);
           effectiveTenantId = user?.tenantId || 'connected-auto-care';
+          console.log(effectiveTenantId)
         } catch (error) {
           console.log('Could not get user tenant, using default');
           effectiveTenantId = tenantId as string || 'connected-auto-care';
