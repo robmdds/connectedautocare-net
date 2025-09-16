@@ -295,7 +295,7 @@ export default function Claims() {
                     <div>
                       <p className="text-sm font-medium text-gray-500">Estimated Amount</p>
                       <p className="text-sm text-gray-900">
-                        {claim.estimatedAmount ? `$${claim.estimatedAmount}` : 'Not assessed'}
+                        {claim.estimatedAmount ? `${claim.estimatedAmount}` : 'Not assessed'}
                       </p>
                     </div>
                     <div>
@@ -434,13 +434,13 @@ export default function Claims() {
                   <div>
                     <p className="text-sm font-medium text-gray-500">Estimated Amount</p>
                     <p className="text-sm text-gray-900">
-                      {selectedClaim.estimatedAmount ? `$${selectedClaim.estimatedAmount}` : 'Not assessed'}
+                      {selectedClaim.estimatedAmount ? `${selectedClaim.estimatedAmount}` : 'Not assessed'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Actual Amount</p>
                     <p className="text-sm text-gray-900">
-                      {selectedClaim.actualAmount ? `$${selectedClaim.actualAmount}` : 'Not set'}
+                      {selectedClaim.actualAmount ? `${selectedClaim.actualAmount}` : 'Not set'}
                     </p>
                   </div>
                 </div>

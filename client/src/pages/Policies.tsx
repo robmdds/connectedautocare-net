@@ -285,7 +285,7 @@ export default function Policies() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Premium</p>
-                      <p className="text-sm text-gray-900">${policy.premium}</p>
+                      <p className="text-sm text-gray-900">{policy.premium}</p>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between">
@@ -366,7 +366,7 @@ export default function Policies() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Premium</p>
-                <p>${selectedPolicy.premium}</p>
+                <p>{selectedPolicy.premium}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Effective Date</p>
