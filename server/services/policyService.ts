@@ -1,8 +1,8 @@
 import { storage } from "../storage";
-import { type InsertPolicy } from "@shared/schema";
+import { type InsertPolicy, type Policy } from "@shared/schema";
 
 export class PolicyService {
-  async issuePolicy(policyData: InsertPolicy & { issuedBy: string }): Promise<any> {
+  async issuePolicy(policyData: InsertPolicy & { issuedBy: string }): Promise<Policy> {
     try {
       // Generate policy number
       const policyNumber = `POL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
@@ -32,7 +32,7 @@ export class PolicyService {
     }
   }
 
-  async processPaymentConfirmation(paymentId: string): Promise<any> {
+  async processPaymentConfirmation(paymentId: string): Promise<Policy> {
     try {
       // Get payment details
       const payment = await storage.getPayment(paymentId);
@@ -68,7 +68,38 @@ export class PolicyService {
     }
   }
 
-  private async generatePolicyDocuments(policy: any): Promise<void> {
+  async updatePolicy(id: string, policyData: Partial<InsertPolicy>): Promise<Policy> {
+    try {
+      // Check if policy exists
+      const existingPolicy = await storage.getPolicy(id);
+      if (!existingPolicy) {
+        throw new Error('Policy not found');
+      }
+
+      // Update policy with provided fields
+      const updatedPolicy = await storage.updatePolicy(id, {
+        ...policyData,
+        updatedAt: new Date(), // Track update timestamp
+      });
+
+      // Regenerate documents if necessary (e.g., if coverage or dates changed)
+      if (
+        policyData.coverageOptions ||
+        policyData.effectiveDate ||
+        policyData.expiryDate ||
+        policyData.premium
+      ) {
+        await this.generatePolicyDocuments(updatedPolicy);
+      }
+
+      return updatedPolicy;
+    } catch (error) {
+      console.error('Policy update error:', error);
+      throw new Error('Failed to update policy');
+    }
+  }
+
+  private async generatePolicyDocuments(policy: Policy): Promise<void> {
     // Placeholder for document generation
     // In a real implementation, this would:
     // 1. Generate policy declarations page
@@ -78,7 +109,7 @@ export class PolicyService {
     console.log(`Generated documents for policy ${policy.policyNumber}`);
   }
 
-  async renewPolicy(policyId: string): Promise<any> {
+  async renewPolicy(policyId: string): Promise<Policy> {
     try {
       const existingPolicy = await storage.getPolicy(policyId);
       if (!existingPolicy) {
@@ -143,5 +174,17 @@ export class PolicyService {
     const premium = parseFloat(policy.premium);
     
     return Math.round(premium * refundPercentage * 100) / 100;
+  }
+
+  async getPolicy(id: string): Promise<Policy | undefined> {
+    return storage.getPolicy(id);
+  }
+
+  async getPolicyByNumber(policyNumber: string): Promise<Policy | undefined> {
+    return storage.getPolicyByNumber(policyNumber);
+  }
+
+  async getPolicies(tenantId: string, filters?: any): Promise<Policy[]> {
+    return storage.getPolicies(tenantId, filters);
   }
 }

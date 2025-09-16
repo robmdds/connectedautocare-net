@@ -25,9 +25,11 @@ const policyFormSchema = z.object({
   vehicleModel: z.string().min(1, "Vehicle model is required"),
   vehicleYear: z.string().min(4, "Vehicle year is required"),
   vehicleVin: z.string().min(17, "Valid VIN is required").max(17, "Valid VIN is required"),
-  coverageLevel: z.enum(["basic", "standard", "premium", "platinum"]),
+  coverageLevel: z.enum(["basic", "standard", "premium", "platinum", "gold", "silver"]),
   termLength: z.enum(["12", "24", "36", "48", "60"]),
   premium: z.string().min(1, "Premium amount is required"),
+  effectiveDate: z.string().optional(),
+  expirationDate: z.string().optional(),
 });
 
 export default function Policies() {
@@ -58,6 +60,8 @@ export default function Policies() {
       coverageLevel: "standard",
       termLength: "36",
       premium: "",
+      effectiveDate: "",
+      expirationDate: "",
     },
   });
 
@@ -96,10 +100,16 @@ export default function Policies() {
         description: "Policy has been successfully updated",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Update policy error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update policy",
+        description:
+          error.message === 'Failed to fetch'
+            ? 'Unable to connect to the server. Please try again later.'
+            : error.details
+            ? `Validation error: ${error.details.map((e: any) => e.message).join(', ')}`
+            : error.message || 'Failed to update policy',
         variant: "destructive",
       });
     },
@@ -119,6 +129,8 @@ export default function Policies() {
         coverageLevel: selectedPolicy.coverageLevel || "standard",
         termLength: selectedPolicy.termLength || "36",
         premium: selectedPolicy.premium || "",
+        effectiveDate: selectedPolicy.effectiveDate || "",
+        expirationDate: selectedPolicy.expiryDate || "",
       });
     }
   }, [selectedPolicy, showEditPolicyModal, form]);
@@ -547,6 +559,8 @@ export default function Policies() {
                               <SelectItem value="standard">Standard</SelectItem>
                               <SelectItem value="premium">Premium</SelectItem>
                               <SelectItem value="platinum">Platinum</SelectItem>
+                              <SelectItem value="gold">Gold</SelectItem>
+                              <SelectItem value="silver">Silver</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -585,6 +599,32 @@ export default function Policies() {
                           <FormLabel>Premium Amount *</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="1500.00" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="effectiveDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Effective Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="expirationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -767,69 +807,97 @@ export default function Policies() {
                             <SelectItem value="standard">Standard</SelectItem>
                             <SelectItem value="premium">Premium</SelectItem>
                             <SelectItem value="platinum">Platinum</SelectItem>
+                            <SelectItem value="gold">Gold</SelectItem>
+                            <SelectItem value="silver">Silver</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="termLength"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Term (Months) *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="termLength"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Term (Months) *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select term" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="12">12 Months</SelectItem>
+                              <SelectItem value="24">24 Months</SelectItem>
+                              <SelectItem value="36">36 Months</SelectItem>
+                              <SelectItem value="48">48 Months</SelectItem>
+                              <SelectItem value="60">60 Months</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="premium"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Premium Amount *</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select term" />
-                            </SelectTrigger>
+                            <Input {...field} placeholder="1500.00" />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="12">12 Months</SelectItem>
-                            <SelectItem value="24">24 Months</SelectItem>
-                            <SelectItem value="36">36 Months</SelectItem>
-                            <SelectItem value="48">48 Months</SelectItem>
-                            <SelectItem value="60">60 Months</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="premium"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Premium Amount *</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="1500.00" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="effectiveDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Effective Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="expirationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end space-x-4 pt-6 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowNewPolicyModal(false)}
-                  disabled={createPolicyMutation.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createPolicyMutation.isPending}>
-                  {createPolicyMutation.isPending ? "Creating..." : "Create Policy"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+                <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowNewPolicyModal(false)}
+                    disabled={createPolicyMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createPolicyMutation.isPending}>
+                    {createPolicyMutation.isPending ? "Creating..." : "Create Policy"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
 }

@@ -15,6 +15,25 @@ import { SpecialQuoteRequestService } from "./services/specialQuoteRequestServic
 import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema, insertSpecialQuoteRequestSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Define a partial schema for updates to allow optional fields
+const updatePolicySchema = z.object({
+  customerName: z.string().min(1, 'Customer name is required').optional(),
+  customerEmail: z.string().email('Valid email is required').optional(),
+  customerPhone: z.string().optional(),
+  productType: z.enum(['auto_vsc', 'rv_vsc', 'marine_vsc', 'powersports_vsc', 'home_warranty']).optional(),
+  vehicleMake: z.string().min(1, 'Vehicle make is required').optional(),
+  vehicleModel: z.string().min(1, 'Vehicle model is required').optional(),
+  vehicleYear: z.string().min(4, 'Vehicle year is required').optional(),
+  vehicleVin: z.string().min(17, 'Valid VIN is required').max(17, 'Valid VIN is required').optional(),
+  coverageLevel: z.enum(['basic', 'standard', 'premium', 'platinum', 'gold', 'silver']).optional(),
+  termLength: z.enum(['12', '24', '36', '48', '60']).optional(),
+  premium: z.string().min(1, 'Premium amount is required').optional(),
+  effectiveDate: z.string().optional(),
+  expiryDate: z.string().optional(),
+  // Note: Fields like tenantId, customerId, productId, vehicleId, coverageOptions are not included
+  // as they are not sent by the frontend and should be preserved from the existing policy
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
     // Health check endpoint for uptime monitoring
     app.get('/healthz', (req, res) => {
@@ -488,6 +507,36 @@ ${urls.map(url => `  <url>
     } catch (error) {
       console.error("Error fetching policy:", error);
       res.status(500).json({ error: "Failed to fetch policy" });
+    }
+  });
+
+  app.put('/api/policies/:id', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // Ensure user is authenticated
+      if (!req.user?.id) {
+        return res.status(401).json({ error: 'Unauthorized: User not authenticated' });
+      }
+
+      const policyId = req.params.id;
+      const policyData = updatePolicySchema.parse(req.body); // Validate with partial schema
+      const userId = req.user.id;
+
+      // Update the policy using policyService
+      const updatedPolicy = await policyService.updatePolicy(policyId, {
+        ...policyData,
+        updatedBy: userId, // Track who updated the policy
+      });
+
+      res.json(updatedPolicy);
+    } catch (error) {
+      console.error('Policy update error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation error', details: error.errors });
+      }
+      if (error instanceof Error && error.message === 'Policy not found') {
+        return res.status(404).json({ error: 'Policy not found' });
+      }
+      res.status(500).json({ error: 'Failed to update policy' });
     }
   });
 
