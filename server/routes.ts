@@ -970,7 +970,7 @@ ${urls.map(url => `  <url>
       if (req.isAuthenticated?.() && req.user?.id) {
         try {
           const user = await storage.getUser(req.user.id);
-          effectiveTenantId = user?.tenantId || tenantId as string;
+          effectiveTenantId = user?.tenantId || 'connected-auto-care';
         } catch (error) {
           console.log('Could not get user tenant, using default');
           effectiveTenantId = tenantId as string || 'connected-auto-care';
