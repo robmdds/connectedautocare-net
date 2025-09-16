@@ -728,67 +728,60 @@ ${urls.map(url => `  <url>
   // Analytics API
   app.get('/api/analytics/dashboard', requireAuth, async (req: AuthRequest, res) => {
     try {
-      // Return sample analytics data for testing (remove isAuthenticated temporarily)
-      const sampleAnalytics = {
-        totalPolicies: 1247,
-        activePolicies: 1089,
-        totalClaims: 187,
-        pendingClaims: 23,
-        totalRevenue: 2847392.50,
-        monthlyRevenue: 234567.80,
-        lossRatio: 0.68,
-        combinedRatio: 0.94,
-        customerSatisfaction: 4.7,
-        retentionRate: 0.92,
-        averageClaimAmount: 1825.40,
-        processingTime: 5.2,
-        recentActivity: [
-          {
-            id: 1,
-            type: 'policy_issued',
-            description: 'New VSC policy issued - VSC-1755185348873',
-            timestamp: '2025-08-14T23:42:28.873Z',
-            amount: '$2,349.99'
-          },
-          {
-            id: 2,
-            type: 'claim_filed',
-            description: 'Claim filed for policy VSC-1755184920051',
-            timestamp: '2025-08-14T22:15:20.051Z',
-            amount: '$1,235.00'
-          },
-          {
-            id: 3,
-            type: 'payment_received',
-            description: 'Payment processed for VSC-1755183825101',
-            timestamp: '2025-08-14T21:03:45.101Z',
-            amount: '$1,299.99'
-          }
-        ],
-        chartData: {
-          policyTrends: [
-            { month: 'Jan', policies: 89, revenue: 187420 },
-            { month: 'Feb', policies: 102, revenue: 214680 },
-            { month: 'Mar', policies: 118, revenue: 248920 },
-            { month: 'Apr', policies: 134, revenue: 283560 },
-            { month: 'May', policies: 156, revenue: 327840 },
-            { month: 'Jun', policies: 178, revenue: 374220 },
-            { month: 'Jul', policies: 203, revenue: 427830 },
-            { month: 'Aug', policies: 267, revenue: 562490 }
-          ],
-          claimsByStatus: [
-            { status: 'Approved', count: 142, percentage: 76 },
-            { status: 'Pending', count: 23, percentage: 12 },
-            { status: 'Under Review', count: 15, percentage: 8 },
-            { status: 'Denied', count: 7, percentage: 4 }
-          ]
+      const { dateRange, tenantId } = req.query;
+      
+      // Get user's tenant ID if authenticated, otherwise use query param or default
+      let effectiveTenantId: string | undefined;
+      
+      if (req.isAuthenticated?.() && req.user?.id) {
+        try {
+          const user = await storage.getUser(req.user.id);
+          effectiveTenantId = user?.tenantId || tenantId as string;
+        } catch (error) {
+          console.log('Could not get user tenant, using default');
+          effectiveTenantId = tenantId as string || 'default-tenant';
         }
+      } else {
+        effectiveTenantId = tenantId as string || 'default-tenant';
+      }
+
+      // Parse date range if provided
+      let dateFilter;
+      if (dateRange) {
+        const days = parseInt(dateRange as string) || 30;
+        const endDate = new Date();
+        const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        dateFilter = { start: startDate, end: endDate };
+      }
+
+      // Get analytics data using the enhanced service
+      const analytics = await analyticsService.getDashboardMetrics(effectiveTenantId, dateFilter);
+      
+      console.log(`Analytics data retrieved for tenant: ${effectiveTenantId}`, {
+        totalPolicies: analytics.totalPolicies,
+        totalRevenue: analytics.totalRevenue
+      });
+
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching dashboard analytics:', error);
+      
+      // Return fallback data instead of error to prevent frontend crashes
+      const fallbackAnalytics = {
+        totalPolicies: 0,
+        activePolicies: 0,
+        totalClaims: 0,
+        pendingClaims: 0,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
+        avgProcessingTime: 0,
+        customerSatisfaction: 0,
+        retentionRate: 0,
+        lossRatio: 0,
+        message: 'Using fallback data due to database error'
       };
       
-      res.json(sampleAnalytics);
-    } catch (error) {
-      console.error("Analytics error:", error);
-      res.status(500).json({ error: "Failed to fetch analytics" });
+      res.json(fallbackAnalytics);
     }
   });
 
@@ -3161,7 +3154,7 @@ How can I help you today?`;
   });
 
   // Advanced Analytics API Routes
-  app.get('/api/analytics/dashboard', async (req, res) => {
+  app.get('/api/analytics/dashboard', attachUser, async (req: AuthRequest, res) => {
     try {
       const { dateRange } = req.query;
       const days = parseInt(dateRange as string) || 30;
@@ -3211,69 +3204,90 @@ How can I help you today?`;
     }
   });
 
-  app.get('/api/analytics/kpi-metrics', async (req, res) => {
+  app.get('/api/analytics/kpi-metrics', attachUser, async (req: AuthRequest, res) => {
     try {
       const { dateRange } = req.query;
       
-      // Mock KPI metrics with targets and trends
+      // Get tenant ID
+      let tenantId = 'default-tenant';
+      if (req.isAuthenticated?.() && req.user?.id) {
+        try {
+          const user = await storage.getUser(req.user.id);
+          tenantId = user?.tenantId || 'default-tenant';
+        } catch (error) {
+          console.log('Using default tenant for KPI metrics');
+        }
+      }
+
+      // Get current and previous period data for comparison
+      const currentMetrics = await analyticsService.getDashboardMetrics(tenantId);
+      
+      // Calculate previous period (simplified - would need more sophisticated date handling in production)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+      const previousMetrics = await analyticsService.getDashboardMetrics(tenantId, {
+        start: sixtyDaysAgo,
+        end: thirtyDaysAgo
+      });
+
       const kpiMetrics = [
         {
           id: 'revenue',
           name: 'Total Revenue',
-          value: 4250000,
-          previousValue: 3890000,
+          value: currentMetrics.totalRevenue || 0,
+          previousValue: previousMetrics.totalRevenue || 0,
           format: 'currency',
-          trend: 'up',
-          target: 4500000,
+          trend: (currentMetrics.totalRevenue || 0) >= (previousMetrics.totalRevenue || 0) ? 'up' : 'down',
+          target: Math.round((currentMetrics.totalRevenue || 0) * 1.1), // 10% growth target
           description: 'Total premium revenue collected'
         },
         {
           id: 'policies',
           name: 'Active Policies',
-          value: 2847,
-          previousValue: 2654,
+          value: currentMetrics.activePolicies || 0,
+          previousValue: previousMetrics.activePolicies || 0,
           format: 'number',
-          trend: 'up',
-          target: 3000,
+          trend: (currentMetrics.activePolicies || 0) >= (previousMetrics.activePolicies || 0) ? 'up' : 'down',
+          target: Math.round((currentMetrics.activePolicies || 0) * 1.05), // 5% growth target
           description: 'Currently active insurance policies'
         },
         {
           id: 'claims_ratio',
           name: 'Loss Ratio',
-          value: 68.5,
-          previousValue: 72.1,
+          value: Math.round((currentMetrics.lossRatio || 0) * 100 * 10) / 10,
+          previousValue: Math.round((previousMetrics.lossRatio || 0) * 100 * 10) / 10,
           format: 'percentage',
-          trend: 'down',
+          trend: (currentMetrics.lossRatio || 0) <= (previousMetrics.lossRatio || 0) ? 'up' : 'down', // Lower is better
           target: 65.0,
           description: 'Claims paid vs premiums collected'
         },
         {
           id: 'retention',
           name: 'Retention Rate',
-          value: 89.2,
-          previousValue: 87.8,
+          value: Math.round((currentMetrics.retentionRate || 0) * 100 * 10) / 10,
+          previousValue: Math.round((previousMetrics.retentionRate || 0) * 100 * 10) / 10,
           format: 'percentage',
-          trend: 'up',
+          trend: (currentMetrics.retentionRate || 0) >= (previousMetrics.retentionRate || 0) ? 'up' : 'down',
           target: 90.0,
           description: 'Customer retention rate'
         },
         {
           id: 'processing_time',
           name: 'Avg Processing Time',
-          value: 6.8,
-          previousValue: 8.2,
+          value: currentMetrics.avgProcessingTime || 0,
+          previousValue: previousMetrics.avgProcessingTime || 0,
           format: 'number',
-          trend: 'down',
+          trend: (currentMetrics.avgProcessingTime || 0) <= (previousMetrics.avgProcessingTime || 0) ? 'up' : 'down', // Lower is better
           target: 5.0,
           description: 'Average claim processing time in days'
         },
         {
           id: 'profit_margin',
           name: 'Profit Margin',
-          value: 15.8,
-          previousValue: 14.2,
+          value: currentMetrics.profitMargin || 0,
+          previousValue: previousMetrics.profitMargin || 0,
           format: 'percentage',
-          trend: 'up',
+          trend: (currentMetrics.profitMargin || 0) >= (previousMetrics.profitMargin || 0) ? 'up' : 'down',
           target: 18.0,
           description: 'Net profit margin percentage'
         }
@@ -3286,25 +3300,152 @@ How can I help you today?`;
     }
   });
 
-  app.get('/api/analytics/revenue-trends', async (req, res) => {
+
+  app.get('/api/analytics/revenue-trends', attachUser, async (req: AuthRequest, res) => {
     try {
       const { dateRange } = req.query;
       const days = parseInt(dateRange as string) || 30;
       
-      // Generate revenue trend data
-      const revenueTrends = Array.from({ length: days }, (_, i) => ({
-        date: format(subDays(new Date(), days - i), 'MMM dd'),
-        revenue: Math.floor(Math.random() * 50000) + 100000,
-        policies: Math.floor(Math.random() * 20) + 10,
-        claims: Math.floor(Math.random() * 5) + 2
-      }));
+      let tenantId = 'default-tenant';
+      if (req.isAuthenticated?.() && req.user?.id) {
+        try {
+          const user = await storage.getUser(req.user.id);
+          tenantId = user?.tenantId || 'default-tenant';
+        } catch (error) {
+          console.log('Using default tenant for revenue trends');
+        }
+      }
 
-      res.json(revenueTrends);
+      const endDate = new Date();
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      
+      const analytics = await analyticsService.getDashboardMetrics(tenantId, {
+        start: startDate,
+        end: endDate
+      });
+
+      // Use the chart data from analytics service
+      const revenueTrends = analytics.chartData?.dailyMetrics || [];
+
+      res.json({
+        trends: revenueTrends,
+        summary: analytics.chartData?.summary || {
+          totalRevenue: analytics.totalRevenue || 0,
+          totalPolicies: analytics.totalPolicies || 0,
+          averageDaily: revenueTrends.length > 0 ? 
+            Math.round((analytics.totalRevenue || 0) / revenueTrends.length) : 0
+        }
+      });
     } catch (error) {
       console.error('Error fetching revenue trends:', error);
       res.status(500).json({ error: 'Failed to fetch revenue trends' });
     }
   });
+
+  // Claims analytics endpoint with real data
+  app.get('/api/analytics/claims-overview', attachUser, async (req: AuthRequest, res) => {
+    try {
+      let tenantId = 'default-tenant';
+      if (req.isAuthenticated?.() && req.user?.id) {
+        try {
+          const user = await storage.getUser(req.user.id);
+          tenantId = user?.tenantId || 'default-tenant';
+        } catch (error) {
+          console.log('Using default tenant for claims overview');
+        }
+      }
+
+      const analytics = await analyticsService.getDashboardMetrics(tenantId);
+
+      const claimsOverview = {
+        totalClaims: analytics.totalClaims || 0,
+        openClaims: analytics.openClaims || 0,
+        pendingClaims: analytics.pendingClaims || 0,
+        averageProcessingTime: analytics.avgProcessingTime || 0,
+        averageClaimAmount: analytics.averageClaimAmount || 0,
+        approvalRate: analytics.approvalRate || 0,
+        lossRatio: (analytics.lossRatio || 0) * 100,
+        claimsTrends: analytics.claimsTrends || []
+      };
+
+      res.json(claimsOverview);
+    } catch (error) {
+      console.error('Error fetching claims overview:', error);
+      res.status(500).json({ error: 'Failed to fetch claims overview' });
+    }
+  });
+
+  app.get('/api/analytics/recent-activity', attachUser, async (req: AuthRequest, res) => {
+    try {
+      const { limit } = req.query;
+      
+      let tenantId = 'default-tenant';
+      if (req.isAuthenticated?.() && req.user?.id) {
+        try {
+          const user = await storage.getUser(req.user.id);
+          tenantId = user?.tenantId || 'default-tenant';
+        } catch (error) {
+          console.log('Using default tenant for recent activity');
+        }
+      }
+
+      const recentActivity = await analyticsService.getRecentActivity(
+        tenantId, 
+        parseInt(limit as string) || 10
+      );
+
+      res.json({
+        activities: recentActivity,
+        total: recentActivity.length
+      });
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+      res.status(500).json({ error: 'Failed to fetch recent activity' });
+    }
+  });
+
+  // Export analytics data endpoint
+  app.get('/api/analytics/export', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { format, reportType, dateRange } = req.query;
+      
+      const user = await storage.getUser(req.user!.id);
+      const tenantId = user?.tenantId || 'default-tenant';
+
+      const analytics = await analyticsService.getDashboardMetrics(tenantId);
+      
+      if (format === 'json') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=analytics-${Date.now()}.json`);
+        res.json(analytics);
+      } else if (format === 'csv') {
+        // Basic CSV export of key metrics
+        const csvData = [
+          ['Metric', 'Value'],
+          ['Total Policies', analytics.totalPolicies || 0],
+          ['Active Policies', analytics.activePolicies || 0],
+          ['Total Revenue', analytics.totalRevenue || 0],
+          ['Monthly Revenue', analytics.monthlyRevenue || 0],
+          ['Average Processing Time', analytics.avgProcessingTime || 0],
+          ['Customer Satisfaction', analytics.customerSatisfaction || 0],
+          ['Retention Rate', analytics.retentionRate || 0],
+          ['Loss Ratio', analytics.lossRatio || 0]
+        ];
+        
+        const csvString = csvData.map(row => row.join(',')).join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=analytics-${Date.now()}.csv`);
+        res.send(csvString);
+      } else {
+        res.status(400).json({ error: 'Invalid format. Use json or csv.' });
+      }
+    } catch (error) {
+      console.error('Error exporting analytics:', error);
+      res.status(500).json({ error: 'Failed to export analytics data' });
+    }
+  });
+
 
   app.get('/api/analytics/policy-breakdown', async (req, res) => {
     try {
