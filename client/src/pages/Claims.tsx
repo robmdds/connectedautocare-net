@@ -68,11 +68,12 @@ const claimFormSchema = z.object({
   dateOfLoss: z.string().min(1, "Date of loss is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   estimatedAmount: z.string().optional(),
+  status: z.enum(["open", "review", "awaiting_docs", "estimate", "decision", "approved", "denied", "payout", "closed"]).default("open"),
 });
 
 // Form schema for updating claims
 const updateClaimFormSchema = z.object({
-  status: z.enum(["submitted", "under_review", "approved", "denied", "settled", "closed"]),
+  status: z.enum(["open", "review", "awaiting_docs", "estimate", "decision", "approved", "denied", "payout", "closed"]),
   actualAmount: z.string().optional(),
   adjusterNotes: z.string().optional(),
 });
@@ -116,7 +117,6 @@ export default function Claims() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fixed useQuery with proper queryFn
   const { data: claims, isLoading, error } = useQuery({
     queryKey: ["claims"],
     queryFn: fetchClaims,
@@ -135,13 +135,14 @@ export default function Claims() {
       dateOfLoss: "",
       description: "",
       estimatedAmount: "",
+      status: "open",
     },
   });
 
   const updateForm = useForm<UpdateClaimFormData>({
     resolver: zodResolver(updateClaimFormSchema),
     defaultValues: {
-      status: "submitted",
+      status: "open",
       actualAmount: "",
       adjusterNotes: "",
     },
@@ -205,7 +206,7 @@ export default function Claims() {
   useEffect(() => {
     if (selectedClaim && showProcessClaimModal) {
       updateForm.reset({
-        status: selectedClaim.status as any || "submitted",
+        status: selectedClaim.status as any || "open",
         actualAmount: selectedClaim.actualAmount ? selectedClaim.actualAmount.toString() : "",
         adjusterNotes: selectedClaim.adjusterNotes || "",
       });
@@ -262,12 +263,9 @@ export default function Claims() {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "submitted":
       case "open":
         return "default";
-      case "under_review":
       case "review":
-        return "secondary";
       case "awaiting_docs":
       case "estimate":
       case "decision":
@@ -276,7 +274,6 @@ export default function Claims() {
         return "default";
       case "denied":
         return "destructive";
-      case "settled":
       case "payout":
         return "default";
       case "closed":
@@ -409,16 +406,19 @@ export default function Claims() {
                   </div>
                   <div className="flex space-x-4 text-sm">
                     <span className="text-blue-600">
-                      Open: {claims.filter((c: Claim) => ['submitted', 'under_review', 'open'].includes(c.status)).length}
+                      Open: {claims.filter((c: Claim) => ['open', 'review', 'awaiting_docs', 'estimate', 'decision'].includes(c.status)).length}
                     </span>
                     <span className="text-green-600">
                       Approved: {claims.filter((c: Claim) => c.status === 'approved').length}
                     </span>
                     <span className="text-orange-600">
-                      Settled: {claims.filter((c: Claim) => c.status === 'settled').length}
+                      Payout: {claims.filter((c: Claim) => c.status === 'payout').length}
                     </span>
                     <span className="text-red-600">
                       Denied: {claims.filter((c: Claim) => c.status === 'denied').length}
+                    </span>
+                    <span className="text-gray-600">
+                      Closed: {claims.filter((c: Claim) => c.status === 'closed').length}
                     </span>
                   </div>
                 </div>
@@ -525,12 +525,12 @@ export default function Claims() {
                 <div className="text-center">
                   <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {searchTerm ? 'No claims found' : 'No claims yet'}
+                    {searchTerm ? "No claims found" : "No claims yet"}
                   </h3>
                   <p className="text-gray-500 mb-4">
                     {searchTerm
-                      ? 'Try adjusting your search criteria'
-                      : 'Claims will appear here when customers file them'}
+                      ? "Try adjusting your search criteria"
+                      : "Start by filing your first claim or generating claims from policies"}
                   </p>
                   <Button onClick={() => setShowNewClaimModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -545,7 +545,7 @@ export default function Claims() {
 
       {/* View Claim Modal */}
       <Dialog open={showViewClaimModal} onOpenChange={setShowViewClaimModal}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Claim Details - {selectedClaim?.claimNumber}</DialogTitle>
             <DialogDescription>View Claim Modal</DialogDescription>
@@ -554,14 +554,14 @@ export default function Claims() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Claim Number</p>
-                  <p className="font-medium">{selectedClaim.claimNumber}</p>
-                </div>
-                <div>
                   <p className="text-sm font-medium text-gray-500">Status</p>
                   <Badge variant={getStatusColor(selectedClaim.status)}>
                     {selectedClaim.status?.replace('_', ' ') || 'Unknown'}
                   </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Submitted</p>
+                  <p>{selectedClaim.submittedAt ? new Date(selectedClaim.submittedAt).toLocaleDateString() : new Date(selectedClaim.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
@@ -725,11 +725,14 @@ export default function Claims() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="submitted">Submitted</SelectItem>
-                              <SelectItem value="under_review">Under Review</SelectItem>
+                              <SelectItem value="open">Open</SelectItem>
+                              <SelectItem value="review">Review</SelectItem>
+                              <SelectItem value="awaiting_docs">Awaiting Docs</SelectItem>
+                              <SelectItem value="estimate">Estimate</SelectItem>
+                              <SelectItem value="decision">Decision</SelectItem>
                               <SelectItem value="approved">Approved</SelectItem>
                               <SelectItem value="denied">Denied</SelectItem>
-                              <SelectItem value="settled">Settled</SelectItem>
+                              <SelectItem value="payout">Payout</SelectItem>
                               <SelectItem value="closed">Closed</SelectItem>
                             </SelectContent>
                           </Select>
