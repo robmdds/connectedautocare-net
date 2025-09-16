@@ -652,6 +652,7 @@ ${urls.map(url => `  <url>
       });
     }
   });
+
   // Claims Management API
   app.post('/api/claims', requireAuth, async (req: AuthRequest, res) => {
     try {
@@ -710,7 +711,7 @@ ${urls.map(url => `  <url>
         description: claimData.description,
         incidentDate: claimData.dateOfLoss ? new Date(claimData.dateOfLoss) : new Date(),
         claimAmount: claimData.estimatedAmount,
-        status: 'submitted'
+        status: 'open'
       });
       
       console.log('Claim created successfully:', newClaim.claimNumber);
