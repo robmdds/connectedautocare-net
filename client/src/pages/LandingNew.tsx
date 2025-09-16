@@ -183,24 +183,26 @@ export default function LandingNew() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+          // Call the correct logout endpoint
+          const response = await fetch('/api/auth/logout', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+          });
 
-      if (response.ok) {
-        // Clear client-side auth data
-        localStorage.removeItem("authToken");
-        setLocation("/"); // Redirect to home
-      } else {
-        console.error("Logout failed:", await response.text());
+          if (response.ok) {
+              console.log('Logout successful');
+          } else {
+              console.error('Logout failed:', await response.text());
+          }
+      } catch (error) {
+          console.error('Logout error:', error);
+      } finally {
+          // Always redirect to home regardless of logout success/failure
+          setLocation('/');
       }
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
   };
 
   const handleDashboard = () => {
