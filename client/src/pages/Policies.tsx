@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -428,7 +428,7 @@ export default function Policies() {
                     <div>
                       <p className="text-sm font-medium text-gray-500">Premium</p>
                       <p className="text-sm text-gray-900 font-semibold">
-                        ${parseFloat(policy.premium || '0').toLocaleString()}
+                        ${policy.premium}
                       </p>
                     </div>
                   </div>
@@ -493,6 +493,7 @@ export default function Policies() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Policy Details</DialogTitle>
+            <DialogDescription>View Policy Modal</DialogDescription>
           </DialogHeader>
           {selectedPolicy && (
             <div className="space-y-6">
@@ -536,7 +537,7 @@ export default function Policies() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Premium</p>
-                    <p className="font-semibold">${parseFloat(selectedPolicy.premium || '0').toLocaleString()}</p>
+                    <p className="font-semibold">${selectedPolicy.premium}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Coverage Level</p>
@@ -604,6 +605,7 @@ export default function Policies() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Policy {selectedPolicy?.policyNumber}</DialogTitle>
+            <DialogDescription>Edit Policy Modal</DialogDescription>
           </DialogHeader>
           {selectedPolicy && (
             <Form {...form}>
@@ -856,6 +858,7 @@ export default function Policies() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Policy</DialogTitle>
+            <DialogDescription>Create Policy Modal</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

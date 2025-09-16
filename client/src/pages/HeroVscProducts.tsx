@@ -11,9 +11,51 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Shield, Car, Home, CheckCircle, AlertCircle, Phone, Globe } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Shield, Car, Home, CheckCircle, AlertCircle, Phone, Globe, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// API fetch functions
+const fetchHeroVscProducts = async () => {
+  const response = await fetch('/api/hero-vsc/products');
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+const decodeVin = async (vin: string) => {
+  const response = await fetch('/api/vehicles/decode', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ vin }),
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to decode VIN');
+  }
+  
+  return response.json();
+};
+
+const generateHeroVscQuote = async (quoteData: any) => {
+  const response = await fetch('/api/hero-vsc/quotes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(quoteData),
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to generate quote');
+  }
+  
+  return response.json();
+};
 
 // Hero VSC product configuration schema
 const heroVscQuoteSchema = z.object({
@@ -35,34 +77,81 @@ const heroVscQuoteSchema = z.object({
 
 type HeroVscQuoteForm = z.infer<typeof heroVscQuoteSchema>;
 
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  features?: string[];
+  vehicleTypes?: string[];
+  coverageOptions?: CoverageOption[];
+  claimsProcess?: {
+    phone: string;
+    website?: string;
+    timeLimit: string;
+  };
+}
+
+interface CoverageOption {
+  name: string;
+  description: string;
+  options: string[];
+}
+
+interface VehicleData {
+  year: string;
+  make: string;
+  model: string;
+  trim?: string;
+  vin?: string;
+}
+
+interface QuoteResult {
+  quote: {
+    quoteNumber: string;
+    id: string;
+  };
+  productDetails: {
+    name: string;
+  };
+  ratingResult: {
+    basePremium: number;
+    taxes: number;
+    fees: number;
+    totalPremium: number;
+  };
+}
+
 export default function HeroVscProducts() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [vehicleData, setVehicleData] = useState<any>(null);
-  const [quoteResult, setQuoteResult] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [vehicleData, setVehicleData] = useState<VehicleData | null>(null);
+  const [quoteResult, setQuoteResult] = useState<QuoteResult | null>(null);
 
   const form = useForm<HeroVscQuoteForm>({
     resolver: zodResolver(heroVscQuoteSchema),
     defaultValues: {
-      customerAddress: {},
+      customerAddress: {
+        street: '',
+        city: '',
+        state: '',
+        zip: '',
+      },
     },
   });
 
-  // Fetch Hero VSC products
-  const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['/api/hero-vsc/products'],
+  // Fixed useQuery with proper queryFn
+  const { data: products, isLoading: productsLoading, error: productsError } = useQuery({
+    queryKey: ['hero-vsc-products'],
+    queryFn: fetchHeroVscProducts,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // VIN decode mutation
   const vinDecodeMutation = useMutation({
-    mutationFn: async (vin: string) => {
-      return await apiRequest('/api/vehicles/decode', {
-        method: 'POST',
-        body: JSON.stringify({ vin }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-    },
+    mutationFn: decodeVin,
     onSuccess: (data) => {
       setVehicleData(data);
       toast({
@@ -70,10 +159,11 @@ export default function HeroVscProducts() {
         description: `${data.year} ${data.make} ${data.model}`,
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('VIN decode error:', error);
       toast({
         title: "VIN Decode Failed",
-        description: "Unable to decode VIN. You can still continue with manual entry.",
+        description: error.message || "Unable to decode VIN. You can still continue with manual entry.",
         variant: "destructive",
       });
     },
@@ -97,53 +187,88 @@ export default function HeroVscProducts() {
         coverageSelections.vehiclescope = quoteData.vehicleScope;
       }
 
-      return await apiRequest('/api/hero-vsc/quotes', {
-        method: 'POST',
-        body: JSON.stringify({
-          productId,
-          coverageSelections,
-          vehicleData,
-          customerData,
-        }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const requestData = {
+        productId,
+        coverageSelections,
+        vehicleData: vehicleVin ? { ...vehicleData, vin: vehicleVin } : vehicleData,
+        customerData: {
+          ...customerData,
+          vehicleVin, // Include VIN in customer data as well
+        },
+      };
+
+      console.log('Sending quote request:', requestData);
+      return await generateHeroVscQuote(requestData);
     },
     onSuccess: (data) => {
+      console.log('Quote generated successfully:', data);
       setQuoteResult(data);
       toast({
         title: "Quote Generated Successfully",
-        description: `Premium: $${data.ratingResult.totalPremium.toFixed(2)}`,
+        description: `Premium: $${data.ratingResult?.totalPremium?.toFixed(2) || 'N/A'}`,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Quote generation error:', error);
       toast({
         title: "Quote Generation Failed",
-        description: "Unable to generate quote. Please check your information and try again.",
+        description: error.message || "Unable to generate quote. Please check your information and try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleProductSelect = (product: any) => {
+  const handleProductSelect = (product: Product) => {
+    console.log('Product selected:', product);
     setSelectedProduct(product);
     form.setValue('productId', product.id);
     setQuoteResult(null);
+    // Clear vehicle data when switching products
+    setVehicleData(null);
   };
 
   const handleVinDecode = () => {
     const vin = form.getValues('vehicleVin');
     if (vin && vin.length === 17) {
+      console.log('Decoding VIN:', vin);
       vinDecodeMutation.mutate(vin);
+    } else {
+      toast({
+        title: "Invalid VIN",
+        description: "Please enter a valid 17-character VIN",
+        variant: "destructive",
+      });
     }
   };
 
   const onSubmit = (data: HeroVscQuoteForm) => {
+    console.log('Form submitted with data:', data);
+    
+    // Validate required fields
+    if (!data.productId) {
+      toast({
+        title: "Product Required",
+        description: "Please select a product before generating a quote.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!data.termYears) {
+      toast({
+        title: "Term Required", 
+        description: "Please select a term length.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     quoteMutation.mutate(data);
   };
 
   const getProductIcon = (category: string) => {
-    switch (category) {
+    switch (category?.toLowerCase()) {
       case 'auto': return <Car className="h-6 w-6" />;
       case 'home': return <Home className="h-6 w-6" />;
       default: return <Shield className="h-6 w-6" />;
@@ -159,9 +284,55 @@ export default function HeroVscProducts() {
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <Loader2 className="animate-spin h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
             <p>Loading Hero VSC products...</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (productsError) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="w-96">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Products</h2>
+                <p className="text-gray-600 mb-4">
+                  {productsError instanceof Error ? productsError.message : 'Failed to load Hero VSC products'}
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!products || Object.keys(products).length === 0) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="w-96">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-600 mb-2">No Products Available</h2>
+                <p className="text-gray-500 mb-4">
+                  No Hero VSC products are currently available.
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                  Refresh
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -181,19 +352,19 @@ export default function HeroVscProducts() {
 
       {!selectedProduct ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products && Object.entries(products).map(([key, product]: [string, any]) => (
+          {Object.entries(products).map(([key, product]: [string, any]) => (
             <Card key={key} className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-blue-200">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getProductIcon(product.category)}
                     <Badge variant={product.category === 'auto' ? 'default' : 'secondary'}>
-                      {product.category.toUpperCase()}
+                      {product.category?.toUpperCase() || 'PRODUCT'}
                     </Badge>
                   </div>
                 </div>
-                <CardTitle className="text-lg">{product.name}</CardTitle>
-                <CardDescription>{product.description}</CardDescription>
+                <CardTitle className="text-lg">{product.name || formatProductId(key)}</CardTitle>
+                <CardDescription>{product.description || 'Hero VSC Protection Plan'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -205,7 +376,12 @@ export default function HeroVscProducts() {
                           <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                           <span>{feature}</span>
                         </li>
-                      ))}
+                      )) || (
+                        <li className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <span>Comprehensive coverage</span>
+                        </li>
+                      )}
                     </ul>
                   </div>
                   
@@ -228,7 +404,7 @@ export default function HeroVscProducts() {
                   )}
 
                   <Button 
-                    onClick={() => handleProductSelect(product)} 
+                    onClick={() => handleProductSelect({ ...product, id: key })} 
                     className="w-full"
                   >
                     Select This Product
@@ -246,12 +422,17 @@ export default function HeroVscProducts() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {getProductIcon(selectedProduct.category)}
-                  <Badge>{selectedProduct.category.toUpperCase()}</Badge>
+                  <Badge>{selectedProduct.category?.toUpperCase() || 'PRODUCT'}</Badge>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setSelectedProduct(null)}
+                  onClick={() => {
+                    setSelectedProduct(null);
+                    setQuoteResult(null);
+                    setVehicleData(null);
+                    form.reset();
+                  }}
                 >
                   Change Product
                 </Button>
@@ -269,21 +450,26 @@ export default function HeroVscProducts() {
                       <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{feature}</span>
                     </li>
-                  ))}
+                  )) || (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">Comprehensive vehicle service contract coverage</span>
+                    </li>
+                  )}
                 </ul>
               </div>
 
               {/* Coverage Options */}
-              {selectedProduct.coverageOptions && (
+              {selectedProduct.coverageOptions && selectedProduct.coverageOptions.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-3">Coverage Options:</h4>
                   <div className="space-y-3">
-                    {selectedProduct.coverageOptions.map((option: any, index: number) => (
+                    {selectedProduct.coverageOptions.map((option: CoverageOption, index: number) => (
                       <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <h5 className="font-medium">{option.name}</h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{option.description}</p>
                         <div className="flex flex-wrap gap-1">
-                          {option.options.map((opt: string, optIndex: number) => (
+                          {option.options?.map((opt: string, optIndex: number) => (
                             <Badge key={optIndex} variant="outline" className="text-xs">
                               {opt}
                             </Badge>
@@ -332,10 +518,10 @@ export default function HeroVscProducts() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   {/* Coverage Selections */}
-                  {selectedProduct.coverageOptions?.map((option: any, index: number) => {
-                    const fieldName = option.name.replace(/\s+/g, '').toLowerCase() as keyof HeroVscQuoteForm;
+                  {selectedProduct.coverageOptions?.map((option: CoverageOption, index: number) => {
+                    const fieldName = option.name.replace(/\s+/g, '').toLowerCase();
                     
-                    if (fieldName === 'termoptions') {
+                    if (fieldName === 'termoptions' || fieldName.includes('term')) {
                       return (
                         <FormField
                           key={index}
@@ -343,15 +529,15 @@ export default function HeroVscProducts() {
                           name="termYears"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{option.name}</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormLabel>{option.name} *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder={`Select ${option.name.toLowerCase()}`} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {option.options.map((opt: string) => (
+                                  {option.options?.map((opt: string) => (
                                     <SelectItem key={opt} value={opt}>
                                       {opt}
                                     </SelectItem>
@@ -365,7 +551,7 @@ export default function HeroVscProducts() {
                       );
                     }
                     
-                    if (fieldName === 'deductiblecoverage') {
+                    if (fieldName === 'deductiblecoverage' || fieldName.includes('deductible')) {
                       return (
                         <FormField
                           key={index}
@@ -374,14 +560,14 @@ export default function HeroVscProducts() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>{option.name}</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder={`Select ${option.name.toLowerCase()}`} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {option.options.map((opt: string) => (
+                                  {option.options?.map((opt: string) => (
                                     <SelectItem key={opt} value={opt}>
                                       {opt}
                                     </SelectItem>
@@ -395,7 +581,7 @@ export default function HeroVscProducts() {
                       );
                     }
 
-                    if (fieldName === 'vehiclescope') {
+                    if (fieldName === 'vehiclescope' || fieldName.includes('vehicle') || fieldName.includes('scope')) {
                       return (
                         <FormField
                           key={index}
@@ -404,14 +590,14 @@ export default function HeroVscProducts() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>{option.name}</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder={`Select ${option.name.toLowerCase()}`} />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {option.options.map((opt: string) => (
+                                  {option.options?.map((opt: string) => (
                                     <SelectItem key={opt} value={opt}>
                                       {opt}
                                     </SelectItem>
@@ -427,6 +613,34 @@ export default function HeroVscProducts() {
                     
                     return null;
                   })}
+
+                  {/* Manual term selection if no coverage options */}
+                  {(!selectedProduct.coverageOptions || selectedProduct.coverageOptions.length === 0) && (
+                    <FormField
+                      control={form.control}
+                      name="termYears"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Term Length *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select term length" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="12">12 Months</SelectItem>
+                              <SelectItem value="24">24 Months</SelectItem>
+                              <SelectItem value="36">36 Months</SelectItem>
+                              <SelectItem value="48">48 Months</SelectItem>
+                              <SelectItem value="60">60 Months</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   <Separator />
 
@@ -454,7 +668,14 @@ export default function HeroVscProducts() {
                                 onClick={handleVinDecode}
                                 disabled={!field.value || field.value.length !== 17 || vinDecodeMutation.isPending}
                               >
-                                {vinDecodeMutation.isPending ? 'Decoding...' : 'Decode'}
+                                {vinDecodeMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    Decoding...
+                                  </>
+                                ) : (
+                                  'Decode'
+                                )}
                               </Button>
                             </div>
                             <FormMessage />
@@ -487,7 +708,7 @@ export default function HeroVscProducts() {
                         name="customerName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>Full Name *</FormLabel>
                             <FormControl>
                               <Input placeholder="John Doe" {...field} />
                             </FormControl>
@@ -502,7 +723,7 @@ export default function HeroVscProducts() {
                           name="customerEmail"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email</FormLabel>
+                              <FormLabel>Email *</FormLabel>
                               <FormControl>
                                 <Input type="email" placeholder="john@example.com" {...field} />
                               </FormControl>
@@ -516,7 +737,7 @@ export default function HeroVscProducts() {
                           name="customerPhone"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Phone</FormLabel>
+                              <FormLabel>Phone *</FormLabel>
                               <FormControl>
                                 <Input placeholder="(555) 123-4567" {...field} />
                               </FormControl>
@@ -531,7 +752,7 @@ export default function HeroVscProducts() {
                         name="customerAddress.street"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Street Address</FormLabel>
+                            <FormLabel>Street Address *</FormLabel>
                             <FormControl>
                               <Input placeholder="123 Main St" {...field} />
                             </FormControl>
@@ -546,7 +767,7 @@ export default function HeroVscProducts() {
                           name="customerAddress.city"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>City</FormLabel>
+                              <FormLabel>City *</FormLabel>
                               <FormControl>
                                 <Input placeholder="New York" {...field} />
                               </FormControl>
@@ -560,7 +781,7 @@ export default function HeroVscProducts() {
                           name="customerAddress.state"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>State</FormLabel>
+                              <FormLabel>State *</FormLabel>
                               <FormControl>
                                 <Input placeholder="NY" maxLength={2} {...field} />
                               </FormControl>
@@ -574,7 +795,7 @@ export default function HeroVscProducts() {
                           name="customerAddress.zip"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>ZIP Code</FormLabel>
+                              <FormLabel>ZIP Code *</FormLabel>
                               <FormControl>
                                 <Input placeholder="10001" {...field} />
                               </FormControl>
@@ -591,7 +812,14 @@ export default function HeroVscProducts() {
                     className="w-full" 
                     disabled={quoteMutation.isPending}
                   >
-                    {quoteMutation.isPending ? 'Generating Quote...' : 'Get Quote'}
+                    {quoteMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating Quote...
+                      </>
+                    ) : (
+                      'Get Quote'
+                    )}
                   </Button>
                 </form>
               </Form>
@@ -606,29 +834,29 @@ export default function HeroVscProducts() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Quote Number:</span>
-                      <span className="font-mono">{quoteResult.quote.quoteNumber}</span>
+                      <span className="font-mono">{quoteResult.quote?.quoteNumber || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Product:</span>
-                      <span>{quoteResult.productDetails.name}</span>
+                      <span>{quoteResult.productDetails?.name || selectedProduct.name}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Base Premium:</span>
-                      <span>${quoteResult.ratingResult.basePremium.toFixed(2)}</span>
+                      <span>${quoteResult.ratingResult?.basePremium?.toFixed(2) || '0.00'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Taxes:</span>
-                      <span>${quoteResult.ratingResult.taxes.toFixed(2)}</span>
+                      <span>${quoteResult.ratingResult?.taxes?.toFixed(2) || '0.00'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Fees:</span>
-                      <span>${quoteResult.ratingResult.fees.toFixed(2)}</span>
+                      <span>${quoteResult.ratingResult?.fees?.toFixed(2) || '0.00'}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total Premium:</span>
                       <span className="text-blue-600 dark:text-blue-400">
-                        ${quoteResult.ratingResult.totalPremium.toFixed(2)}
+                        ${quoteResult.ratingResult?.totalPremium?.toFixed(2) || '0.00'}
                       </span>
                     </div>
                   </div>

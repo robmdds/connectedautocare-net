@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -548,6 +548,7 @@ export default function Claims() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Claim Details - {selectedClaim?.claimNumber}</DialogTitle>
+            <DialogDescription>View Claim Modal</DialogDescription>
           </DialogHeader>
           {selectedClaim && (
             <div className="space-y-6">
@@ -703,6 +704,7 @@ export default function Claims() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Process Claim - {selectedClaim?.claimNumber}</DialogTitle>
+            <DialogDescription>Process Claim Modal</DialogDescription>
           </DialogHeader>
           {selectedClaim && (
             <Form {...updateForm}>
@@ -787,6 +789,7 @@ export default function Claims() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>File New Claim</DialogTitle>
+            <DialogDescription>New Claim Modal</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
