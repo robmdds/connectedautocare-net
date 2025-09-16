@@ -10,10 +10,52 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FileText, Search, Plus, Shield, Calendar } from "lucide-react";
+import { FileText, Search, Plus, Shield, Calendar, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+
+// API fetch functions
+const fetchPolicies = async () => {
+  const response = await fetch('/api/policies');
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+const createPolicy = async (policyData: any) => {
+  const response = await fetch('/api/policies', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(policyData),
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+};
+
+const updatePolicy = async ({ id, ...data }: { id: string; [key: string]: any }) => {
+  const response = await fetch(`/api/policies/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+};
 
 // Form schema for policies
 const policyFormSchema = z.object({
@@ -32,21 +74,49 @@ const policyFormSchema = z.object({
   expirationDate: z.string().optional(),
 });
 
+type PolicyFormData = z.infer<typeof policyFormSchema>;
+
+interface Policy {
+  id: string;
+  policyNumber: string;
+  status: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  productType: string;
+  productName?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: string;
+  vehicleVin?: string;
+  coverageLevel?: string;
+  termLength?: string;
+  premium: string;
+  effectiveDate?: string;
+  expiryDate?: string;
+  renewalDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function Policies() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewPolicyModal, setShowNewPolicyModal] = useState(false);
   const [showViewPolicyModal, setShowViewPolicyModal] = useState(false);
   const [showEditPolicyModal, setShowEditPolicyModal] = useState(false);
-  const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fixed useQuery with proper queryFn
   const { data: policies, isLoading, error } = useQuery({
-    queryKey: ["/api/policies"],
-    retry: false,
+    queryKey: ["policies"],
+    queryFn: fetchPolicies,
+    retry: 3,
+    retryDelay: 1000,
   });
 
-  const form = useForm({
+  const form = useForm<PolicyFormData>({
     resolver: zodResolver(policyFormSchema),
     defaultValues: {
       customerName: "",
@@ -66,11 +136,9 @@ export default function Policies() {
   });
 
   const createPolicyMutation = useMutation({
-    mutationFn: async (policyData) => {
-      return apiRequest("/api/policies", "POST", policyData);
-    },
+    mutationFn: createPolicy,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/policies"] });
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
       setShowNewPolicyModal(false);
       form.reset();
       toast({
@@ -78,7 +146,7 @@ export default function Policies() {
         description: "New policy has been successfully created",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to create policy",
@@ -88,11 +156,9 @@ export default function Policies() {
   });
 
   const updatePolicyMutation = useMutation({
-    mutationFn: async ({ id, ...data }) => {
-      return apiRequest(`/api/policies/${id}`, "PUT", data);
-    },
+    mutationFn: updatePolicy,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/policies"] });
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
       setShowEditPolicyModal(false);
       form.reset();
       toast({
@@ -100,16 +166,11 @@ export default function Policies() {
         description: "Policy has been successfully updated",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Update policy error:', error);
       toast({
         title: "Error",
-        description:
-          error.message === 'Failed to fetch'
-            ? 'Unable to connect to the server. Please try again later.'
-            : error.details
-            ? `Validation error: ${error.details.map((e: any) => e.message).join(', ')}`
-            : error.message || 'Failed to update policy',
+        description: error.message || 'Failed to update policy',
         variant: "destructive",
       });
     },
@@ -121,13 +182,13 @@ export default function Policies() {
         customerName: selectedPolicy.customerName || "",
         customerEmail: selectedPolicy.customerEmail || "",
         customerPhone: selectedPolicy.customerPhone || "",
-        productType: selectedPolicy.productType || "auto_vsc",
+        productType: selectedPolicy.productType as any || "auto_vsc",
         vehicleMake: selectedPolicy.vehicleMake || "",
         vehicleModel: selectedPolicy.vehicleModel || "",
         vehicleYear: selectedPolicy.vehicleYear || "",
         vehicleVin: selectedPolicy.vehicleVin || "",
-        coverageLevel: selectedPolicy.coverageLevel || "standard",
-        termLength: selectedPolicy.termLength || "36",
+        coverageLevel: selectedPolicy.coverageLevel as any || "standard",
+        termLength: selectedPolicy.termLength as any || "36",
         premium: selectedPolicy.premium || "",
         effectiveDate: selectedPolicy.effectiveDate || "",
         expirationDate: selectedPolicy.expiryDate || "",
@@ -135,29 +196,50 @@ export default function Policies() {
     }
   }, [selectedPolicy, showEditPolicyModal, form]);
 
-  const onSubmit = (data) => {
+  const onSubmit = (data: PolicyFormData) => {
     createPolicyMutation.mutate(data);
+  };
+
+  const onUpdateSubmit = (data: PolicyFormData) => {
+    if (selectedPolicy) {
+      updatePolicyMutation.mutate({ id: selectedPolicy.id, ...data });
+    }
   };
 
   const filteredPolicies = Array.isArray(policies)
     ? policies.filter(
-        (policy) =>
+        (policy: Policy) =>
           policy.policyNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          policy.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
+          policy.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          policy.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
 
-  const getStatusColor = (status) => {
-    switch (status) {
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
       case "active":
         return "default";
       case "expired":
         return "secondary";
       case "cancelled":
         return "destructive";
+      case "pending":
+        return "outline";
       default:
         return "outline";
     }
+  };
+
+  const getProductDisplayName = (productType: string) => {
+    const productNames: { [key: string]: string } = {
+      'auto_vsc': 'Auto VSC',
+      'rv_vsc': 'RV VSC',
+      'marine_vsc': 'Marine VSC',
+      'powersports_vsc': 'Powersports VSC',
+      'home_warranty': 'Home Warranty'
+    };
+    
+    return productNames[productType] || productType;
   };
 
   if (error) {
@@ -179,11 +261,21 @@ export default function Policies() {
           <Card>
             <CardContent className="py-8">
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-red-600 mb-2">Authentication Required</h2>
-                <p className="text-gray-600 mb-4">Please sign in to view policy data</p>
-                <a href="/api/login" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                  Sign In
-                </a>
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Policies</h2>
+                <p className="text-gray-600 mb-4">
+                  {error instanceof Error ? error.message : 'Failed to load policies'}
+                </p>
+                <Button onClick={() => window.location.reload()} className="mr-2">
+                  Retry
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowNewPolicyModal(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Policy
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -267,7 +359,7 @@ export default function Policies() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search policies by number or customer name..."
+              placeholder="Search policies by number, customer name, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -275,9 +367,35 @@ export default function Policies() {
           </div>
         </div>
 
+        {/* Policies Count Summary */}
+        {Array.isArray(policies) && policies.length > 0 && (
+          <div className="mb-6">
+            <Card>
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {filteredPolicies.length} of {policies.length} policies
+                  </div>
+                  <div className="flex space-x-4 text-sm">
+                    <span className="text-green-600">
+                      Active: {policies.filter((p: Policy) => p.status === 'active').length}
+                    </span>
+                    <span className="text-orange-600">
+                      Pending: {policies.filter((p: Policy) => p.status === 'pending').length}
+                    </span>
+                    <span className="text-red-600">
+                      Expired: {policies.filter((p: Policy) => p.status === 'expired').length}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="space-y-4">
           {filteredPolicies.length > 0 ? (
-            filteredPolicies.map((policy) => (
+            filteredPolicies.map((policy: Policy) => (
               <Card key={policy.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -286,18 +404,32 @@ export default function Policies() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <p className="text-sm font-medium text-gray-500">Customer</p>
                       <p className="text-sm text-gray-900">{policy.customerName || "N/A"}</p>
+                      <p className="text-xs text-gray-500">{policy.customerEmail || ""}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Product</p>
-                      <p className="text-sm text-gray-900">{policy.productName || "N/A"}</p>
+                      <p className="text-sm text-gray-900">
+                        {policy.productName || getProductDisplayName(policy.productType) || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Vehicle</p>
+                      <p className="text-sm text-gray-900">
+                        {policy.vehicleYear && policy.vehicleMake && policy.vehicleModel 
+                          ? `${policy.vehicleYear} ${policy.vehicleMake} ${policy.vehicleModel}`
+                          : "N/A"
+                        }
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Premium</p>
-                      <p className="text-sm text-gray-900">{policy.premium}</p>
+                      <p className="text-sm text-gray-900 font-semibold">
+                        ${parseFloat(policy.premium || '0').toLocaleString()}
+                      </p>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between">
@@ -343,7 +475,7 @@ export default function Policies() {
                   <p className="text-gray-500 mb-4">
                     {searchTerm
                       ? "Try adjusting your search criteria"
-                      : "Start by creating your first quote to generate policies"}
+                      : "Start by creating your first policy or generating policies from quotes"}
                   </p>
                   <Button onClick={() => setShowNewPolicyModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -358,37 +490,106 @@ export default function Policies() {
 
       {/* View Policy Modal */}
       <Dialog open={showViewPolicyModal} onOpenChange={setShowViewPolicyModal}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Policy Details</DialogTitle>
           </DialogHeader>
           {selectedPolicy && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Policy Number</p>
-                <p>{selectedPolicy.policyNumber}</p>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Policy Number</p>
+                  <p className="font-medium">{selectedPolicy.policyNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Status</p>
+                  <Badge variant={getStatusColor(selectedPolicy.status)}>{selectedPolicy.status}</Badge>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Customer</p>
-                <p>{selectedPolicy.customerName}</p>
+              
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3">Customer Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Name</p>
+                    <p>{selectedPolicy.customerName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Email</p>
+                    <p>{selectedPolicy.customerEmail}</p>
+                  </div>
+                  {selectedPolicy.customerPhone && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Phone</p>
+                      <p>{selectedPolicy.customerPhone}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Product</p>
-                <p>{selectedPolicy.productName}</p>
+
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3">Coverage Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Product</p>
+                    <p>{getProductDisplayName(selectedPolicy.productType)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Premium</p>
+                    <p className="font-semibold">${parseFloat(selectedPolicy.premium || '0').toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Coverage Level</p>
+                    <p>{selectedPolicy.coverageLevel || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Term Length</p>
+                    <p>{selectedPolicy.termLength ? `${selectedPolicy.termLength} months` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Effective Date</p>
+                    <p>{selectedPolicy.effectiveDate ? new Date(selectedPolicy.effectiveDate).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Expiry Date</p>
+                    <p>{selectedPolicy.expiryDate ? new Date(selectedPolicy.expiryDate).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Premium</p>
-                <p>{selectedPolicy.premium}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Effective Date</p>
-                <p>{new Date(selectedPolicy.effectiveDate).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Expiry Date</p>
-                <p>{new Date(selectedPolicy.expiryDate).toLocaleDateString()}</p>
-              </div>
-              <div className="flex justify-end">
+
+              {(selectedPolicy.vehicleMake || selectedPolicy.vehicleModel || selectedPolicy.vehicleYear || selectedPolicy.vehicleVin) && (
+                <div className="border-t pt-4">
+                  <h3 className="font-medium mb-3">Vehicle Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedPolicy.vehicleYear && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Year</p>
+                        <p>{selectedPolicy.vehicleYear}</p>
+                      </div>
+                    )}
+                    {selectedPolicy.vehicleMake && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Make</p>
+                        <p>{selectedPolicy.vehicleMake}</p>
+                      </div>
+                    )}
+                    {selectedPolicy.vehicleModel && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Model</p>
+                        <p>{selectedPolicy.vehicleModel}</p>
+                      </div>
+                    )}
+                    {selectedPolicy.vehicleVin && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">VIN</p>
+                        <p className="font-mono text-sm">{selectedPolicy.vehicleVin}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-4 border-t">
                 <Button variant="outline" onClick={() => setShowViewPolicyModal(false)}>
                   Close
                 </Button>
@@ -407,9 +608,7 @@ export default function Policies() {
           {selectedPolicy && (
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit((data) =>
-                  updatePolicyMutation.mutate({ id: selectedPolicy.id, ...data })
-                )}
+                onSubmit={form.handleSubmit(onUpdateSubmit)}
                 className="space-y-6"
               >
                 <div className="space-y-4">
@@ -460,7 +659,7 @@ export default function Policies() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Product Type *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select product type" />
@@ -548,7 +747,7 @@ export default function Policies() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Coverage Level *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select coverage" />
@@ -573,7 +772,7 @@ export default function Policies() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Term (Months) *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select term" />
@@ -708,7 +907,7 @@ export default function Policies() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Product Type *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select product type" />
@@ -796,7 +995,7 @@ export default function Policies() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Coverage Level *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select coverage" />
@@ -821,7 +1020,7 @@ export default function Policies() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Term (Months) *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select term" />

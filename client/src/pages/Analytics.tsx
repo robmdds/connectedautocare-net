@@ -302,20 +302,6 @@ export default function Analytics() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Debug Information (remove in production) */}
-            {process.env.NODE_ENV === 'development' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Debug: Raw Analytics Data</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto">
-                    {JSON.stringify(analytics, null, 2)}
-                  </pre>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
       </main>

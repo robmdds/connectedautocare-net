@@ -6,15 +6,95 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, UserPlus, Shield, Settings, Loader2, ArrowLeft } from "lucide-react";
+import { Users, UserPlus, Shield, Settings, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 
+// API fetch functions
+const fetchCurrentUser = async () => {
+  const response = await fetch('/api/auth/user');
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+const fetchUsers = async () => {
+  const response = await fetch('/api/users');
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+const updateUser = async ({ userId, userData }: { userId: string; userData: any }) => {
+  const response = await fetch(`/api/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(userData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to update user');
+  }
+
+  return response.json();
+};
+
+const createUser = async (userData: any) => {
+  const response = await fetch('/api/users', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(userData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Failed to create user');
+  }
+
+  return response.json();
+};
+
+// TypeScript interfaces
+interface User {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  role?: string;
+  status?: string;
+  tenantId?: string;
+  profileImageUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+interface EditingUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
+interface NewUser {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 export default function AdminUsers() {
-  const [editingUser, setEditingUser] = useState(null);
+  const [editingUser, setEditingUser] = useState<EditingUser | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<NewUser>({
     firstName: '',
     lastName: '',
     email: '',
@@ -22,65 +102,39 @@ export default function AdminUsers() {
   });
   const queryClient = useQueryClient();
 
+  // Fixed useQuery with proper queryFn
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["current-user"],
+    queryFn: fetchCurrentUser,
     retry: false,
   });
 
-  // Fetch all users from the API
+  // Fixed useQuery with proper queryFn
   const { data: users = [], isLoading, error } = useQuery({
-    queryKey: ["/api/users"],
-    retry: false,
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Mutation for updating users
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, userData }) => {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update user');
-      }
-
-      return response.json();
-    },
+    mutationFn: updateUser,
     onSuccess: () => {
-      queryClient.invalidateQueries(["/api/users"]);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       setIsEditDialogOpen(false);
       setEditingUser(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       alert(`Error updating user: ${error.message}`);
     },
   });
 
   // Mutation for creating users
   const createUserMutation = useMutation({
-    mutationFn: async (userData) => {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create user');
-      }
-
-      return response.json();
-    },
+    mutationFn: createUser,
     onSuccess: () => {
-      queryClient.invalidateQueries(["/api/users"]);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       setIsAddDialogOpen(false);
       setNewUser({
         firstName: '',
@@ -89,7 +143,7 @@ export default function AdminUsers() {
         role: 'user',
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       alert(`Error creating user: ${error.message}`);
     },
   });
@@ -113,7 +167,7 @@ export default function AdminUsers() {
     createUserMutation.mutate(newUser);
   };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     setEditingUser({
       id: user.id,
       firstName: user.firstName || '',
@@ -138,7 +192,7 @@ export default function AdminUsers() {
     });
   };
 
-  const getRoleBadgeColor = (role) => {
+  const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
       case 'agent': return 'bg-blue-100 text-blue-800';
@@ -163,11 +217,15 @@ export default function AdminUsers() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-96">
           <CardContent className="pt-6">
-            <div className="text-center text-red-600">
-              <p className="font-medium">Failed to load users</p>
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <p className="font-medium text-red-600">Failed to load users</p>
               <p className="text-sm text-gray-500 mt-2">
                 {error instanceof Error ? error.message : 'Unknown error occurred'}
               </p>
+              <Button onClick={() => window.location.reload()} className="mt-4">
+                Retry
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -220,7 +278,7 @@ export default function AdminUsers() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {users.filter(u => u.status === 'active' || !u.status).length}
+                  {users.filter((u: User) => u.status === 'active' || !u.status).length}
                 </div>
               </CardContent>
             </Card>
@@ -231,7 +289,7 @@ export default function AdminUsers() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {users.filter(u => u.role === 'admin').length}
+                  {users.filter((u: User) => u.role === 'admin').length}
                 </div>
               </CardContent>
             </Card>
@@ -242,7 +300,7 @@ export default function AdminUsers() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {users.filter(u => u.role === 'agent').length}
+                  {users.filter((u: User) => u.role === 'agent').length}
                 </div>
               </CardContent>
             </Card>
@@ -260,18 +318,22 @@ export default function AdminUsers() {
               {users.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No users found</p>
+                  <p className="text-gray-500 mb-4">No users found</p>
+                  <Button onClick={handleAddUser}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add First User
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {users.map((user) => (
+                  {users.map((user: User) => (
                     <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                       <div className="flex items-center space-x-4">
                         <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                           {user.profileImageUrl ? (
                             <img
                               src={user.profileImageUrl}
-                              alt={`${user.firstName} ${user.lastName}`}
+                              alt={`${user.firstName || ''} ${user.lastName || ''}`}
                               className="h-10 w-10 rounded-full object-cover"
                             />
                           ) : (
@@ -438,6 +500,7 @@ export default function AdminUsers() {
                     setIsEditDialogOpen(false);
                     setEditingUser(null);
                   }}
+                  disabled={updateUserMutation.isPending}
                 >
                   Cancel
                 </Button>
@@ -542,6 +605,7 @@ export default function AdminUsers() {
                     role: 'user',
                   });
                 }}
+                disabled={createUserMutation.isPending}
               >
                 Cancel
               </Button>
