@@ -439,7 +439,7 @@ ${urls.map(url => `  <url>
       const policyNumber = policyData.policyNumber || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
       // Get tenant ID from user context or use default
-      let tenantId = policyData.tenantId || 'default-tenant';
+      let tenantId = policyData.tenantId || 'connected-auto-care';
       if (req.user?.tenantId) {
         tenantId = req.user.tenantId;
       }
@@ -500,7 +500,7 @@ ${urls.map(url => `  <url>
       console.log('Fetching policies from storage...');
       
       // Get user context for tenant filtering
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.user?.tenantId) {
         tenantId = req.user.tenantId;
       }
@@ -684,7 +684,7 @@ ${urls.map(url => `  <url>
       const claimNumber = claimData.claimNumber || `CLM-${Date.now()}`;
       
       // Get tenant ID from user context or use default
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.user?.tenantId) {
         tenantId = req.user.tenantId;
       }
@@ -737,7 +737,7 @@ ${urls.map(url => `  <url>
       console.log('Fetching claims from storage...');
       
       // Get user context for tenant filtering
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.user?.tenantId) {
         tenantId = req.user.tenantId;
       }
@@ -972,10 +972,10 @@ ${urls.map(url => `  <url>
           effectiveTenantId = user?.tenantId || tenantId as string;
         } catch (error) {
           console.log('Could not get user tenant, using default');
-          effectiveTenantId = tenantId as string || 'default-tenant';
+          effectiveTenantId = tenantId as string || 'connected-auto-care';
         }
       } else {
-        effectiveTenantId = tenantId as string || 'default-tenant';
+        effectiveTenantId = tenantId as string || 'connected-auto-care';
       }
 
       // Parse date range if provided
@@ -1234,7 +1234,7 @@ ${urls.map(url => `  <url>
       }
 
       const specialRequest = await specialQuoteRequestService.createSpecialQuoteRequest({
-        tenantId: 'default-tenant', // For now using default tenant
+        tenantId: 'connected-auto-care', // For now using default tenant
         productId: requestData.productId,
         vehicleData: requestData.vehicleData,
         coverageSelections: requestData.coverageSelections || {},
@@ -3442,11 +3442,11 @@ How can I help you today?`;
       const { dateRange } = req.query;
       
       // Get tenant ID
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.isAuthenticated?.() && req.user?.id) {
         try {
           const user = await storage.getUser(req.user.id);
-          tenantId = user?.tenantId || 'default-tenant';
+          tenantId = user?.tenantId || 'connected-auto-care';
         } catch (error) {
           console.log('Using default tenant for KPI metrics');
         }
@@ -3539,11 +3539,11 @@ How can I help you today?`;
       const { dateRange } = req.query;
       const days = parseInt(dateRange as string) || 30;
       
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.isAuthenticated?.() && req.user?.id) {
         try {
           const user = await storage.getUser(req.user.id);
-          tenantId = user?.tenantId || 'default-tenant';
+          tenantId = user?.tenantId || 'connected-auto-care';
         } catch (error) {
           console.log('Using default tenant for revenue trends');
         }
@@ -3578,11 +3578,11 @@ How can I help you today?`;
   // Claims analytics endpoint with real data
   app.get('/api/analytics/claims-overview', attachUser, async (req: AuthRequest, res) => {
     try {
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.isAuthenticated?.() && req.user?.id) {
         try {
           const user = await storage.getUser(req.user.id);
-          tenantId = user?.tenantId || 'default-tenant';
+          tenantId = user?.tenantId || 'connected-auto-care';
         } catch (error) {
           console.log('Using default tenant for claims overview');
         }
@@ -3612,11 +3612,11 @@ How can I help you today?`;
     try {
       const { limit } = req.query;
       
-      let tenantId = 'default-tenant';
+      let tenantId = 'connected-auto-care';
       if (req.isAuthenticated?.() && req.user?.id) {
         try {
           const user = await storage.getUser(req.user.id);
-          tenantId = user?.tenantId || 'default-tenant';
+          tenantId = user?.tenantId || 'connected-auto-care';
         } catch (error) {
           console.log('Using default tenant for recent activity');
         }
@@ -3643,7 +3643,7 @@ How can I help you today?`;
       const { format, reportType, dateRange } = req.query;
       
       const user = await storage.getUser(req.user!.id);
-      const tenantId = user?.tenantId || 'default-tenant';
+      const tenantId = user?.tenantId || 'connected-auto-care';
 
       const analytics = await analyticsService.getDashboardMetrics(tenantId);
       
