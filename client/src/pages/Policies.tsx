@@ -62,6 +62,16 @@ const policyFormSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Valid email is required"),
   customerPhone: z.string().optional(),
+  customerAddress: z.object({
+    street: z.string().min(1, "Street is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    zip: z.string().min(1, "Zip code is required"),
+  }),
+  coverageDetails: z.object({
+    deductible: z.string().optional(),
+    limits: z.record(z.any()).optional(),
+  }).optional(),
   productType: z.enum(["auto_vsc", "rv_vsc", "marine_vsc", "powersports_vsc", "home_warranty"]),
   vehicleMake: z.string().min(1, "Vehicle make is required"),
   vehicleModel: z.string().min(1, "Vehicle model is required"),
@@ -79,10 +89,17 @@ type PolicyFormData = z.infer<typeof policyFormSchema>;
 interface Policy {
   id: string;
   policyNumber: string;
-  status: string;
+  status: "issued" | "active" | "cancelled" | "expired" | "lapsed";
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  customerAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+  coverageDetails: Record<string, any>;
   productType: string;
   productName?: string;
   vehicleMake?: string;
@@ -108,7 +125,6 @@ export default function Policies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fixed useQuery with proper queryFn
   const { data: policies, isLoading, error } = useQuery({
     queryKey: ["policies"],
     queryFn: fetchPolicies,
@@ -122,6 +138,13 @@ export default function Policies() {
       customerName: "",
       customerEmail: "",
       customerPhone: "",
+      customerAddress: {
+        street: "",
+        city: "",
+        state: "",
+        zip: "",
+      },
+      coverageDetails: {},
       productType: "auto_vsc",
       vehicleMake: "",
       vehicleModel: "",
@@ -182,6 +205,8 @@ export default function Policies() {
         customerName: selectedPolicy.customerName || "",
         customerEmail: selectedPolicy.customerEmail || "",
         customerPhone: selectedPolicy.customerPhone || "",
+        customerAddress: selectedPolicy.customerAddress || { street: "", city: "", state: "", zip: "" },
+        coverageDetails: selectedPolicy.coverageDetails || {},
         productType: selectedPolicy.productType as any || "auto_vsc",
         vehicleMake: selectedPolicy.vehicleMake || "",
         vehicleModel: selectedPolicy.vehicleModel || "",
@@ -219,12 +244,14 @@ export default function Policies() {
     switch (status?.toLowerCase()) {
       case "active":
         return "default";
-      case "expired":
-        return "secondary";
+      case "issued":
+        return "outline";
       case "cancelled":
         return "destructive";
-      case "pending":
-        return "outline";
+      case "expired":
+        return "secondary";
+      case "lapsed":
+        return "secondary";
       default:
         return "outline";
     }
@@ -380,11 +407,17 @@ export default function Policies() {
                     <span className="text-green-600">
                       Active: {policies.filter((p: Policy) => p.status === 'active').length}
                     </span>
-                    <span className="text-orange-600">
-                      Pending: {policies.filter((p: Policy) => p.status === 'pending').length}
+                    <span className="text-blue-600">
+                      Issued: {policies.filter((p: Policy) => p.status === 'issued').length}
                     </span>
                     <span className="text-red-600">
+                      Cancelled: {policies.filter((p: Policy) => p.status === 'cancelled').length}
+                    </span>
+                    <span className="text-gray-600">
                       Expired: {policies.filter((p: Policy) => p.status === 'expired').length}
+                    </span>
+                    <span className="text-gray-600">
+                      Lapsed: {policies.filter((p: Policy) => p.status === 'lapsed').length}
                     </span>
                   </div>
                 </div>
@@ -525,6 +558,10 @@ export default function Policies() {
                       <p>{selectedPolicy.customerPhone}</p>
                     </div>
                   )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Address</p>
+                    <p>{selectedPolicy.customerAddress.street}, {selectedPolicy.customerAddress.city}, {selectedPolicy.customerAddress.state} {selectedPolicy.customerAddress.zip}</p>
+                  </div>
                 </div>
               </div>
 
@@ -555,6 +592,12 @@ export default function Policies() {
                     <p className="text-sm font-medium text-gray-500">Expiry Date</p>
                     <p>{selectedPolicy.expiryDate ? new Date(selectedPolicy.expiryDate).toLocaleDateString() : 'N/A'}</p>
                   </div>
+                  {selectedPolicy.coverageDetails?.deductible && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Deductible</p>
+                      <p>${selectedPolicy.coverageDetails.deductible}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -675,6 +718,58 @@ export default function Policies() {
                               <SelectItem value="home_warranty">Home Warranty</SelectItem>
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="customerAddress.street"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Street Address *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="123 Main St" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="customerAddress.city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Anytown" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="customerAddress.state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="CA" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="customerAddress.zip"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zip Code *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="12345" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -831,6 +926,19 @@ export default function Policies() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="coverageDetails.deductible"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deductible</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="100.00" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
@@ -928,6 +1036,58 @@ export default function Policies() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="customerAddress.street"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Street Address *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="123 Main St" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="customerAddress.city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Anytown" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="customerAddress.state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="CA" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="customerAddress.zip"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Zip Code *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="12345" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -1014,92 +1174,105 @@ export default function Policies() {
                           </SelectContent>
                         </Select>
                         <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="termLength"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Term (Months) *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select term" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="12">12 Months</SelectItem>
-                              <SelectItem value="24">24 Months</SelectItem>
-                              <SelectItem value="36">36 Months</SelectItem>
-                              <SelectItem value="48">48 Months</SelectItem>
-                              <SelectItem value="60">60 Months</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="premium"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Premium Amount *</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="termLength"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Term (Months) *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Input {...field} placeholder="1500.00" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select term" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="effectiveDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Effective Date</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="expirationDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expiration Date</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          <SelectContent>
+                            <SelectItem value="12">12 Months</SelectItem>
+                            <SelectItem value="24">24 Months</SelectItem>
+                            <SelectItem value="36">36 Months</SelectItem>
+                            <SelectItem value="48">48 Months</SelectItem>
+                            <SelectItem value="60">60 Months</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="premium"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Premium Amount *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="1500.00" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="effectiveDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Effective Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="expirationDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiration Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="coverageDetails.deductible"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Deductible</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="100.00" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+              </div>
 
-                <div className="flex justify-end space-x-4 pt-6 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowNewPolicyModal(false)}
-                    disabled={createPolicyMutation.isPending}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createPolicyMutation.isPending}>
-                    {createPolicyMutation.isPending ? "Creating..." : "Create Policy"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
+              <div className="flex justify-end space-x-4 pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewPolicyModal(false)}
+                  disabled={createPolicyMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createPolicyMutation.isPending}>
+                  {createPolicyMutation.isPending ? "Creating..." : "Create Policy"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

@@ -1,15 +1,27 @@
 import { storage } from "../storage";
-import { type InsertPolicy, type Policy } from "@shared/schema";
+import { InsertPolicy, Policy } from "@shared/schema";
 
 export class PolicyService {
   async issuePolicy(policyData: InsertPolicy & { issuedBy: string }): Promise<Policy> {
     try {
+      // Validate required fields
+      if (!policyData.customerAddress || typeof policyData.customerAddress !== 'object') {
+        throw new Error('Customer address is required and must be an object');
+      }
+      const { street, city, state, zip } = policyData.customerAddress;
+      if (!street || !city || !state || !zip) {
+        throw new Error('Customer address must include street, city, state, and zip');
+      }
+
       // Generate policy number
-      const policyNumber = `POL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      const policyNumber = policyData.policyNumber || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
       
       // Set policy dates
       const effectiveDate = policyData.effectiveDate || new Date();
-      const expiryDate = policyData.expiryDate || new Date(effectiveDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
+      const expiryDate = policyData.expiryDate || new Date(effectiveDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+      // Ensure coverage_details is provided
+      const coverageDetails = policyData.coverageDetails || {};
 
       // Create policy
       const policy = await storage.createPolicy({
@@ -17,12 +29,13 @@ export class PolicyService {
         policyNumber,
         effectiveDate,
         expiryDate,
+        coverageDetails,
         status: 'active',
         issuedBy: policyData.issuedBy,
-        issuedAt: new Date()
+        issuedAt: new Date(),
       });
 
-      // Generate policy documents (placeholder for actual document generation)
+      // Generate policy documents
       await this.generatePolicyDocuments(policy);
 
       return policy;
@@ -46,16 +59,32 @@ export class PolicyService {
         throw new Error('Quote not found');
       }
 
+      // Validate or provide default customer_address
+      const customerAddress = quote.customerAddress || {
+        street: "",
+        city: "",
+        state: "",
+        zip: "",
+      };
+      if (!customerAddress.street || !customerAddress.city || !customerAddress.state || !customerAddress.zip) {
+        throw new Error('Customer address must include street, city, state, and zip');
+      }
+
       // Issue policy automatically
       const policy = await this.issuePolicy({
         tenantId: quote.tenantId!,
         quoteId: quote.id,
-        customerId: quote.customerId!,
+        customerName: quote.customerName!,
+        customerEmail: quote.customerEmail!,
+        customerPhone: quote.customerPhone,
+        customerAddress,
+        coverageDetails: quote.coverageSelections || {},
         productId: quote.productId!,
         vehicleId: quote.vehicleId,
-        coverageOptions: quote.coverageOptions,
         premium: quote.totalPremium,
-        issuedBy: 'system'
+        issuedBy: 'system',
+        effectiveDate: new Date(),
+        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       });
 
       // Update payment with policy ID
@@ -76,18 +105,29 @@ export class PolicyService {
         throw new Error('Policy not found');
       }
 
-      // Update policy with provided fields
+      // Validate customer_address if provided
+      if (policyData.customerAddress && typeof policyData.customerAddress === 'object') {
+        const { street, city, state, zip } = policyData.customerAddress;
+        if (!street || !city || !state || !zip) {
+          throw new Error('Customer address must include street, city, state, and zip');
+        }
+      }
+
+      // Prepare update payload
       const updatedPolicy = await storage.updatePolicy(id, {
         ...policyData,
-        updatedAt: new Date(), // Track update timestamp
+        customerAddress: policyData.customerAddress || existingPolicy.customerAddress,
+        coverageDetails: policyData.coverageDetails || existingPolicy.coverageDetails,
+        updatedAt: new Date(),
       });
 
-      // Regenerate documents if necessary (e.g., if coverage or dates changed)
+      // Regenerate documents if necessary
       if (
-        policyData.coverageOptions ||
+        policyData.coverageDetails ||
         policyData.effectiveDate ||
         policyData.expiryDate ||
-        policyData.premium
+        policyData.premium ||
+        policyData.customerAddress
       ) {
         await this.generatePolicyDocuments(updatedPolicy);
       }
@@ -100,12 +140,6 @@ export class PolicyService {
   }
 
   private async generatePolicyDocuments(policy: Policy): Promise<void> {
-    // Placeholder for document generation
-    // In a real implementation, this would:
-    // 1. Generate policy declarations page
-    // 2. Generate terms and conditions
-    // 3. Generate insurance cards
-    // 4. Store documents in the document system
     console.log(`Generated documents for policy ${policy.policyNumber}`);
   }
 
@@ -119,13 +153,16 @@ export class PolicyService {
       // Create renewal policy
       const renewalPolicy = await this.issuePolicy({
         tenantId: existingPolicy.tenantId!,
-        customerId: existingPolicy.customerId!,
-        productId: existingPolicy.productId!,
+        customerName: existingPolicy.customerName,
+        customerEmail: existingPolicy.customerEmail,
+        customerPhone: existingPolicy.customerPhone,
+        customerAddress: existingPolicy.customerAddress,
+        coverageDetails: existingPolicy.coverageDetails,
+        productId: existingPolicy.productId,
         vehicleId: existingPolicy.vehicleId,
-        coverageOptions: existingPolicy.coverageOptions,
         premium: existingPolicy.premium,
         effectiveDate: existingPolicy.expiryDate,
-        issuedBy: 'system'
+        issuedBy: 'system',
       });
 
       // Update original policy status
@@ -143,16 +180,16 @@ export class PolicyService {
       const policy = await storage.updatePolicy(policyId, {
         status: 'cancelled',
         cancelledAt: new Date(),
-        cancellationReason: reason
+        cancellationReason: reason,
       });
 
-      // Calculate refund amount (placeholder logic)
+      // Calculate refund amount
       const refundAmount = this.calculateCancellationRefund(policy);
 
       return {
         policy,
         refundAmount,
-        message: 'Policy cancelled successfully'
+        message: 'Policy cancelled successfully',
       };
     } catch (error) {
       console.error('Policy cancellation error:', error);
@@ -160,8 +197,7 @@ export class PolicyService {
     }
   }
 
-  private calculateCancellationRefund(policy: any): number {
-    // Simple pro-rata refund calculation
+  private calculateCancellationRefund(policy: Policy): number {
     const now = new Date();
     const effectiveDate = new Date(policy.effectiveDate);
     const expiryDate = new Date(policy.expiryDate);

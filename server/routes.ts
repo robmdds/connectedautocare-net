@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, attachUser, requireAuth } from "./auth.ts"; // Updated import
+import { setupAuth, attachUser, requireAuth } from "./auth.ts";
 import { HelcimService } from "./services/helcimService";
 import { VinDecodeService } from "./services/vinDecodeService";
 import { RatingEngineService } from "./services/ratingEngineService";
@@ -12,27 +12,10 @@ import { AIAssistantService } from "./services/aiAssistantService";
 import { HeroVscRatingService, HERO_VSC_PRODUCTS } from "./services/heroVscService";
 import { ConnectedAutoCareRatingService, CONNECTED_AUTO_CARE_PRODUCTS } from "./services/connectedAutoCareService";
 import { SpecialQuoteRequestService } from "./services/specialQuoteRequestService";
-import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema, insertSpecialQuoteRequestSchema } from "@shared/schema";
+import { insertQuoteSchema, insertPolicySchema, insertClaimSchema, insertAnalyticsEventSchema, insertSpecialQuoteRequestSchema, InsertPolicy } from "@shared/schema";
 import { z } from "zod";
 
 // Define a partial schema for updates to allow optional fields
-const updatePolicySchema = z.object({
-  customerName: z.string().min(1, 'Customer name is required').optional(),
-  customerEmail: z.string().email('Valid email is required').optional(),
-  customerPhone: z.string().optional(),
-  productType: z.enum(['auto_vsc', 'rv_vsc', 'marine_vsc', 'powersports_vsc', 'home_warranty']).optional(),
-  vehicleMake: z.string().min(1, 'Vehicle make is required').optional(),
-  vehicleModel: z.string().min(1, 'Vehicle model is required').optional(),
-  vehicleYear: z.string().min(4, 'Vehicle year is required').optional(),
-  vehicleVin: z.string().min(17, 'Valid VIN is required').max(17, 'Valid VIN is required').optional(),
-  coverageLevel: z.enum(['basic', 'standard', 'premium', 'platinum', 'gold', 'silver']).optional(),
-  termLength: z.enum(['12', '24', '36', '48', '60']).optional(),
-  premium: z.string().min(1, 'Premium amount is required').optional(),
-  effectiveDate: z.string().optional(),
-  expiryDate: z.string().optional(),
-  // Note: Fields like tenantId, customerId, productId, vehicleId, coverageOptions are not included
-  // as they are not sent by the frontend and should be preserved from the existing policy
-});
 
 export async function registerRoutes(app: Express): Promise<Server> {
     // Health check endpoint for uptime monitoring
@@ -430,39 +413,75 @@ ${urls.map(url => `  <url>
         });
       }
 
+      if (!policyData.customerAddress || typeof policyData.customerAddress !== 'object') {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Customer address is required and must be an object'
+        });
+      }
+
+      const { street, city, state, zip } = policyData.customerAddress;
+      if (!street || !city || !state || !zip) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Customer address must include street, city, state, and zip'
+        });
+      }
+
+      if (!policyData.premium) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Premium is required'
+        });
+      }
+
       // Generate policy number if not provided
-      const policyNumber = policyData.policyNumber || `POL-${Date.now()}`;
-      
+      const policyNumber = policyData.policyNumber || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
       // Get tenant ID from user context or use default
-      let tenantId = 'default-tenant';
+      let tenantId = policyData.tenantId || 'default-tenant';
       if (req.user?.tenantId) {
         tenantId = req.user.tenantId;
       }
 
-      const newPolicy = await storage.createPolicy({
+      // Ensure coverage_details is provided, default to empty object
+      const coverageDetails = policyData.coverageDetails || {};
+
+      // Ensure effective_date and expiry_date
+      const effectiveDate = policyData.effectiveDate ? new Date(policyData.effectiveDate) : new Date();
+      const expiryDate = policyData.expirationDate ? new Date(policyData.expirationDate) : new Date(effectiveDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+      const newPolicy: InsertPolicy = {
         tenantId,
         policyNumber,
         customerEmail: policyData.customerEmail,
         customerName: policyData.customerName,
         customerPhone: policyData.customerPhone,
-        productType: policyData.productType,
+        customerAddress: policyData.customerAddress,
+        coverageDetails,
+        productId: policyData.productId, 
+        vehicleId: policyData.vehicleId, 
+        premium: policyData.premium,
+        effectiveDate,
+        expiryDate,
+        status: 'active',
+        productType: policyData.productType, 
         vehicleMake: policyData.vehicleMake,
         vehicleModel: policyData.vehicleModel,
         vehicleYear: policyData.vehicleYear,
         vehicleVin: policyData.vehicleVin,
         coverageLevel: policyData.coverageLevel,
         termLength: policyData.termLength,
-        premium: policyData.premium,
-        status: 'active',
-        effectiveDate: policyData.effectiveDate ? new Date(policyData.effectiveDate) : new Date(),
-        expiryDate: policyData.expirationDate ? new Date(policyData.expirationDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      });
+        issuedBy: req.user?.id, // From authenticated user
+      };
+
+      const createdPolicy = await storage.createPolicy(newPolicy);
       
-      console.log('Policy created successfully:', newPolicy.policyNumber);
+      console.log('Policy created successfully:', createdPolicy.policyNumber);
       
       res.status(201).json({
         success: true,
-        policy: newPolicy,
+        policy: createdPolicy,
         message: 'Policy created successfully'
       });
       
@@ -501,7 +520,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.get('/api/policies/:id', async (req, res) => {
+  app.get('/api/policies/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
       console.log(`Fetching policy ${req.params.id} from storage...`);
       
@@ -543,10 +562,29 @@ ${urls.map(url => `  <url>
         });
       }
 
-      const updatedPolicy = await storage.updatePolicy(policyId, {
+      // Validate customer_address if provided
+      if (updateData.customerAddress && typeof updateData.customerAddress === 'object') {
+        const { street, city, state, zip } = updateData.customerAddress;
+        if (!street || !city || !state || !zip) {
+          return res.status(400).json({ 
+            success: false,
+            error: 'Customer address must include street, city, state, and zip'
+          });
+        }
+      }
+
+      // Prepare update payload
+      const updatePayload: Partial<InsertPolicy> = {
         customerName: updateData.customerName,
         customerEmail: updateData.customerEmail,
         customerPhone: updateData.customerPhone,
+        customerAddress: updateData.customerAddress || existingPolicy.customerAddress,
+        coverageDetails: updateData.coverageDetails || existingPolicy.coverageDetails,
+        productId: updateData.productId,
+        vehicleId: updateData.vehicleId,
+        premium: updateData.premium,
+        effectiveDate: updateData.effectiveDate ? new Date(updateData.effectiveDate) : undefined,
+        expiryDate: updateData.expirationDate ? new Date(updateData.expirationDate) : undefined,
         productType: updateData.productType,
         vehicleMake: updateData.vehicleMake,
         vehicleModel: updateData.vehicleModel,
@@ -554,11 +592,10 @@ ${urls.map(url => `  <url>
         vehicleVin: updateData.vehicleVin,
         coverageLevel: updateData.coverageLevel,
         termLength: updateData.termLength,
-        premium: updateData.premium,
-        effectiveDate: updateData.effectiveDate ? new Date(updateData.effectiveDate) : undefined,
-        expiryDate: updateData.expirationDate ? new Date(updateData.expirationDate) : undefined,
-        updatedAt: new Date()
-      });
+        updatedAt: new Date(),
+      };
+
+      const updatedPolicy = await storage.updatePolicy(policyId, updatePayload);
 
       console.log('Policy updated successfully:', updatedPolicy.policyNumber);
 
