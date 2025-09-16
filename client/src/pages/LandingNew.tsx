@@ -12,11 +12,13 @@ import {
   Search,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LandingNew() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, user, isLoading } = useAuth();
+  const queryClient = useQueryClient();
   const [vinInput, setVinInput] = useState("");
   const [vinError, setVinError] = useState("");
   const [mileageInput, setMileageInput] = useState("");
@@ -178,31 +180,34 @@ export default function LandingNew() {
   };
 
   const handleLogin = () => {
-    setLocation("/login"); // Use wouter navigation
+    setLocation("/login");
   };
 
   const handleLogout = async () => {
     try {
-          // Call the correct logout endpoint
-          const response = await fetch('/api/auth/logout', {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-          });
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-          if (response.ok) {
-              console.log('Logout successful');
-          } else {
-              console.error('Logout failed:', await response.text());
-          }
-      } catch (error) {
-          console.error('Logout error:', error);
-      } finally {
-          // Always redirect to home regardless of logout success/failure
-          setLocation('/');
+      if (response.ok) {
+        console.log("Logout successful");
+        // Clear the user query cache immediately
+        queryClient.setQueryData(["/api/auth/user"], null);
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        // Small delay to ensure state propagation
+        setTimeout(() => {
+          setLocation("/");
+        }, 100);
+      } else {
+        console.error("Logout failed:", await response.text());
       }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const handleDashboard = () => {
@@ -423,10 +428,9 @@ export default function LandingNew() {
                         <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>{emailError}</AlertDescription>
-                        </Alert>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
                   <div className="bg-blue-100 border border-blue-300 p-4 rounded-lg mt-6">
                     <h4 className="font-semibold text-blue-900 mb-2">What you'll get:</h4>
                     <ul className="space-y-1 text-sm text-blue-800">
