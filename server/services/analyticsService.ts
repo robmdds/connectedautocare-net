@@ -17,7 +17,7 @@ export class AnalyticsService {
       const startDate = dateRange?.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
 
       // If no tenantId provided, use default or get from the first available tenant
-      const effectiveTenantId = tenantId || 'default-tenant';
+      const effectiveTenantId = 'connected-auto-care' || tenantId;
 
       // Fetch real data from database
       const [
