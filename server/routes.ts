@@ -709,8 +709,8 @@ ${urls.map(url => `  <url>
         claimantPhone: claimData.claimantPhone,
         type: claimData.type,
         description: claimData.description,
-        incidentDate: claimData.dateOfLoss ? new Date(claimData.dateOfLoss) : new Date(),
-        claimAmount: claimData.estimatedAmount,
+        dateOfLoss: claimData.dateOfLoss ? new Date(claimData.dateOfLoss) : new Date(),
+        estimatedAmount: claimData.estimatedAmount,
         status: 'open'
       });
       
