@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -859,15 +858,6 @@ export default function HeroVscProducts() {
                         ${quoteResult.ratingResult?.totalPremium?.toFixed(2) || '0.00'}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <Button className="w-full">
-                      Purchase This Coverage
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      Save Quote & Email Details
-                    </Button>
                   </div>
                 </div>
               )}

@@ -412,224 +412,420 @@ ${urls.map(url => `  <url>
   // Policy Management API
   app.post('/api/policies', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const policyData = insertPolicySchema.parse(req.body);
-      const userId = req.user!.id;
-      
-      const policy = await policyService.issuePolicy({
-        ...policyData,
-        issuedBy: userId,
-      });
+      const policyData = req.body;
+      console.log('Creating new policy:', policyData);
 
-      res.json(policy);
+      // Validate required fields
+      if (!policyData.customerEmail) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Customer email is required'
+        });
+      }
+
+      if (!policyData.customerName) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Customer name is required'
+        });
+      }
+
+      // Generate policy number if not provided
+      const policyNumber = policyData.policyNumber || `POL-${Date.now()}`;
+      
+      // Get tenant ID from user context or use default
+      let tenantId = 'default-tenant';
+      if (req.user?.tenantId) {
+        tenantId = req.user.tenantId;
+      }
+
+      const newPolicy = await storage.createPolicy({
+        tenantId,
+        policyNumber,
+        customerEmail: policyData.customerEmail,
+        customerName: policyData.customerName,
+        customerPhone: policyData.customerPhone,
+        productType: policyData.productType,
+        vehicleMake: policyData.vehicleMake,
+        vehicleModel: policyData.vehicleModel,
+        vehicleYear: policyData.vehicleYear,
+        vehicleVin: policyData.vehicleVin,
+        coverageLevel: policyData.coverageLevel,
+        termLength: policyData.termLength,
+        premium: policyData.premium,
+        status: 'active',
+        effectiveDate: policyData.effectiveDate ? new Date(policyData.effectiveDate) : new Date(),
+        expiryDate: policyData.expirationDate ? new Date(policyData.expirationDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      });
+      
+      console.log('Policy created successfully:', newPolicy.policyNumber);
+      
+      res.status(201).json({
+        success: true,
+        policy: newPolicy,
+        message: 'Policy created successfully'
+      });
+      
     } catch (error) {
-      console.error("Policy creation error:", error);
-      res.status(500).json({ error: "Failed to create policy" });
+      console.error('Error creating policy:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to create policy in database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
   app.get('/api/policies', requireAuth, async (req: AuthRequest, res) => {
     try {
-      // Return sample policy data for testing (remove isAuthenticated temporarily)
-      const samplePolicies = [
-        {
-          id: 'VSC-1755185348873',
-          policyNumber: 'VSC-1755185348873',
-          customerName: 'John Smith',
-          customerEmail: 'john.smith@email.com',
-          customerPhone: '+1-555-123-4567',
-          status: 'active',
-          productType: 'auto_vsc',
-          vehicleMake: 'Infiniti',
-          vehicleModel: 'QX80',
-          vehicleYear: '2021',
-          vehicleVin: 'JN8AZ2AF1M9715383',
-          coverageLevel: 'platinum',
-          termLength: '36',
-          premium: '$2,349.99',
-          effectiveDate: '2025-08-14',
-          expirationDate: '2028-08-14',
-          createdAt: '2025-08-14T23:42:28.873Z'
-        },
-        {
-          id: 'VSC-1755184920051',
-          policyNumber: 'VSC-1755184920051',
-          customerName: 'Sarah Johnson',
-          customerEmail: 'sarah.johnson@email.com',
-          customerPhone: '+1-555-987-6543',
-          status: 'active',
-          productType: 'auto_vsc',
-          vehicleMake: 'Toyota',
-          vehicleModel: 'Camry',
-          vehicleYear: '2022',
-          vehicleVin: '4T1G11AK0NU123456',
-          coverageLevel: 'gold',
-          termLength: '48',
-          premium: '$1,894.46',
-          effectiveDate: '2025-08-13',
-          expirationDate: '2029-08-13',
-          createdAt: '2025-08-13T22:15:20.051Z'
-        },
-        {
-          id: 'VSC-1755183825101',
-          policyNumber: 'VSC-1755183825101',
-          customerName: 'Michael Davis',
-          customerEmail: 'michael.davis@email.com',
-          customerPhone: '+1-555-456-7890',
-          status: 'pending',
-          productType: 'auto_vsc',
-          vehicleMake: 'Honda',
-          vehicleModel: 'Accord',
-          vehicleYear: '2020',
-          vehicleVin: '1HGCV1F30LA123456',
-          coverageLevel: 'silver',
-          termLength: '24',
-          premium: '$1,299.99',
-          effectiveDate: '2025-08-15',
-          expirationDate: '2027-08-15',
-          createdAt: '2025-08-14T23:03:45.101Z'
-        }
-      ];
+      console.log('Fetching policies from storage...');
       
-      res.json(samplePolicies);
+      // Get user context for tenant filtering
+      let tenantId = 'default-tenant';
+      if (req.user?.tenantId) {
+        tenantId = req.user.tenantId;
+      }
+
+      const policies = await storage.getPolicies(tenantId, req.query);
+      
+      console.log(`Found ${policies.length} policies in storage`);
+      res.json(policies);
+      
     } catch (error) {
-      console.error("Error fetching policies:", error);
-      res.status(500).json({ error: "Failed to fetch policies" });
+      console.error('Error fetching policies:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch policies from database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
   app.get('/api/policies/:id', async (req, res) => {
     try {
+      console.log(`Fetching policy ${req.params.id} from storage...`);
+      
       const policy = await storage.getPolicy(req.params.id);
+      
       if (!policy) {
-        return res.status(404).json({ error: "Policy not found" });
+        return res.status(404).json({ 
+          success: false,
+          error: 'Policy not found in database'
+        });
       }
+      
+      console.log('Policy found:', policy.policyNumber);
       res.json(policy);
+      
     } catch (error) {
-      console.error("Error fetching policy:", error);
-      res.status(500).json({ error: "Failed to fetch policy" });
+      console.error('Error fetching policy:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch policy from database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
   app.put('/api/policies/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
-      // Ensure user is authenticated
-      if (!req.user?.id) {
-        return res.status(401).json({ error: 'Unauthorized: User not authenticated' });
+      const policyId = req.params.id;
+      const updateData = req.body;
+
+      console.log('Updating policy:', policyId, updateData);
+
+      // Check if policy exists
+      const existingPolicy = await storage.getPolicy(policyId);
+      if (!existingPolicy) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Policy not found in database'
+        });
       }
 
-      const policyId = req.params.id;
-      const policyData = updatePolicySchema.parse(req.body); // Validate with partial schema
-      const userId = req.user.id;
-
-      // Update the policy using policyService
-      const updatedPolicy = await policyService.updatePolicy(policyId, {
-        ...policyData,
-        updatedBy: userId, // Track who updated the policy
+      const updatedPolicy = await storage.updatePolicy(policyId, {
+        customerName: updateData.customerName,
+        customerEmail: updateData.customerEmail,
+        customerPhone: updateData.customerPhone,
+        productType: updateData.productType,
+        vehicleMake: updateData.vehicleMake,
+        vehicleModel: updateData.vehicleModel,
+        vehicleYear: updateData.vehicleYear,
+        vehicleVin: updateData.vehicleVin,
+        coverageLevel: updateData.coverageLevel,
+        termLength: updateData.termLength,
+        premium: updateData.premium,
+        effectiveDate: updateData.effectiveDate ? new Date(updateData.effectiveDate) : undefined,
+        expiryDate: updateData.expirationDate ? new Date(updateData.expirationDate) : undefined,
+        updatedAt: new Date()
       });
 
-      res.json(updatedPolicy);
+      console.log('Policy updated successfully:', updatedPolicy.policyNumber);
+
+      res.json({
+        success: true,
+        policy: updatedPolicy,
+        message: 'Policy updated successfully'
+      });
+
     } catch (error) {
-      console.error('Policy update error:', error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: 'Validation error', details: error.errors });
-      }
-      if (error instanceof Error && error.message === 'Policy not found') {
-        return res.status(404).json({ error: 'Policy not found' });
-      }
-      res.status(500).json({ error: 'Failed to update policy' });
+      console.error('Error updating policy:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to update policy in database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
+  app.delete('/api/policies/:id', requireAuth, async(req: AuthRequest, res) => {
+    try {
+      const policyId = req.params.id;
+      console.log('Deleting policy:', policyId);
+
+      // Check if policy exists
+      const existingPolicy = await storage.getPolicy(policyId);
+      if (!existingPolicy) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Policy not found in database'
+        });
+      }
+
+      // Instead of hard delete, update status to 'cancelled'
+      const cancelledPolicy = await storage.updatePolicy(policyId, {
+        status: 'cancelled',
+        updatedAt: new Date()
+      });
+
+      console.log('Policy cancelled successfully:', cancelledPolicy.policyNumber);
+
+      res.json({
+        success: true,
+        policy: cancelledPolicy,
+        message: 'Policy cancelled successfully'
+      });
+
+    } catch (error) {
+      console.error('Error deleting policy:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to delete policy from database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   // Claims Management API
   app.post('/api/claims', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const claimData = insertClaimSchema.parse(req.body);
+      const claimData = req.body;
+      console.log('Creating new claim:', claimData);
+
+      // Validate required fields
+      if (!claimData.policyNumber && !claimData.policyId) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Policy number or policy ID is required'
+        });
+      }
+
+      if (!claimData.claimantEmail) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Claimant email is required'
+        });
+      }
+
+      if (!claimData.description) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Claim description is required'
+        });
+      }
+
+      // Generate claim number if not provided
+      const claimNumber = claimData.claimNumber || `CLM-${Date.now()}`;
       
-      const claim = await claimsService.createClaim(claimData);
-      res.json(claim);
+      // Get tenant ID from user context or use default
+      let tenantId = 'default-tenant';
+      if (req.user?.tenantId) {
+        tenantId = req.user.tenantId;
+      }
+
+      // Find policy if policyId not provided
+      let policyId = claimData.policyId;
+      if (!policyId && claimData.policyNumber) {
+        const policy = await storage.getPolicyByNumber(claimData.policyNumber);
+        if (policy) {
+          policyId = policy.id;
+        }
+      }
+
+      const newClaim = await storage.createClaim({
+        tenantId,
+        claimNumber,
+        policyId,
+        policyNumber: claimData.policyNumber,
+        claimantName: claimData.claimantName,
+        claimantEmail: claimData.claimantEmail,
+        claimantPhone: claimData.claimantPhone,
+        type: claimData.type,
+        description: claimData.description,
+        incidentDate: claimData.dateOfLoss ? new Date(claimData.dateOfLoss) : new Date(),
+        claimAmount: claimData.estimatedAmount,
+        status: 'submitted'
+      });
+      
+      console.log('Claim created successfully:', newClaim.claimNumber);
+      
+      res.status(201).json({
+        success: true,
+        claim: newClaim,
+        message: 'Claim created successfully'
+      });
+      
     } catch (error) {
-      console.error("Claim creation error:", error);
-      res.status(500).json({ error: "Failed to create claim" });
+      console.error('Error creating claim:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to create claim in database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
+
   app.get('/api/claims', requireAuth, async (req: AuthRequest, res) => {
     try {
-      // Return sample claims data for testing (remove isAuthenticated temporarily)
-      const sampleClaims = [
-        {
-          id: 'CLM-1755186690650',
-          claimNumber: 'CLM-1755186690650',
-          policyNumber: 'VSC-1755185348873',
-          claimantName: 'John Smith',
-          claimantEmail: 'john.smith@email.com',
-          claimantPhone: '+1-555-123-4567',
-          status: 'under_review',
-          type: 'mechanical_breakdown',
-          dateOfLoss: '2025-08-10',
-          description: 'Engine overheating - coolant system failure requiring repairs',
-          estimatedAmount: '$2,450.00',
-          actualAmount: null,
-          adjusterName: 'Sarah Williams',
-          createdAt: '2025-08-14T23:51:30.650Z',
-          riskScore: 25,
-          fraudIndicators: []
-        },
-        {
-          id: 'CLM-1755184920089',
-          claimNumber: 'CLM-1755184920089',
-          policyNumber: 'VSC-1755184920051',
-          claimantName: 'Sarah Johnson',
-          claimantEmail: 'sarah.johnson@email.com',
-          claimantPhone: '+1-555-987-6543',
-          status: 'approved',
-          type: 'tire_wheel',
-          dateOfLoss: '2025-08-12',
-          description: 'Tire damage from road hazard - replacement needed',
-          estimatedAmount: '$850.00',
-          actualAmount: '$825.00',
-          adjusterName: 'Mike Chen',
-          createdAt: '2025-08-13T22:15:28.089Z',
-          riskScore: 15,
-          fraudIndicators: []
-        },
-        {
-          id: 'CLM-1755183825145',
-          claimNumber: 'CLM-1755183825145',
-          policyNumber: 'VSC-1755183825101',
-          claimantName: 'Michael Davis',
-          claimantEmail: 'michael.davis@email.com',
-          claimantPhone: '+1-555-456-7890',
-          status: 'requires_investigation',
-          type: 'theft',
-          dateOfLoss: '2025-08-08',
-          description: 'Vehicle theft - total loss claim with recovery pending',
-          estimatedAmount: '$35,000.00',
-          actualAmount: null,
-          adjusterName: 'Lisa Rodriguez',
-          createdAt: '2025-08-14T23:03:52.145Z',
-          riskScore: 75,
-          fraudIndicators: ['high_value_claim', 'recent_policy']
-        }
-      ];
+      console.log('Fetching claims from storage...');
       
-      res.json(sampleClaims);
+      // Get user context for tenant filtering
+      let tenantId = 'default-tenant';
+      if (req.user?.tenantId) {
+        tenantId = req.user.tenantId;
+      }
+
+      const claims = await storage.getClaims(tenantId, req.query);
+      
+      console.log(`Found ${claims.length} claims in storage`);
+      res.json(claims);
+      
     } catch (error) {
-      console.error("Error fetching claims:", error);
-      res.status(500).json({ error: "Failed to fetch claims" });
+      console.error('Error fetching claims:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch claims from database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
   app.put('/api/claims/:id', requireAuth, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user!.id;
-      const claimUpdate = req.body;
-      
-      const claim = await claimsService.updateClaim(req.params.id, claimUpdate, userId);
-      res.json(claim);
+      const claimId = req.params.id;
+      const updateData = req.body;
+
+      console.log('Updating claim:', claimId, updateData);
+
+      // Check if claim exists
+      const existingClaim = await storage.getClaim(claimId);
+      if (!existingClaim) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Claim not found in database'
+        });
+      }
+
+      const updatedClaim = await storage.updateClaim(claimId, {
+        status: updateData.status,
+        actualAmount: updateData.actualAmount,
+        adjusterNotes: updateData.adjusterNotes,
+        processedAt: updateData.status === 'settled' ? new Date() : undefined,
+        settledAt: updateData.status === 'settled' ? new Date() : undefined,
+        approvedAt: updateData.status === 'approved' ? new Date() : undefined,
+        deniedAt: updateData.status === 'denied' ? new Date() : undefined,
+        updatedAt: new Date()
+      });
+
+      console.log('Claim updated successfully:', updatedClaim.claimNumber);
+
+      res.json({
+        success: true,
+        claim: updatedClaim,
+        message: 'Claim updated successfully'
+      });
+
     } catch (error) {
-      console.error("Claim update error:", error);
-      res.status(500).json({ error: "Failed to update claim" });
+      console.error('Error updating claim:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to update claim in database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get('/api/claims/:id', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      console.log(`Fetching claim ${req.params.id} from storage...`);
+      
+      const claim = await storage.getClaim(req.params.id);
+      
+      if (!claim) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Claim not found in database'
+        });
+      }
+      
+      console.log('Claim found:', claim.claimNumber);
+      res.json(claim);
+      
+    } catch (error) {
+      console.error('Error fetching claim:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch claim from database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.delete('/api/claims/:id', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const claimId = req.params.id;
+      console.log('Deleting claim:', claimId);
+
+      // Check if claim exists
+      const existingClaim = await storage.getClaim(claimId);
+      if (!existingClaim) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Claim not found in database'
+        });
+      }
+
+      // Instead of hard delete, update status to 'cancelled'
+      const cancelledClaim = await storage.updateClaim(claimId, {
+        status: 'cancelled',
+        updatedAt: new Date()
+      });
+
+      console.log('Claim cancelled successfully:', cancelledClaim.claimNumber);
+
+      res.json({
+        success: true,
+        claim: cancelledClaim,
+        message: 'Claim cancelled successfully'
+      });
+
+    } catch (error) {
+      console.error('Error deleting claim:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to delete claim from database',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
