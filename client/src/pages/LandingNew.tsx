@@ -181,8 +181,26 @@ export default function LandingNew() {
     setLocation("/login"); // Use wouter navigation
   };
 
-  const handleLogout = () => {
-    setLocation("/logout");
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Clear client-side auth data
+        localStorage.removeItem("authToken");
+        setLocation("/"); // Redirect to home
+      } else {
+        console.error("Logout failed:", await response.text());
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const handleDashboard = () => {
