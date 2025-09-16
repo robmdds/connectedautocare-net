@@ -428,9 +428,10 @@ export default function LandingNew() {
                         <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>{emailError}</AlertDescription>
-                        )}
-                      </div>
+                        </Alert>
+                      )}
                     </div>
+                  </div>
                   <div className="bg-blue-100 border border-blue-300 p-4 rounded-lg mt-6">
                     <h4 className="font-semibold text-blue-900 mb-2">What you'll get:</h4>
                     <ul className="space-y-1 text-sm text-blue-800">
